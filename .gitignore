@@ -1,0 +1,41 @@
+# Ambientes virtuais
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Bytecode e cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Banco de dados local
+*.sqlite3
+*.db
+
+# Variáveis de ambiente
+.env
+
+# Arquivos do macOS
+.DS_Store
+
+# Arquivos de log
+*.log
+
+# Migrations (se usar Alembic e quiser ignorar)
+alembic/versions/
+
+# Arquivos gerados por testes
+.pytest_cache/
+coverage/
+htmlcov/
+
+# Arquivos temporários ou zipados
+*.zip
+*.tar.gz
+*.bak
+
+# Banco de dados
+*.db

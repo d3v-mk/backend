@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}PanoPoker{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1 class="logo">JOGA A BET NO PANO!</h1>
+        </nav>
+    </header>
+    
+    <div class="navbar">
+        <ul>
+            <li><a href="#">Comprar Fichas</a></li>
+            <li><a href="#">Promotores</a></li>
+            <li><a href="#">Regras</a></li>
+            <li><a href="#">Sobre</a></li>
+        </ul>
+    </div>
+    
+    
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2025 PanoPoker — Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>

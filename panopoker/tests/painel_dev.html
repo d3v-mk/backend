@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>PanoPoker Dev Panel</title>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: #eee; padding: 20px; }
+    .jogador {
+      border: 1px solid #444;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      background: #1e1e1e;
+      width: 290px;
+      flex-shrink: 0;
+    }
+    #jogadores {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    button {
+      margin: 5px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #555; }
+    input[type="number"] { width: 60px; }
+    .mesa { margin-bottom: 30px; }
+    .vez { color: #00ff88; font-weight: bold; }
+    .entradas { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>PanoPoker Painel Dev</h1>
+
+  <div class="entradas">
+    <label>Mesa ID: <input type="number" id="mesaId" value="1" /></label>
+    <button onclick="carregarMesa()">🔄 Carregar Mesa</button>
+    <div style="margin-top: 10px;">
+      <strong>Entrar na mesa:</strong><br/>
+      <button onclick="entrarNaMesa(1)">🎮 Jogador 1</button>
+      <button onclick="entrarNaMesa(2)">🎮 Jogador 2</button>
+      <button onclick="entrarNaMesa(3)">🎮 Jogador 3</button>
+      <button onclick="entrarNaMesa(4)">🎮 Jogador 4</button>
+      <button onclick="entrarNaMesa(5)">🎮 Jogador 5</button>
+      <button onclick="entrarNaMesa(6)">🎮 Jogador 6</button>
+    </div>
+  </div>
+
+  <div class="mesa" id="mesaInfo"></div>
+  <div id="jogadores"></div>
+
+  <script>
+    const tokens = {
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ2NTU2Nzc3fQ.qXf3tclKUbh4yp-yR0Q5J6THPmI8LLrzabVuvrUQrVs",
+      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ2NTU2ODA0fQ.UUXZWHugqSXjMCQvZvVFsrNBvkgezlL04s8aMcU7ez8",
+      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ2NTU2ODIxfQ.s08EO0Pel29jDZsPf9g3yhnKkAko_SGGFbV1DnPkaC8",
+      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ2NDcwMDAyfQ.iWDMSa4FQUAcw__hJVL2lW0w3bL3ucP0RxqtPXjoh-M",
+      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ2NTQyNzUzfQ.k0GK0z6Mx-kmbxOtybU410wtA4KkjiD2ikEX9QFGbu4",
+      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ2NTQyNzcxfQ.J7MFmteBAOPsp7no3aTZ5CLKaoXHNR1FaL7tixNCnkc"
+    };
+
+
+    async function carregarMesa() {
+      const mesaId = document.getElementById("mesaId").value;
+      const token = tokens[1];
+
+      try {
+        const mesaRes = await fetch(`http://localhost:8000/mesa/${mesaId}`, {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const mesa = await mesaRes.json();
+
+        const jogadoresRes = await fetch(`http://localhost:8000/mesa/${mesaId}/jogadores`, {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const jogadores = await jogadoresRes.json();
+
+        document.getElementById("mesaInfo").innerHTML = `
+          <h2>Mesa ${mesa.id} — Estado: ${mesa.estado_da_rodada}</h2>
+          <p>Cartas comunitárias: ${JSON.stringify(mesa.cartas_comunitarias)}</p>
+          <p>Pote: R$ ${mesa.pote_total}</p>
+          <p>Jogador da vez: ${mesa.jogador_da_vez}</p>
+        `;
+
+        const container = document.getElementById("jogadores");
+        container.innerHTML = "";
+        jogadores.forEach(j => {
+          const vezTag = j.vez ? `<span class="vez">● VEZ</span>` : "";
+          const sbTag = j.is_sb ? "🟢 SB" : "";
+          const bbTag = j.is_bb ? "🔴 BB" : "";
+          const dealerTag = j.posicao_cadeira === mesa.dealer_pos ? "⚪ DEALER" : "";
+
+          const div = document.createElement("div");
+          div.className = "jogador";
+          div.innerHTML = `
+            <h3>Jogador ${j.user_id} — posição ${j.posicao_cadeira} ${vezTag}</h3>
+            <p>Saldo atual: R$ ${j.saldo_atual}</p>
+            <p>Aposta atual: R$ ${j.aposta_atual}</p>
+            <p>Foldado: ${j.foldado}</p>
+            <p>Agiu nesta rodada: ${j.rodada_ja_agiu}</p>
+            <p>${sbTag} ${bbTag} ${dealerTag}</p>
+            <p>Cartas: ${j.cartas?.join(", ")}</p>
+            <button onclick="acao(${mesa.id}, ${j.user_id}, 'check')">Check</button>
+            <button onclick="acao(${mesa.id}, ${j.user_id}, 'call')">Call</button>
+            <button onclick="acao(${mesa.id}, ${j.user_id}, 'fold')">Fold</button>
+            <button onclick="acao(${mesa.id}, ${j.user_id}, 'allin')">All-In</button>
+            <br/>
+            <label>Raise: R$ <input type="number" id="raise-${j.user_id}" value="0.05"/></label>
+            <button onclick="acao(${mesa.id}, ${j.user_id}, 'raise')">Raise</button>
+            <br/><br/>
+            <button onclick="sairDaMesa(${mesa.id}, ${j.user_id})">🚪 Sair da Mesa</button>
+          `;
+          container.appendChild(div);
+        });
+
+      } catch (err) {
+        console.error("💥 Erro ao carregar mesa:", err);
+        alert("Erro: " + err.message);
+      }
+    }
+
+    async function acao(mesaId, jogadorId, tipo) {
+      const url = `http://localhost:8000/mesa/${mesaId}/${tipo}`;
+      const token = tokens[jogadorId];
+      if (!token) {
+        alert(`Token do jogador ${jogadorId} não encontrado.`);
+        return;
+      }
+
+      let body = {};
+      if (tipo === "raise") {
+        const valor = document.getElementById(`raise-${jogadorId}`).value;
+        body = { valor: parseFloat(valor) };
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: tipo === "raise" ? JSON.stringify(body) : null
+        });
+
+        const data = await res.json();
+        alert(`${tipo.toUpperCase()} (J${jogadorId}) → ${data.detail || "OK"}`);
+        carregarMesa();
+
+      } catch (err) {
+        console.error(`Erro ao fazer ${tipo}:`, err);
+        alert("Erro: " + err.message);
+      }
+    }
+
+    async function entrarNaMesa(jogadorId) {
+      const mesaId = document.getElementById("mesaId").value;
+      const token = tokens[jogadorId];
+      if (!token) {
+        alert(`Token do jogador ${jogadorId} não encontrado.`);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8000/mesa/${mesaId}/entrar`, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const data = await res.json();
+        alert(`🎮 JOGADOR ${jogadorId} entrou na mesa → ${data.detail || "OK"}`);
+        carregarMesa();
+
+      } catch (err) {
+        console.error("Erro ao entrar na mesa:", err);
+        alert("Erro: " + err.message);
+      }
+    }
+
+    async function sairDaMesa(mesaId, jogadorId) {
+      const token = tokens[jogadorId];
+      if (!token) {
+        alert(`Token do jogador ${jogadorId} não encontrado.`);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8000/mesa/${mesaId}/sair`, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const data = await res.json();
+        alert(`🚪 JOGADOR ${jogadorId} saiu da mesa → ${data.detail || "OK"}`);
+        carregarMesa();
+
+      } catch (err) {
+        console.error("Erro ao sair da mesa:", err);
+        alert("Erro: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
