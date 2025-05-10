@@ -17,6 +17,8 @@ import asyncio
 
 from panopoker.usuarios.routers import usuario
 
+from starlette.middleware.sessions import SessionMiddleware
+
 
 
 
@@ -96,6 +98,7 @@ app.add_middleware(
 
 # Importar rotas
 from panopoker.financeiro.routers import webhook, pagamentos
+from panopoker.google.routers import auth_google
 
 # Import do poker
 from panopoker.poker.routers import acoes, jogadores, mesa_cartas, mesas_abertas, vez, mesa
@@ -119,6 +122,10 @@ app.include_router(vez.router)
 app.include_router(acoes.router)
 app.include_router(mesa.router)
 app.include_router(admin.router)
+<<<<<<< HEAD
+=======
+app.include_router(auth_google.router)
+>>>>>>> 79c8d6a (adicionado register/login com google (OAuth) e img no site)
 
 # Rotas do site
 from fastapi import FastAPI
@@ -160,3 +167,5 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 timers_async.loop_principal = asyncio.get_event_loop()
+
+app.add_middleware(SessionMiddleware, secret_key="alguma_chave_segura_aqui")
