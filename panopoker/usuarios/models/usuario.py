@@ -12,6 +12,8 @@ class Usuario(Base):
     saldo = Column(Float, default=0.0)
     is_admin = Column(Boolean, default=False)
 
+    auth_provider = Column(String, default="local")
+
     mesas = relationship("JogadorNaMesa", back_populates="jogador")  # Relacionamento com mesas
 
     pagamentos = relationship("Pagamento", back_populates="user") # Relacionamento com pagamento
