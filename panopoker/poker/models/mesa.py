@@ -42,9 +42,14 @@ class Mesa(Base):
     big_blind = Column(Float)  # Valor do big blind
     posicao_sb = Column(Integer, nullable=True)
     posicao_bb = Column(Integer, nullable=True)
+
+
     pote_total = Column(Float, default=0.0) # Pote total da mesa
     aposta_atual = Column(Float, default=0.0) # Aposta atual na mesa
+
+
     cartas_comunitarias = Column(JSON, default=dict) # Mostrar cartas comunitarias
+    vencedores_ultima_rodada = Column(JSON, default=[]) #INUTIL POR ENQUANTO <------
 
 
     jogadores = relationship("JogadorNaMesa", back_populates="mesa", lazy="select")
@@ -60,14 +65,18 @@ class JogadorNaMesa(Base):
     id = Column(Integer, primary_key=True, index=True) # id do registro JogadorNaMesa (único pra cada entrada)
     mesa_id = Column(Integer, ForeignKey("mesas.id")) # em qual mesa ele tá
     jogador_id = Column(Integer, ForeignKey("usuarios.id"))  # Referência para o usuário (jogador)
-    saldo_inicial = Column(Float)  # O saldo do jogador ao entrar na mesa
-    saldo_atual = Column(Float)  # O saldo atual do jogador (deve ser atualizado conforme as apostas)
-    aposta_atual = Column(Float, default=0.0)  # A aposta atual do jogador na rodada
     foldado = Column(Boolean, default=False)  # 0 = não, 1 = sim (se o jogador deu fold)
 
     posicao_cadeira = Column(Integer, nullable=True) # Posicao do jogador sentado na cadeira
     rodada_ja_agiu = Column(Boolean, default=False) # Verifica se o jogador ja agiu naquela rodada
     participando_da_rodada = Column(Boolean, default=True) # Verifica jogador participando da rodada
+
+
+    saldo_inicial = Column(Float)  # O saldo do jogador ao entrar na mesa
+    saldo_atual = Column(Float)  # O saldo atual do jogador (deve ser atualizado conforme as apostas)
+    
+    aposta_atual = Column(Float, default=0.0)  # A aposta atual do jogador na rodada
+    aposta_acumulada = Column(Float, default=0.0) # Aposta acumulada de todos os jogadores
 
  
     cartas = Column(JSON, nullable=True, default=[]) # Cartas do jogador na mesa

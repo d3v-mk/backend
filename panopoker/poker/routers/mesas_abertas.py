@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
-from panopoker.models.mesa import Mesa
+from panopoker.poker.models.mesa import Mesa
 
 router = APIRouter(prefix="/mesa", tags=["Mesas"])
 

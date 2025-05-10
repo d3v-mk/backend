@@ -2,16 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.core.security import get_current_user
-from panopoker.models.mesa import JogadorNaMesa
+from panopoker.poker.models.mesa import Mesa, JogadorNaMesa, EstadoDaMesa
 from panopoker.usuarios.models.usuario import Usuario
 import json
 from panopoker.core.debug import debug_print
 from panopoker.poker.game.mesa_utils import get_mesa
 from panopoker.poker.game.ControladorDePartida import ControladorDePartida
-from panopoker.models.mesa import Mesa
+from panopoker.poker.game.avaliar_maos import avaliar_mao
+from typing import List
+
+
 
 router = APIRouter(prefix="/mesa", tags=["Baralho"])
-
 
 # Cartas do jogador
 @router.get("/{mesa_id}/minhas_cartas")
@@ -27,29 +29,76 @@ def minhas_cartas(
           .filter_by(mesa_id=mesa_id, jogador_id=current_user.id)
           .first()
     )
-
     if not jogador:
-        debug_print(f"[MINHAS_CARTAS][ERRO] Jogador {current_user.id} não encontrado na mesa {mesa_id}")
         raise HTTPException(status_code=404, detail="Jogador não encontrado na mesa")
 
-    # se zerou o saldo ou não está participando da rodada, retorna lista vazia
     if jogador.saldo_atual <= 0 or not jogador.participando_da_rodada:
-        debug_print(
-            f"[MINHAS_CARTAS] Jogador {current_user.id} sem saldo ou fora da rodada — retornando []",
-            silent=True
-        )
-        return []
+        return {
+            "cartas": [],
+            "mao_formada": ""
+        }
 
     try:
         cartas = json.loads(jogador.cartas) if jogador.cartas else []
-        debug_print(f"[MINHAS_CARTAS] Cartas retornadas para jogador {current_user.id}: {cartas}", silent=True)
-        return cartas
+
+        mesa = db.query(Mesa).filter_by(id=mesa_id).first()
+        cartas_comunitarias: List[str] = []
+        estado = mesa.estado_da_rodada
+
+        if isinstance(mesa.cartas_comunitarias, dict):
+            flop = mesa.cartas_comunitarias.get("flop", [])
+            turn = mesa.cartas_comunitarias.get("turn")
+            river = mesa.cartas_comunitarias.get("river")
+
+            if estado in (EstadoDaMesa.FLOP, EstadoDaMesa.TURN, EstadoDaMesa.RIVER, EstadoDaMesa.SHOWDOWN):
+                cartas_comunitarias.extend(flop)
+            if estado in (EstadoDaMesa.TURN, EstadoDaMesa.RIVER, EstadoDaMesa.SHOWDOWN):
+                if isinstance(turn, list):
+                    cartas_comunitarias.extend(turn)
+                elif isinstance(turn, str):
+                    cartas_comunitarias.append(turn)
+            if estado in (EstadoDaMesa.RIVER, EstadoDaMesa.SHOWDOWN):
+                if isinstance(river, list):
+                    cartas_comunitarias.extend(river)
+                elif isinstance(river, str):
+                    cartas_comunitarias.append(river)
+
+        todas_cartas = cartas + cartas_comunitarias
+
+        if len(todas_cartas) >= 5:
+            tipo_mao, _ = avaliar_mao(todas_cartas)
+
+            mao_legivel = {
+                1: "Carta Alta",
+                2: "Par",
+                3: "Dois Pares",
+                4: "Trinca",
+                5: "Sequência",
+                6: "Flush",
+                7: "Full House",
+                8: "Quadra",
+                9: "Straight Flush",
+                10: "Royal Flush"
+            }.get(tipo_mao, "Indefinida")
+
+            return {
+                "cartas": cartas,
+                "mao_formada": mao_legivel
+            }
+
+        return {
+            "cartas": cartas,
+            "mao_formada": ""
+        }
+
     except Exception as e:
-        debug_print(
-            f"[MINHAS_CARTAS][ERRO] Erro ao carregar cartas do jogador {current_user.id} "
-            f"na mesa {mesa_id}: {str(e)}"
-        )
-        return []
+        return {
+            "cartas": [],
+            "mao_formada": ""
+        }
+
+
+
 
     
 
@@ -60,8 +109,6 @@ def get_cartas_comunitarias(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    debug_print(f"[CARTAS_COMUNITARIAS] Jogador {current_user.id} solicitou cartas da mesa {mesa_id}", silent=True)
-
     mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
     if not mesa:
         raise HTTPException(status_code=404, detail="Mesa não encontrada.")
@@ -90,9 +137,7 @@ def get_cartas_comunitarias(
     if estado in ["river", "showdown"]:
         cartas_visiveis["river"] = river
 
-    debug_print(f"[CARTAS_COMUNITARIAS] Mesa {mesa.id} | Estado: {estado} | Retornando: {cartas_visiveis}", silent=True)
-
-    return {"cartas_comunitarias": cartas_visiveis}
+    return {"cartas_comunitarias": cartas_visiveis} ##
 
 
 

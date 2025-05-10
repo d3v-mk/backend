@@ -4,7 +4,7 @@ from panopoker.service.mercadopago import criar_pagamento_pix
 from panopoker.core.database import get_db
 from panopoker.core.security import get_current_user  # ajuste esse import se necessário
 from pydantic import BaseModel
-from panopoker.models.pagamento import Pagamento
+from panopoker.financeiro.models.pagamento import Pagamento
 import logging
 
 router = APIRouter(prefix="/pagamentos", tags=["Pagamentos"])

@@ -50,6 +50,11 @@
       <button onclick="entrarNaMesa(5)">🎮 Jogador 5</button>
       <button onclick="entrarNaMesa(6)">🎮 Jogador 6</button>
     </div>
+
+    <div style="margin-top: 20px;">
+      <strong>⚠️ Ferramentas Dev:</strong><br/>
+      <button onclick="forcarShowdown()">🏆 Forçar Showdown</button>
+    </div>
   </div>
 
   <div class="mesa" id="mesaInfo"></div>
@@ -57,14 +62,13 @@
 
   <script>
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ2NTU2Nzc3fQ.qXf3tclKUbh4yp-yR0Q5J6THPmI8LLrzabVuvrUQrVs",
-      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ2NTU2ODA0fQ.UUXZWHugqSXjMCQvZvVFsrNBvkgezlL04s8aMcU7ez8",
-      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ2NTU2ODIxfQ.s08EO0Pel29jDZsPf9g3yhnKkAko_SGGFbV1DnPkaC8",
-      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ2NDcwMDAyfQ.iWDMSa4FQUAcw__hJVL2lW0w3bL3ucP0RxqtPXjoh-M",
-      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ2NTQyNzUzfQ.k0GK0z6Mx-kmbxOtybU410wtA4KkjiD2ikEX9QFGbu4",
-      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ2NTQyNzcxfQ.J7MFmteBAOPsp7no3aTZ5CLKaoXHNR1FaL7tixNCnkc"
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ2OTIxNjI0fQ.06UeMl4oZCQfIZdt61sMO-F5h22KqYfQvwbJ6o9cfyI",
+      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ2OTIxNjQ3fQ.XW-Jv6ERPB21Wo9PwhAdNVlb3YgA0sxQMkVvbDEu3aw",
+      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ2OTIxNjY5fQ.fHmmL9ALo4-i-rQBQPFa8vZchScrmIXV_S2VaTqUjio",
+      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ2OTIxNjg2fQ.s8nnoJBYg5T573S9gHV8DCf8qYATC6PHgd9dsYOVw7E",
+      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ2OTIxNzA2fQ.kcayivIP2CW45we4i157F_Kzh2ePqI5DjbQLQ8rnhEg",
+      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ2OTIxNzI2fQ.FfIqauuST2ZQ5iIJclphWeMqQBFuO0DEKkgxEggu6Zs"
     };
-
 
     async function carregarMesa() {
       const mesaId = document.getElementById("mesaId").value;
@@ -209,6 +213,29 @@
         alert("Erro: " + err.message);
       }
     }
+
+    async function forcarShowdown() {
+    const mesaId = document.getElementById("mesaId").value;
+    const token = tokens[1];
+
+    try {
+      const res = await fetch(`http://localhost:8000/mesa/${mesaId}/debug/forcar_showdown`, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      const data = await res.json();
+      alert(`🏆 Mesa ${mesaId} forçada para SHOWDOWN!\n${data.detail || "OK"}`);
+      carregarMesa();
+
+    } catch (err) {
+      console.error("Erro ao forçar showdown:", err);
+      alert("Erro ao chamar /debug/forcar_showdown: " + err.message);
+    }
+  }
+
   </script>
 </body>
 </html>

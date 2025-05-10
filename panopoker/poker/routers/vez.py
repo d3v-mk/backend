@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
-from panopoker.models.mesa import Mesa
-from panopoker.models.mesa import JogadorNaMesa
+from panopoker.poker.models.mesa import Mesa
+from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.security import get_current_user
 from panopoker.core.debug import debug_print
 

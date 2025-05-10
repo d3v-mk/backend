@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.service.mercadopago import sdk
-from panopoker.models.pagamento import Pagamento
+from panopoker.financeiro.models.pagamento import Pagamento
 from panopoker.usuarios.models.usuario import Usuario
 import logging
 

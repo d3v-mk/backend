@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
-from panopoker.models.mesa import Mesa, JogadorNaMesa
+from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from fastapi import HTTPException
 
 
 class ExecutorDeAcoes:
     def __init__(self, mesa: Mesa, db: Session):
-        debug_print(f"[ExecutorDeAcoes] iniciando para mesa {mesa.id}")
         self.mesa = mesa
         self.db = db
 
@@ -29,27 +28,54 @@ class ExecutorDeAcoes:
             debug_print(f"[ExecutorDeAcoes] jogador {jogador_id} não encontrado")
             raise HTTPException(status_code=404, detail="Jogador não encontrado na mesa.")
         return jogador
+    
+
+
+
+
+
+
+
+
 
     def acao_check(self, jogador_id: int):
-        self._cancelar_timer()
-        debug_print(f"[ACAO_CHECK] início para jogador {jogador_id}")
+        debug_print(f"[ACAO_CHECK] 🔍 Iniciando CHECK do jogador {jogador_id}")
+        
         jogador = self._buscar_jogador(jogador_id)
+        debug_print(f"[ACAO_CHECK] 👤 Jogador encontrado: {jogador.jogador_id} (posição {jogador.posicao_cadeira})")
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
+            debug_print(f"[ACAO_CHECK] ❌ Jogador {jogador.jogador_id} tentou agir fora da vez (vez do jogador {self.mesa.jogador_da_vez})")
             raise HTTPException(400, "Não é sua vez de agir.")
+
         if jogador.foldado or not jogador.participando_da_rodada:
+            debug_print(f"[ACAO_CHECK] ❌ Jogador {jogador.jogador_id} está foldado ou fora da rodada")
             raise HTTPException(400, "Jogador não pode agir.")
+
         if self.mesa.aposta_atual > 0 and not abs(jogador.aposta_atual - self.mesa.aposta_atual) < 1e-6:
+            debug_print(f"[ACAO_CHECK] ❌ CHECK inválido: aposta atual da mesa = {self.mesa.aposta_atual}, aposta do jogador = {jogador.aposta_atual}")
             raise HTTPException(400, "CHECK inválido: aposte ou all-in primeiro.")
+
+        self._cancelar_timer()
+        debug_print(f"[ACAO_CHECK] ⏹️ Timer cancelado para jogador {jogador_id}")
 
         jogador.rodada_ja_agiu = True
         self.db.commit()
-        debug_print(f"[ACAO_CHECK] jogador {jogador_id} deu CHECK")
+        debug_print(f"[ACAO_CHECK] ✅ Jogador {jogador_id} deu CHECK com sucesso")
+
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        debug_print(f"[ACAO_CHECK] 🔄 Chamando verificar_proxima_etapa() após CHECK do jogador {jogador_id}")
+
+
+
+
+
+
+
+
 
     def acao_call(self, jogador_id: int):
-        self._cancelar_timer()
-        debug_print(f"[ACAO_CALL] início para jogador {jogador_id}")
+        debug_print(f"[ACAO_CALL] jogador {jogador_id} tentando CALL")
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -65,17 +91,31 @@ class ExecutorDeAcoes:
 
         paid = min(jogador.saldo_atual, to_pay)
         jogador.saldo_atual -= paid
+        jogador.saldo_atual = round(jogador.saldo_atual, 2)
         jogador.aposta_atual += paid
+        jogador.aposta_acumulada += paid
         jogador.rodada_ja_agiu = True
-        #self.mesa.pote_total += paid
+        self._cancelar_timer()
+        debug_print(f"[ACAO_CALL] ❌ Timer cancelado para jogador {jogador_id}")
         self.db.commit()
+        debug_print(f"[ACAO_CALL] 🔄 Chamando verificar_proxima_etapa()")
 
-        debug_print(f"[ACAO_CALL] jogador {jogador_id} pagou {paid}")
+        debug_print(f"[ACAO_CALL_APOSTA_ATUAL] jogador {jogador_id} pagou {paid}")
+        debug_print(f"[ACAO_CALL_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do call: {jogador.saldo_atual}")
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        debug_print(f"[ACAO_CALL] 🔄 verificar_proxima_etapa() chamado!!!")
+
+
+
+
+
+
+
+
+
+
 
     def acao_allin(self, jogador_id: int):
-        self._cancelar_timer()
-        debug_print(f"[ACAO_ALLIN] início para jogador {jogador_id}")
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -85,15 +125,18 @@ class ExecutorDeAcoes:
 
         allin = jogador.saldo_atual
         jogador.aposta_atual += allin
+        jogador.aposta_acumulada += allin
         jogador.saldo_atual = 0.0
+        jogador.saldo_atual = round(jogador.saldo_atual, 2)
         jogador.rodada_ja_agiu = True
+        self._cancelar_timer()
+
+        debug_print(f"[ACAO_ALLIN_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do allin: {jogador.saldo_atual}")
 
         is_raise = False
         if jogador.aposta_atual > self.mesa.aposta_atual:
             self.mesa.aposta_atual = jogador.aposta_atual
             is_raise = True
-
-        #self.mesa.pote_total += allin
 
         if is_raise:
             outros = (
@@ -113,9 +156,14 @@ class ExecutorDeAcoes:
         debug_print(f"[ACAO_ALLIN] jogador {jogador_id} ALL-IN {allin}")
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
+
+
+
+
+
+
+
     def acao_fold(self, jogador_id: int):
-        self._cancelar_timer()
-        debug_print(f"[ACAO_FOLD] início para jogador {jogador_id}")
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -127,14 +175,19 @@ class ExecutorDeAcoes:
         jogador.participando_da_rodada = False
         jogador.rodada_ja_agiu = True
         self.mesa.jogador_da_vez = None
+        self._cancelar_timer()
         self.db.commit()
 
         debug_print(f"[ACAO_FOLD] jogador {jogador_id} deu FOLD")
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
+
+
+
+
+
+
     def acao_raise(self, jogador_id: int, valor: float):
-        self._cancelar_timer()
-        debug_print(f"[ACAO_RAISE] início para jogador {jogador_id} valor {valor}")
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -150,11 +203,15 @@ class ExecutorDeAcoes:
         total_aposta = to_call + valor
 
         jogador.saldo_atual -= total_aposta
+        jogador.saldo_atual = round(jogador.saldo_atual, 2)
         jogador.aposta_atual = novo_total
+        jogador.aposta_acumulada += total_aposta
         jogador.rodada_ja_agiu = True
 
+        debug_print(f"[ACAO_RAISE_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do raise: {jogador.saldo_atual}")
+
         self.mesa.aposta_atual = novo_total
-        #self.mesa.pote_total += total_aposta
+        self._cancelar_timer()
 
         outros = (
             self.db.query(JogadorNaMesa)
@@ -170,5 +227,7 @@ class ExecutorDeAcoes:
             o.rodada_ja_agiu = False
 
         self.db.commit()
-        debug_print(f"[ACAO_RAISE] jogador {jogador_id} RAISE de {valor}")
+        debug_print(f"[ACAO_RAISE_APOSTA_ATUAL] jogador {jogador_id} RAISE de {valor}")
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+
+

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.game.mesa_utils import get_mesa
 from panopoker.poker.game.ControladorDePartida import ControladorDePartida
-from panopoker.models.mesa import JogadorNaMesa
+from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.debug import debug_print
 import json
 

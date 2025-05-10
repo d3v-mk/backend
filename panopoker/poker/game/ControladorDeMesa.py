@@ -1,11 +1,10 @@
-from panopoker.models.mesa import Mesa, JogadorNaMesa
+from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.core.security import Session
 from fastapi import HTTPException
 from panopoker.core.debug import debug_print
-from panopoker.models.mesa import MesaStatus
+from panopoker.poker.models.mesa import MesaStatus
 import json
-
 
 class ControladorDeMesa:
     def __init__(self, mesa: Mesa, db: Session):
@@ -15,6 +14,18 @@ class ControladorDeMesa:
     def _controlador(self):
         from panopoker.poker.game.ControladorDePartida import ControladorDePartida
         return ControladorDePartida(self.mesa, self.db)
+    
+    def _gerenciador(self):
+        from panopoker.poker.game.GerenciadorDeRodada import GerenciadorDeRodada
+        return GerenciadorDeRodada(self.mesa, self.db)
+    
+    def _distribuidor(self):
+        from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
+        return DistribuidorDePote(self.mesa, self.db)
+    
+    def _resetador (self):
+        from panopoker.poker.game.ResetadorDePartida import ResetadorDePartida
+        return ResetadorDePartida(self.mesa, self.db)
     
 
     def verificar_vitoria_automatica(self):
@@ -104,9 +115,6 @@ class ControladorDeMesa:
 
 
 
-
-
-
     def sair_da_mesa(self, usuario: Usuario):
         # 1) Busca o registro do jogador na mesa
         jogador = self.db.query(JogadorNaMesa) \
@@ -122,43 +130,62 @@ class ControladorDeMesa:
             usuario.saldo += saldo_para_devolver
             self.db.add(usuario)
             self.db.commit()
+            debug_print(f"[SAIR_DA_MESA] Jogador {usuario.id} saiu da mesa {self.mesa.nome} e recebeu R${saldo_para_devolver:.2f}")
+
+        # 2.1) Coloca a aposta_atual do jogador que saiu no side pote
+        if jogador.aposta_atual > 0:
+            debug_print(f"[SAIR_DA_MESA] Adicionando aposta_atual R${jogador.aposta_atual:.2f} para aposta_acumulada antes de sair")
+            jogador.aposta_acumulada += jogador.aposta_atual
+            jogador.aposta_atual = 0
+            self.db.add(jogador)
+            self.db.commit()
 
         # 3) Remove o jogador da mesa
         self.db.delete(jogador)
         self.db.commit()
-        debug_print(f"[SAIR_DA_MESA] Jogador {usuario.id} saiu da mesa {self.mesa.nome} e recebeu R${saldo_para_devolver:.2f}")
 
-        # 4) Se a mesa estava em jogo, primeiro tenta vitória automática
-        if self.mesa.status == MesaStatus.em_jogo:
-            ativos = self.db.query(JogadorNaMesa) \
-                .filter(JogadorNaMesa.mesa_id == self.mesa.id,
-                        JogadorNaMesa.participando_da_rodada == True,
-                        JogadorNaMesa.foldado == False,
-                        JogadorNaMesa.saldo_atual > 0) \
-                .all()
-            
-        if self.verificar_vitoria_automatica():
-            return
 
-        # 5) Se sobrar menos de 2 sentados, mesa volta a 'aberta'
+        # 4) Verifica quantos jogadores restaram
         jogadores_restantes = self.db.query(JogadorNaMesa) \
             .filter(JogadorNaMesa.mesa_id == self.mesa.id) \
-            .count()
-        if jogadores_restantes < 2:
+            .all()
+
+        if len(jogadores_restantes) < 2:
+            self._gerenciador().cancelar_timer()
+
+            # ✅ VERIFICA SE HÁ UM VENCEDOR ANTES DE FECHAR A MESA
+            if len(jogadores_restantes) == 1 and self.mesa.status == MesaStatus.em_jogo:
+                debug_print(f"[SAIR_DA_MESA] Vitória automática para jogador {jogadores_restantes[0].jogador_id}")
+                self._distribuidor().atualizar_pote_total()
+                self._distribuidor().distribuir_pote(jogadores_restantes[0])
+                self._resetador().nova_rodada()
+                return
+
+            # ⛔ Se não tiver vencedor, aí sim volta pra aberta
             self.mesa.status = MesaStatus.aberta
+            self.mesa.jogador_da_vez = None
             self.db.add(self.mesa)
+
+            if jogadores_restantes:
+                unico = jogadores_restantes[0]
+                if unico.aposta_atual > 0:
+                    debug_print(f"[SAIR_DA_MESA] Devolvendo aposta R${unico.aposta_atual:.2f} para jogador {unico.jogador_id}")
+                    unico.saldo_atual += unico.aposta_atual
+                    unico.aposta_atual = 0
+                    self.db.add(unico)
+
             self.db.commit()
             debug_print(f"[SAIR_DA_MESA] Mesa {self.mesa.id} voltou para 'aberta' por falta de jogadores.")
             return
 
-        # 6) Se quem saiu era da vez, limpa e avança para o próximo
+
+        # 5) Se quem saiu era da vez, limpa e avança
         if self.mesa.jogador_da_vez == usuario.id:
             self.mesa.jogador_da_vez = None
             self.db.add(self.mesa)
             self.db.commit()
-            debug_print(f"[SAIR_DA_MESA] Jogador {usuario.id} era da vez — limpando vez.")
-            controlador_temp = self._controlador()
-            controlador_temp.avancar_vez()
+            self._gerenciador().avancar_vez()
+
 
 
 

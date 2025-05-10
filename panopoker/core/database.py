@@ -19,5 +19,5 @@ def get_db():
 
 # 👇 IMPORTA TODOS OS MODELOS EXPLICITAMENTE
 import panopoker.usuarios.models.usuario
-import panopoker.models.pagamento
-import panopoker.models.mesa
+import panopoker.financeiro.models.pagamento
+import panopoker.poker.models.mesa

@@ -1,8 +1,8 @@
 from collections import Counter
-from itertools import combinations
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 VALORES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+
 RANKING = {
     "high_card": 1,
     "one_pair": 2,
@@ -16,71 +16,75 @@ RANKING = {
     "royal_flush": 10
 }
 
-def is_sequencia(valores):
-    vals = sorted(set(valores))
-    for i in range(len(vals) - 4):
-        if vals[i+4] - vals[i] == 4:
-            return True
-    if set([12, 0, 1, 2, 3]).issubset(set(vals)):
-        return True
-    return False
+def extrair_valor(carta: str) -> str:
+    return "10" if carta.startswith("10") else carta[:-1]
 
-def ordenar_mao(mao):
-    return sorted(mao, key=lambda c: VALORES.index(c[:-1]), reverse=True)
+def encontrar_straight(valores: List[int]) -> List[int] | None:
+    s = sorted(set(valores))
+    for i in range(len(s) - 4):
+        if s[i+4] - s[i] == 4:
+            return sorted(s[i:i+5], reverse=True)
+    if set([12, 0, 1, 2, 3]).issubset(s):
+        return [3, 2, 1, 0, 12]
+    return None
 
-def avaliar_mao(mao):
-    valores = [VALORES.index(c[:-1]) for c in mao if c[:-1] in VALORES]
+def avaliar_mao(mao: List[str]) -> Tuple[int, List[int]]:
+    valores_idx = [VALORES.index(extrair_valor(c)) for c in mao]
     naipes = [c[-1] for c in mao]
-    valor_count = Counter(valores)
-    naipe_count = Counter(naipes)
+    vc = Counter(valores_idx)
+    nc = Counter(naipes)
 
-    flush = None
-    for n, count in naipe_count.items():
-        if count >= 5:
-            flush = [c for c in mao if c[-1] == n]
-            break
+    flush_naipe = next((n for n, count in nc.items() if count >= 5), None)
 
-    straight = is_sequencia(valores)
+    if flush_naipe:
+        cartas_flush = [c for c in mao if c[-1] == flush_naipe]
+        valores_flush = [VALORES.index(extrair_valor(c)) for c in cartas_flush]
+        sf = encontrar_straight(valores_flush)
 
-    if flush:
-        flush_vals = [VALORES.index(c[:-1]) for c in flush]
-        if is_sequencia(flush_vals):
-            if max(flush_vals) == 12:
-                return (RANKING["royal_flush"], ordenar_mao(flush)[:5])
-            else:
-                return (RANKING["straight_flush"], ordenar_mao(flush)[:5])
+        if sf:
+            # Verifica se todas as cartas do straight estão no mesmo naipe
+            cartas_esperadas = [VALORES[v] + flush_naipe for v in sf]
+            if all(c in cartas_flush for c in cartas_esperadas):
+                if sf == [12, 11, 10, 9, 8]:
+                    return RANKING["royal_flush"], sf
+                return RANKING["straight_flush"], sf
 
-    for v, c in valor_count.items():
-        if c == 4:
-            kicker = max([k for k in valores if k != v])
-            return (RANKING["four_of_a_kind"], [VALORES[v]]*4 + [VALORES[kicker]])
+    quad = [v for v, c in vc.items() if c == 4]
+    if quad:
+        v = quad[0]
+        kicker = max([x for x in valores_idx if x != v], default=0)
+        return RANKING["four_of_a_kind"], [v]*4 + [kicker]
 
-    trincas = [v for v, c in valor_count.items() if c == 3]
-    pares = [v for v, c in valor_count.items() if c == 2]
-    if trincas:
-        if len(trincas) > 1:
-            return (RANKING["full_house"], [VALORES[max(trincas)]]*3 + [VALORES[min(trincas)]]*2)
-        elif pares:
-            return (RANKING["full_house"], [VALORES[trincas[0]]]*3 + [VALORES[max(pares)]]*2)
+    trips = sorted([v for v, c in vc.items() if c == 3], reverse=True)
+    pairs = sorted([v for v, c in vc.items() if c == 2], reverse=True)
+    if trips:
+        if len(trips) > 1:
+            return RANKING["full_house"], [trips[0]]*3 + [trips[1]]*2
+        if pairs:
+            return RANKING["full_house"], [trips[0]]*3 + [pairs[0]]*2
 
-    if flush:
-        return (RANKING["flush"], [c for c in ordenar_mao(flush)[:5]])
+    if flush_naipe:
+        topf = sorted([VALORES.index(extrair_valor(c)) for c in mao if c[-1] == flush_naipe], reverse=True)[:5]
+        return RANKING["flush"], topf
 
-    if straight:
-        unique_vals = sorted(set(valores), reverse=True)
-        return (RANKING["straight"], [VALORES[v] for v in unique_vals[:5]])
+    straight_vals = encontrar_straight(valores_idx)
+    if straight_vals:
+        return RANKING["straight"], straight_vals
 
-    if trincas:
-        kickers = sorted([v for v in valores if v != trincas[0]], reverse=True)[:2]
-        return (RANKING["three_of_a_kind"], [VALORES[trincas[0]]]*3 + [VALORES[k] for k in kickers])
+    if trips:
+        v = trips[0]
+        kickers = sorted([x for x in valores_idx if x != v], reverse=True)[:2]
+        return RANKING["three_of_a_kind"], [v]*3 + kickers
 
-    if len(pares) >= 2:
-        top_pars = sorted(pares, reverse=True)[:2]
-        kicker = max([v for v in valores if v not in top_pars])
-        return (RANKING["two_pair"], [VALORES[top_pars[0]]]*2 + [VALORES[top_pars[1]]]*2 + [VALORES[kicker]])
+    if len(pairs) >= 2:
+        top2 = pairs[:2]
+        kicker = max([x for x in valores_idx if x not in top2], default=0)
+        return RANKING["two_pair"], [top2[0]]*2 + [top2[1]]*2 + [kicker]
 
-    if len(pares) == 1:
-        kicker = sorted([v for v in valores if v != pares[0]], reverse=True)[:3]
-        return (RANKING["one_pair"], [VALORES[pares[0]]]*2 + [VALORES[k] for k in kicker])
+    if len(pairs) == 1:
+        p = pairs[0]
+        kickers = sorted([x for x in valores_idx if x != p], reverse=True)[:3]
+        return RANKING["one_pair"], [p]*2 + kickers
 
-    return (RANKING["high_card"], [VALORES[v] for v in sorted(valores, reverse=True)[:5]])
+    top5 = sorted(valores_idx, reverse=True)[:5]
+    return RANKING["high_card"], top5

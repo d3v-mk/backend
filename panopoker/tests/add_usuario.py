@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
-from app.models.usuario import Usuario
+from panopoker.core.database import SessionLocal
+from panopoker.usuarios.models.usuario import Usuario
 from passlib.context import CryptContext
-from app.models.mesa import JogadorNaMesa
+from panopoker.poker.models.mesa import JogadorNaMesa
 
 
 
-# PYTHONPATH=. python3 app/tests/add_usuario.py
+# PYTHONPATH=. python3 panopoker/tests/add_usuario.py
 
 db: Session = SessionLocal()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

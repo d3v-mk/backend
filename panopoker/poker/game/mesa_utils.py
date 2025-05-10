@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from panopoker.models.mesa import Mesa, JogadorNaMesa
+from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 
 def get_mesa(db: Session, mesa_id: int) -> Mesa:
     mesa = db.query(Mesa).filter_by(id=mesa_id).first()

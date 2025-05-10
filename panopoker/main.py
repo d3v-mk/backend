@@ -3,9 +3,10 @@ from panopoker.core.database import engine, Base, SessionLocal
 from fastapi.openapi.utils import get_openapi
 
 # Importando os modelos para garantir que as tabelas sejam criadas no banco
-from panopoker.models.mesa import Mesa  # A tabela 'Mesa' será criada
+from panopoker.poker.models.mesa import Mesa  # A tabela 'Mesa' será criada
 from panopoker.usuarios.models.usuario import Usuario  # A tabela 'Usuario' será criada
-from panopoker.models.mesa import JogadorNaMesa # A tabela 'Jogadores_na_mesa' será criada
+from panopoker.poker.models.mesa import JogadorNaMesa # A tabela 'Jogadores_na_mesa' será criada
+
 
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +98,9 @@ app.add_middleware(
 from panopoker.financeiro.routers import webhook, pagamentos
 
 # Import do poker
-from panopoker.poker.routers import acoes, jogadores, mesa_cartas, mesas_abertas, vez
+from panopoker.poker.routers import acoes, jogadores, mesa_cartas, mesas_abertas, vez, mesa
+
+from panopoker.usuarios.routers import admin
 
 # Import do site
 from fastapi.staticfiles import StaticFiles
@@ -114,7 +117,8 @@ app.include_router(mesa_cartas.router)
 app.include_router(jogadores.router)
 app.include_router(vez.router)
 app.include_router(acoes.router)
-
+app.include_router(mesa.router)
+app.include_router(admin.router)
 
 # Rotas do site
 from fastapi import FastAPI
