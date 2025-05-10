@@ -122,10 +122,7 @@ app.include_router(vez.router)
 app.include_router(acoes.router)
 app.include_router(mesa.router)
 app.include_router(admin.router)
-<<<<<<< HEAD
-=======
 app.include_router(auth_google.router)
->>>>>>> 79c8d6a (adicionado register/login com google (OAuth) e img no site)
 
 # Rotas do site
 from fastapi import FastAPI
