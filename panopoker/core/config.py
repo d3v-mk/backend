@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+import os
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./panopoker.db"
@@ -7,3 +9,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
 
 settings = Settings()
+
+### DOTENV DO GOOGLE ###
+
+load_dotenv()
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")

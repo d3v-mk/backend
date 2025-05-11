@@ -27,30 +27,27 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=2
 
 
 # Função para obter o token de autorização (Bearer)
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     credentials_exception = HTTPException(
-        status_code=401,
-        detail="Credenciais inválidas",
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Sessão expirada ou inválida.",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     try:
-        # Decodificando o token JWT
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = int(payload.get("sub"))
-        
-        if user_id is None:
-            raise credentials_exception
-        
-    except JWTError:
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception
-    
-    # Buscar o usuário no banco de dados
+
     user = db.query(Usuario).filter(Usuario.id == user_id).first()
-    
-    if user is None:
-        raise credentials_exception
-    return user  # Retornando o objeto de usuário completo
+    if not user:
+        raise credentials_exception  # 💥 Se o user não existe mais, rejeita o token
+
+    return user
 
 
 

@@ -101,6 +101,12 @@ def entrar_na_mesa(
 ):
     mesa = db.query(Mesa).filter_by(id=mesa_id).first()
 
+    if current_user.saldo is None or current_user.saldo <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Você não possui saldo suficiente para entrar na mesa.",
+        )
+
     if not mesa:
         raise HTTPException(status_code=404, detail="Mesa não encontrada.")
 

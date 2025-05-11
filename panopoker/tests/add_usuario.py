@@ -11,11 +11,11 @@ from panopoker.poker.models.mesa import JogadorNaMesa
 db: Session = SessionLocal()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-senha_hash = pwd_context.hash("")  # Gera hash da senha
+senha_hash = pwd_context.hash("123")  # Gera hash da senha
 
 # Dados dos usuários
 usuarios = [
-    {"nome": "", "email": "mk21@panopoker.com"},
+    {"nome": "mk0", "email": "mk21@panopoker.com"},
     {"nome": "mk1", "email": "mk1@panopoker.com"},
     {"nome": "mk2", "email": "mk2@panopoker.com"},
     {"nome": "mk3", "email": "mk3@panopoker.com"},
