@@ -7,6 +7,15 @@ from panopoker.core.timers_async import timers_async, loop_principal
 import panopoker.core.timers_async as timers
 from fastapi import HTTPException
 
+def marcar_como_ausente(jogador: JogadorNaMesa):
+    jogador.participando_da_rodada = False
+    jogador.rodada_ja_agiu = True
+    jogador.foldado = True
+    jogador.aposta_atual = 0
+
+def esta_fora_da_rodada(jogador: JogadorNaMesa):
+    return (jogador.saldo_atual <= 0 and jogador.aposta_atual == 0 and not jogador.rodada_ja_agiu)
+
 class GerenciadorDeRodada:
     def __init__(self, mesa: Mesa, db: Session):
         self.mesa = mesa
@@ -28,18 +37,6 @@ class GerenciadorDeRodada:
     def _chamar_fold(self):
         from panopoker.poker.game.ExecutorDeAcoes import ExecutorDeAcoes
         return ExecutorDeAcoes(self.mesa, self.db)
-
-
-
-
-
-
-
-
-
-
-
-
 
     def avancar_vez(self, posicao_origem: Optional[int] = None, skip_timer = False):
         debug_print("🔄 Avançar vez")
@@ -86,16 +83,7 @@ class GerenciadorDeRodada:
         debug_print("✅ Todos agiram ou sem saldo — fim de rodada")
         self.mesa.jogador_da_vez = None
         self.db.add(self.mesa); self.db.commit()
-
-
-
-
-
-
-
-
-
-
+        self.verificar_proxima_etapa()
 
     def verificar_proxima_etapa(self, posicao_origem: Optional[int] = None):
         debug_print("🔎 Verificando próxima etapa")
@@ -149,18 +137,6 @@ class GerenciadorDeRodada:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     def avancar_fase(self):
         from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
         debug_print(f"📈 Avançar fase ({self.mesa.estado_da_rodada})")
@@ -204,26 +180,6 @@ class GerenciadorDeRodada:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def iniciar_timer_vez(self, jogador_id: int):
         # cancela o timer anterior desta mesa
         old = timers_async.get(self.mesa.id)
@@ -240,16 +196,12 @@ class GerenciadorDeRodada:
 
 
 
-
-
     def cancelar_timer(self):
         # cancela o timer desta mesa
         old = timers_async.pop(self.mesa.id, None)
         if old and not old.done():
             old.cancel()
             debug_print(f"❌ Timer da mesa {self.mesa.id} cancelado")
-
-
 
 
 

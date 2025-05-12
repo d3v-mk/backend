@@ -28,6 +28,34 @@ def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
     return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
 
 
+@router.delete("/limparhard/{mesa_id}")
+def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
+    jogadores = db.query(JogadorNaMesa).filter(
+        JogadorNaMesa.mesa_id == mesa_id,
+    ).all()
+    
+    for j in jogadores:
+        debug_print(f"[FORCAR_LIMPEZA] Removendo jogador {j.jogador_id} da mesa {mesa_id}")
+        db.delete(j)
+
+    mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
+    if mesa:
+        mesa.status = "aberta"
+        mesa.estado_da_rodada = "pre-flop"
+        mesa.jogador_da_vez = None
+        mesa.dealer_pos = None
+        mesa.posicao_sb = None
+        mesa.posicao_bb = None
+        mesa.pote_total = 0
+        mesa.flop = []
+        mesa.turn = []
+        mesa.river = []
+        debug_print(f"[FORCAR_LIMPEZA] Mesa {mesa_id} resetada para status 'aberta'")
+
+    db.commit()
+    return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
+
+
 
 @router.post("/{mesa_id}/debug/forcar_showdown")
 def debug_forcar_showdown(

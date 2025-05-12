@@ -70,11 +70,8 @@ class ExecutorDeAcoes:
 
 
 
-
-
-
-
     def acao_call(self, jogador_id: int):
+        from panopoker.poker.game.GerenciadorDeRodada import esta_fora_da_rodada, marcar_como_ausente
         debug_print(f"[ACAO_CALL] jogador {jogador_id} tentando CALL")
         jogador = self._buscar_jogador(jogador_id)
 
@@ -95,15 +92,13 @@ class ExecutorDeAcoes:
         jogador.aposta_atual += paid
         jogador.aposta_acumulada += paid
         jogador.rodada_ja_agiu = True
+
         self._cancelar_timer()
         debug_print(f"[ACAO_CALL] ❌ Timer cancelado para jogador {jogador_id}")
-        self.db.commit()
-        debug_print(f"[ACAO_CALL] 🔄 Chamando verificar_proxima_etapa()")
 
-        debug_print(f"[ACAO_CALL_APOSTA_ATUAL] jogador {jogador_id} pagou {paid}")
-        debug_print(f"[ACAO_CALL_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do call: {jogador.saldo_atual}")
+        self.db.commit()
+
         self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
-        debug_print(f"[ACAO_CALL] 🔄 verificar_proxima_etapa() chamado!!!")
 
 
 
