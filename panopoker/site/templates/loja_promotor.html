@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja do {{ nome }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        body, html {
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: gold;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+
+        .descricao {
+            font-size: 15px;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .valores {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .botao-valor {
+            background-color: gold;
+            color: black;
+            border: none;
+            padding: 12px 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1 1 45%;
+            max-width: 140px;
+        }
+
+        .resultado-pix {
+            display: none;
+            background-color: #222;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .pix-codigo {
+            background-color: #000;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-word;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            .descricao {
+                font-size: 14px;
+            }
+
+            .botao-valor {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <img src="{{ avatar_url }}" class="avatar" alt="Avatar do promotor">
+    <h1>Loja do {{ nome }}</h1>
+    <p class="descricao">Escolha um valor para gerar o Pix automaticamente:</p>
+
+    <div class="valores">
+        {% for valor in [3, 5, 10, 20, 50, 100] %}
+            <button class="botao-valor" onclick="gerarPix('{{ valor }}')">R$ {{ valor }}</button>
+        {% endfor %}
+    </div>
+
+    <div class="resultado-pix" id="resultado-pix">
+        <div><strong>Valor:</strong> R$ <span id="valor-escolhido"></span></div>
+        <div class="pix-codigo" id="codigo-pix"></div>
+        <button onclick="copiarPix()" class="botao-valor">Copiar código Pix</button>
+    </div>
+
+    <script>
+        async function gerarPix(valor) {
+            valor = parseInt(valor);
+            const res = await fetch(`/api/gerar_pix/{{ slug }}/${valor}`);
+            if (!res.ok) {
+                alert("Erro ao gerar Pix");
+                return;
+            }
+            const data = await res.json();
+            document.getElementById("valor-escolhido").textContent = valor;
+            document.getElementById("codigo-pix").textContent = data.pix_copia_cola;
+            document.getElementById("resultado-pix").style.display = "block";
+        }
+
+        function copiarPix() {
+            const codigo = document.getElementById("codigo-pix").innerText;
+            navigator.clipboard.writeText(codigo).then(() => {
+                alert("Código Pix copiado!");
+            });
+        }
+    </script>
+
+</body>
+</html>

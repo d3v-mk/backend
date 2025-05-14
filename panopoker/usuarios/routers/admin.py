@@ -4,29 +4,11 @@ from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa
+from panopoker.usuarios.models.usuario import Usuario
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-@router.delete("/limpar/{mesa_id}")
-def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
-    jogadores = db.query(JogadorNaMesa).filter(
-        JogadorNaMesa.mesa_id == mesa_id,
-        JogadorNaMesa.foldado == True,
-        JogadorNaMesa.participando_da_rodada == False,
-        JogadorNaMesa.aposta_atual == 0
-    ).all()
-
-    if not jogadores:
-        debug_print(f"[FORCAR_LIMPEZA] Nenhum jogador pendente de limpeza na mesa {mesa_id}")
-        return {"status": "nenhum jogador para remover"}
-
-    for j in jogadores:
-        debug_print(f"[FORCAR_LIMPEZA] Removendo jogador {j.jogador_id} da mesa {mesa_id}")
-        db.delete(j)
-
-    db.commit()
-    return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
-
+# ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
 
 @router.delete("/limparhard/{mesa_id}")
 def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
@@ -56,6 +38,7 @@ def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
     return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
 
 
+# ============================= FORCA O SHOWDOWN PRA TESTES =============================
 
 @router.post("/{mesa_id}/debug/forcar_showdown")
 def debug_forcar_showdown(
@@ -73,3 +56,70 @@ def debug_forcar_showdown(
 
     debug_print(f"[DEBUG] Forçado estado SHOWDOWN na mesa {mesa.id}")
     return {"detail": "Estado forçado para showdown"}
+
+# ============================= PROMOVER USUARIO A PROMOTER =============================
+
+@router.post("/usuario/promover/{user_id}")
+def promover_usuario(user_id: int, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).get(user_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    usuario.is_promoter = True
+    db.commit()
+    return {"msg": "Usuário promovido a promotor"}
+
+
+
+# ============================= CRIAR LOJA DOS PROMOTERS ==================================
+
+from pydantic import BaseModel
+from panopoker.usuarios.models.promotor import Promotor
+
+
+class LojaPromotorInput(BaseModel):
+    slug: str
+
+    # Pix copia e cola
+    pix_copiaecola_3: str | None = None
+    pix_copiaecola_5: str | None = None
+    pix_copiaecola_10: str | None = None
+    pix_copiaecola_20: str | None = None
+    pix_copiaecola_50: str | None = None
+    pix_copiaecola_100: str | None = None
+
+@router.post("/promotores/{user_id}/criar_loja")
+def criar_loja_promotor(user_id: int, dados: LojaPromotorInput, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    if not usuario.is_promoter:
+        raise HTTPException(status_code=403, detail="Usuário não é um promotor")
+
+    if db.query(Promotor).filter(Promotor.user_id == user_id).first():
+        raise HTTPException(status_code=400, detail="Loja já cadastrada para este usuário")
+
+    if db.query(Promotor).filter(Promotor.slug == dados.slug).first():
+        raise HTTPException(status_code=400, detail="Slug já está em uso")
+
+    loja = Promotor(
+        user_id=user_id,
+        nome=usuario.nome,
+        slug=dados.slug,
+        avatar_url=usuario.avatar_url,
+
+        # Pix Copia e Cola
+        pix_copiaecola_3=dados.pix_copiaecola_3,
+        pix_copiaecola_5=dados.pix_copiaecola_5,
+        pix_copiaecola_10=dados.pix_copiaecola_10,
+        pix_copiaecola_20=dados.pix_copiaecola_20,
+        pix_copiaecola_50=dados.pix_copiaecola_50,
+        pix_copiaecola_100=dados.pix_copiaecola_100,
+    )
+
+    db.add(loja)
+    db.commit()
+
+    return {"status": "ok", "slug": dados.slug}
+

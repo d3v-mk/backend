@@ -10,15 +10,18 @@ from panopoker.core.database import engine, Base, SessionLocal
 from panopoker.core import timers_async
 
 # Importa os modelos para garantir criação das tabelas
+from panopoker.poker.financeiro.routers import pagamentos, saques
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from panopoker.usuarios.models.usuario import Usuario
+from panopoker.usuarios.models.promotor import Promotor
+
 
 # Importa rotas
 from panopoker.auth import login, register
-from panopoker.financeiro.routers import webhook, pagamentos
+from panopoker.financeiro.routers import webhook_mp, auth_mp
 from panopoker.poker.routers import acoes, jogadores, mesa_cartas, mesas_abertas, vez, mesa
 from panopoker.usuarios.routers import admin, usuario
-from panopoker.site import site_pages
+from panopoker.site.routers import loja_promotor, site_pages, login_web, painel_promotor
 
 # === Função de criação de tabelas e mesas ===
 def create_tables():
@@ -75,8 +78,9 @@ app.add_middleware(SessionMiddleware, secret_key="alguma_chave_segura_aqui")
 
 # Inclui as rotas
 app.include_router(usuario.router)
-app.include_router(webhook.router)
+app.include_router(webhook_mp.router)
 app.include_router(pagamentos.router)
+app.include_router(saques.router)
 app.include_router(mesas_abertas.router)
 app.include_router(mesa_cartas.router)
 app.include_router(jogadores.router)
@@ -87,6 +91,10 @@ app.include_router(admin.router)
 app.include_router(login.router)
 app.include_router(register.router)
 app.include_router(site_pages.router)
+app.include_router(login_web.router)
+app.include_router(painel_promotor.router)
+app.include_router(loja_promotor.router)
+app.include_router(auth_mp.router)
 
 # Static files do site
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent

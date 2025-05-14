@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Promotor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #111;
+            color: #fff;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: gold;
+            font-size: 1.8em;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 1.3em;
+            margin-top: 30px;
+        }
+
+        .saque {
+            background-color: #222;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(255,255,255,0.1);
+            font-size: 1em;
+        }
+
+        .botao {
+            margin-top: 10px;
+            background-color: gold;
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .botao[disabled] {
+            background-color: gray;
+            cursor: not-allowed;
+        }
+
+        .topbar {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .logout-btn {
+            background-color: #444;
+            border: none;
+            color: gold;
+            padding: 10px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95em;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .menu-container {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        #dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 40px;
+            background-color: #222;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            z-index: 999;
+            min-width: 150px;
+            padding: 10px;
+        }
+
+        #dropdown-menu form {
+            margin: 0 0 10px 0;
+        }
+
+        #dropdown-menu form:last-child {
+            margin-bottom: 0;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        hr {
+            margin: 30px 0;
+            border-color: #444;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>Painel do Promotor - {{ usuario.username }}</h1>
+
+            <div class="menu-container">
+                <button type="button" class="logout-btn menu-toggle">☰</button>
+                <div id="dropdown-menu">
+                {% if not usuario.promotor or not usuario.promotor.slug %}
+                    <!-- Botão Criar Loja -->
+                    <form method="get" action="https://auth.mercadopago.com.br/authorization">
+                        <input type="hidden" name="client_id" value="739906378143588">
+                        <input type="hidden" name="response_type" value="code">
+                        <input type="hidden" name="platform_id" value="mp">
+                        <input type="hidden" name="redirect_uri" value="https://6ccd-2804-14d-8e91-45c9-926-4a7-19a8-7c2a.ngrok-free.app/auth/callback-mp">
+                        <button type="submit" class="logout-btn">Criar Loja</button>
+                    </form>
+                {% else %}
+                    <!-- Botão Ver Loja -->
+                    <form method="get" action="/loja/{{ usuario.promotor.slug }}">
+                        <button type="submit" class="logout-btn">Ver Loja</button>
+                    </form>
+                {% endif %}
+                    <form method="get" action="/logout">
+                        <button type="submit" class="logout-btn">Sair</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <h2>Solicitar novo saque</h2>
+        <form method="post" action="/painel/promotor/solicitar_saque">
+            <label>ID do Jogador:</label><br>
+            <input type="number" name="jogador_id" required><br>
+            <label>Valor (R$):</label><br>
+            <input type="number" step="0.01" name="valor" required><br>
+            <button class="botao" type="submit">Solicitar Saque</button>
+        </form>
+
+        <hr>
+
+        {% for saque in saques %}
+            <div class="saque">
+                <strong>Saque ID:</strong> {{ saque.id }}<br>
+                <strong>Jogador ID:</strong> {{ saque.jogador_id }}<br>
+                <strong>Valor:</strong> R$ {{ saque.valor }}<br>
+                <strong>Status:</strong> {{ saque.status }}<br>
+
+                {% if saque.status == "confirmado_pelo_jogador" %}
+                    <form method="post" action="/painel/promotor/concluir">
+                        <input type="hidden" name="saque_id" value="{{ saque.id }}">
+                        <button class="botao" type="submit">Concluir Saque</button>
+                    </form>
+                {% else %}
+                    <button class="botao" disabled>Não disponível</button>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.querySelector('.menu-toggle').addEventListener('click', function (e) {
+            e.stopPropagation();
+            const menu = document.getElementById('dropdown-menu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', function (e) {
+            const menu = document.getElementById('dropdown-menu');
+            const toggle = document.querySelector('.menu-toggle');
+            if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

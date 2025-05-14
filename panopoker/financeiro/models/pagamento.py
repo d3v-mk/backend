@@ -8,6 +8,7 @@ class Pagamento(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("usuarios.id"))
+    promotor_id = Column(Integer, ForeignKey("promotores.id"), nullable=True)  # 🔥 NOVO
     valor = Column(Float, nullable=False)
     status = Column(String, default="pending")
     payment_id = Column(String, unique=True)
@@ -15,3 +16,4 @@ class Pagamento(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("Usuario", back_populates="pagamentos")
+    promotor = relationship("Promotor")  # 🔁 vínculo direto com o promotor
