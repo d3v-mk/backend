@@ -20,3 +20,5 @@ class Promotor(Base):
     slug = Column(String, unique=True, nullable=True)  # Será preenchido após o OAuth
     nome = Column(String, nullable=True)               # Pode ser definido depois
     avatar_url = Column(String, nullable=True)
+
+    whatsapp = Column(String, nullable=True)

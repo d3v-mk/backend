@@ -11,15 +11,21 @@
 
         body {
             font-family: Arial, sans-serif;
-            padding: 30px;
             background-color: #111;
             color: #fff;
             margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            text-align: center;
         }
 
         .container {
             max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
+            padding: 30px 20px;
         }
 
         h1 {
@@ -48,7 +54,6 @@
             border: none;
             color: black;
             padding: 10px 20px;
-            text-align: center;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
@@ -115,10 +120,13 @@
             background-color: #333;
             color: #fff;
             font-size: 1em;
+            text-align: center;
         }
 
         label {
             font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
         }
 
         hr {
@@ -128,6 +136,11 @@
 
         @media (max-width: 480px) {
             body {
+                padding: 0;
+                align-items: flex-start;
+            }
+
+            .container {
                 padding: 20px 15px;
             }
 
@@ -144,7 +157,7 @@
 <body>
     <div class="container">
         <div class="topbar">
-            <h1>Painel do Promotor - {{ usuario.username }}</h1>
+            <h1>Painel do Promotor</h1>
 
             <div class="menu-container">
                 <button type="button" class="logout-btn menu-toggle">☰</button>
@@ -159,9 +172,12 @@
                         <button type="submit" class="logout-btn">Criar Loja</button>
                     </form>
                 {% else %}
-                    <!-- Botão Ver Loja -->
-                    <form method="get" action="/loja/{{ usuario.promotor.slug }}">
+                    <form method="get" action="/loja/promotor/{{ usuario.promotor.slug }}">
                         <button type="submit" class="logout-btn">Ver Loja</button>
+                    </form>
+
+                    <form method="get" action="/loja/configurar">
+                        <button type="submit" class="logout-btn">Configurar Loja</button>
                     </form>
                 {% endif %}
                     <form method="get" action="/logout">
@@ -173,10 +189,10 @@
 
         <h2>Solicitar novo saque</h2>
         <form method="post" action="/painel/promotor/solicitar_saque">
-            <label>ID do Jogador:</label><br>
-            <input type="number" name="jogador_id" required><br>
-            <label>Valor (R$):</label><br>
-            <input type="number" step="0.01" name="valor" required><br>
+            <label>ID do Jogador:</label>
+            <input type="number" name="id_publico" required>
+            <label>Valor (R$):</label>
+            <input type="number" step="0.01" name="valor" placeholder="" required>
             <button class="botao" type="submit">Solicitar Saque</button>
         </form>
 
@@ -184,14 +200,14 @@
 
         {% for saque in saques %}
             <div class="saque">
-                <strong>Saque ID:</strong> {{ saque.id }}<br>
-                <strong>Jogador ID:</strong> {{ saque.jogador_id }}<br>
+                <strong>Saque ID:</strong> {{ saque.saque_id_publico }}<br>
+                <strong>Jogador ID:</strong> {{ saque.jogador.id_publico }}<br>
                 <strong>Valor:</strong> R$ {{ saque.valor }}<br>
                 <strong>Status:</strong> {{ saque.status }}<br>
 
                 {% if saque.status == "confirmado_pelo_jogador" %}
                     <form method="post" action="/painel/promotor/concluir">
-                        <input type="hidden" name="saque_id" value="{{ saque.id }}">
+                        <input type="hidden" name="saque_id" value="{{ saque.saque_id_publico }}">
                         <button class="botao" type="submit">Concluir Saque</button>
                     </form>
                 {% else %}

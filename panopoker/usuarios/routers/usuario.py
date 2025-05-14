@@ -17,6 +17,14 @@ def get_user_balance(
 ):
     return {"saldo": user.saldo}
 
+@router.get("/me")
+def get_usuario_logado(user: Usuario = Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "nome": user.nome,
+        "id_publico": user.id_publico,
+        "email": user.email
+    }
 
 @router.get("/{id}")
 def get_usuario_por_id(id: int, db: Session = Depends(get_db), user: Usuario = Depends(get_current_user)):
@@ -24,4 +32,5 @@ def get_usuario_por_id(id: int, db: Session = Depends(get_db), user: Usuario = D
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return {"id": usuario.id, "nome": usuario.nome, "email": usuario.email}
+
 

@@ -108,11 +108,11 @@ def gerar_pix(slug: str, valor: int,
     if not promotor or not promotor.access_token:
         raise HTTPException(status_code=404, detail="Promotor não encontrado ou sem token")
 
-    email = usuario.email if usuario else f"anonimo_{slug}@panopoker.com"
+    email = usuario.email if usuario else f"wwwhoo_{slug}@panopoker.com"
 
     payload = {
         "transaction_amount": float(valor),
-        "description": f"Compra de fichas no valor de R${valor}",
+        "description": f"PanoClubs Sells",
         "payment_method_id": "pix",
         "payer": {
             "email": email

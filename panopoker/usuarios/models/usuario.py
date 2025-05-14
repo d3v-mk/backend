@@ -2,12 +2,14 @@ from sqlalchemy import Column, Integer, String, Float, Boolean
 from panopoker.core.database import Base
 from sqlalchemy.orm import relationship
 from panopoker.usuarios.models.promotor import Promotor
+import uuid
 
 
 class Usuario(Base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
+    id_publico = Column(String, unique=True, default=lambda: str(uuid.uuid4().int)[:8])
     nome = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     senha_hash = Column(String)

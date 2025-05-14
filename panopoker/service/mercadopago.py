@@ -16,7 +16,7 @@ sdk = mercadopago.SDK(ACCESS_TOKEN)
 def criar_pagamento_pix(valor: float, email: str, nome: str):
     payment_data = {
         "transaction_amount": valor,
-        "description": f"Compra de fichas no PanoPoker - R${valor:.2f}",
+        "description": f"PanoClubs",
         "payment_method_id": "pix",
         "payer": {
             "email": email,

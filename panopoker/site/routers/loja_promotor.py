@@ -14,11 +14,14 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 
 # ============================= LINK DA LOJA DO PROMOTOR =============================
 
-@router.get("/loja/{slug}", response_class=HTMLResponse)
+@router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
 def loja_promotor(slug: str, request: Request, db: Session = Depends(get_db)):
     promotor = db.query(Promotor).filter(Promotor.slug == slug).first()
     if not promotor:
-        raise HTTPException(status_code=404, detail="Promotor não encontrado")
+        return HTMLResponse(
+            content="<h1>Olá jogador!</h1><h1>Loja não encontrada</h1><h1>Verifique se o link está correto.</h1>",
+            status_code=404
+        )
 
     return templates.TemplateResponse("loja_promotor.html", {
         "request": request,

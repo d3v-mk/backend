@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Form
+from fastapi.responses import HTMLResponse
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from panopoker.financeiro.models.saque import Saque
 from panopoker.core.security import get_current_user_optional
 from pydantic import BaseModel
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 
 router = APIRouter(prefix = "", tags= ["Painel Promotores"])
@@ -23,13 +25,17 @@ class SaqueCreate(BaseModel):
 def painel_promotor(request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user_optional)):
     if not usuario.is_promoter:
         return RedirectResponse("/", status_code=302)
+    
+    saques = db.query(Saque).options(joinedload(Saque.jogador)).filter(
+        Saque.promotor_id == usuario.id
+    ).all()
 
-    saques = db.query(Saque).filter(Saque.promotor_id == usuario.id).all()
     return templates.TemplateResponse("painel_promotor.html", {
         "request": request,
         "saques": saques,
         "usuario": usuario
     })
+
 
 # ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
 @router.post("/painel/promotor/concluir")
@@ -57,11 +63,10 @@ def criar_saque(request: SaqueCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"msg": "Saque criado"}
 
-# ================ FORMULARIO QUE SOLICITA O SAQUE ================
 @router.post("/painel/promotor/solicitar_saque")
 def solicitar_saque(
     request: Request,
-    jogador_id: int = Form(...),
+    id_publico: str = Form(...),
     valor: float = Form(...),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
@@ -69,8 +74,12 @@ def solicitar_saque(
     if not usuario or not usuario.is_promoter:
         return RedirectResponse(url="/login", status_code=302)
 
+    jogador = db.query(Usuario).filter(Usuario.id_publico == id_publico).first()
+    if not jogador:
+        return HTMLResponse("Jogador não encontrado", status_code=404)
+
     saque = Saque(
-        jogador_id=jogador_id,
+        jogador_id=jogador.id,  # usa o ID real aqui, mas buscou com segurança
         promotor_id=usuario.id,
         valor=valor,
         status="aguardando",

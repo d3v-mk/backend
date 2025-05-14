@@ -19,9 +19,9 @@ from panopoker.usuarios.models.promotor import Promotor
 # Importa rotas
 from panopoker.auth import login, register
 from panopoker.financeiro.routers import webhook_mp, auth_mp
-from panopoker.poker.routers import acoes, jogadores, mesa_cartas, mesas_abertas, vez, mesa
+from panopoker.poker.routers import acoes, jogadores, matchmaking, mesa_cartas, mesas_abertas, vez, mesa, loja_web_promoters
 from panopoker.usuarios.routers import admin, usuario
-from panopoker.site.routers import loja_promotor, site_pages, login_web, painel_promotor
+from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor
 
 # === Função de criação de tabelas e mesas ===
 def create_tables():
@@ -79,10 +79,11 @@ app.add_middleware(SessionMiddleware, secret_key="alguma_chave_segura_aqui")
 # Inclui as rotas
 app.include_router(usuario.router)
 app.include_router(webhook_mp.router)
-app.include_router(pagamentos.router)
+#app.include_router(pagamentos.router) poker/financeiro/pagamentos.py acho q ta inutil apagar se n sentir falta
 app.include_router(saques.router)
 app.include_router(mesas_abertas.router)
 app.include_router(mesa_cartas.router)
+app.include_router(matchmaking.router)
 app.include_router(jogadores.router)
 app.include_router(vez.router)
 app.include_router(acoes.router)
@@ -95,6 +96,8 @@ app.include_router(login_web.router)
 app.include_router(painel_promotor.router)
 app.include_router(loja_promotor.router)
 app.include_router(auth_mp.router)
+app.include_router(loja_web_promoters.router)
+app.include_router(configurar_loja.router)
 
 # Static files do site
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent

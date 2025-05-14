@@ -59,4 +59,6 @@ def callback_oauth(
 
     db.commit()
 
-    return RedirectResponse(url=f"/loja/{usuario.promotor.slug}")
+    usuario.promotor = db.query(Promotor).filter(Promotor.user_id == usuario.id).first()
+
+    return RedirectResponse(url="/loja/configurar", status_code=302)
