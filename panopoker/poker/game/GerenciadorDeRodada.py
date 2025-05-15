@@ -78,6 +78,7 @@ class GerenciadorDeRodada:
             self.mesa.jogador_da_vez = candidato.jogador_id
             self.db.add(self.mesa); self.db.commit()
             debug_print(f"▶️ Vez para jogador {candidato.jogador_id} (pos {candidato.posicao_cadeira})")
+            self.iniciar_timer_vez(candidato.jogador_id)
             return
 
         debug_print("✅ Todos agiram ou sem saldo — fim de rodada")
