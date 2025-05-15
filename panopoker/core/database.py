@@ -21,3 +21,4 @@ def get_db():
 import panopoker.usuarios.models.usuario
 import panopoker.financeiro.models.pagamento
 import panopoker.poker.models.mesa
+import panopoker.usuarios.models

@@ -85,6 +85,8 @@ class GerenciadorDeRodada:
         self.db.add(self.mesa); self.db.commit()
         self.verificar_proxima_etapa()
 
+
+
     def verificar_proxima_etapa(self, posicao_origem: Optional[int] = None):
         debug_print("🔎 Verificando próxima etapa")
 
@@ -114,9 +116,17 @@ class GerenciadorDeRodada:
             return
 
         # ✅ Todos agiram ou estão all-in + apostas iguais → avançar fase
-        if all(j.rodada_ja_agiu or (j.saldo_atual == 0 and j.aposta_atual > 0) for j in ativos) and len({j.aposta_atual for j in ativos}) == 1:
+        if all(j.rodada_ja_agiu or (j.saldo_atual == 0 and j.aposta_atual > 0) for j in ativos) \
+        and len({j.aposta_atual for j in ativos}) == 1:
             debug_print("⏭️ Todos agiram/all-in e apostas iguais — avançar fase")
             self.avancar_fase()
+            return
+
+        # ⚠️ Side-pot sem mais ações possíveis — showdown imediato
+        # aqui detectamos que não há ninguém com saldo > 0 *e* que ainda não tenha agido
+        if not any((not j.rodada_ja_agiu) and j.saldo_atual > 0 for j in ativos):
+            debug_print("🏁 Sem mais ações possíveis (side-pot) — showdown imediato")
+            self._distribuidor().realizar_showdown()
             return
 
         # 🔁 Repassar vez
@@ -124,16 +134,12 @@ class GerenciadorDeRodada:
             debug_print(f"↪️ Repassar vez de posição {posicao_origem}")
             self.avancar_vez(posicao_origem, skip_timer=True)
         else:
+            debug_print("↪️ Iniciando vez padrão")
             self.avancar_vez()
 
-        # ⚠️ Ninguém recebeu vez
-        if self.mesa.jogador_da_vez is None:
-            debug_print("⚠️ Ninguém recebeu vez — avançar fase")
-            self.avancar_fase()
-            return
 
-        # ⏳ Timer do novo jogador da vez
-        self.iniciar_timer_vez(self.mesa.jogador_da_vez)
+
+
 
 
 

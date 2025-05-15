@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 import asyncio
 import pathlib
+import os
 
 from panopoker.core.database import engine, Base, SessionLocal
 from panopoker.core import timers_async
@@ -103,6 +104,10 @@ app.include_router(configurar_loja.router)
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "panopoker" / "site" / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+# Media dos avatars
+app.mount("/media", StaticFiles(directory=os.path.join("panopoker", "usuarios", "media")), name="media")
 
 # Swagger JWT personalizado
 def custom_openapi():

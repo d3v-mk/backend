@@ -62,12 +62,12 @@
 
   <script>
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3MTAxOTAxfQ.b29Z-HioaYvOb4gP8hQJlGXn2Rl4P77gSnW_9hkiiyc",
-      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ3MTAxOTE4fQ.C6--pKZK41zNxE7I3N1VS3uoHnDOGCi702DBIHD8Fqg",
-      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3MTAyNzI5fQ.-R5p0OH771bN3duSJIFgavbvCz97GJuYwPh77YLABzE",
-      4: "",
-      5: "",
-      6: ""
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3MzYxNzQ2fQ.IfmlL_XbBvLlUtyFdGouzU1cNbAfqW9Zxivxu8ORgFU",
+      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ3MzYxNzYwfQ.pbJdO_Wg_Nhi4LvpiQLjSorprPPjCeCJUQhlj_a2jYU",
+      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3MzYxNzczfQ.ORCFiVhO2-Iw6HT3D0XTl53hK27rw65BI4Yh-qXdMIQ",
+      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ3MzYxNzg3fQ.fjJYehbnnFUM_NXoTbtUhAFMkzlebn74rzYUwovyvGY",
+      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ3MzYxODAxfQ.3zwF2J5vCUP_bnKfGXE3rxZTyq91C3ZgbTOktybFjfk",
+      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ3MzYxODE2fQ.HTRYDPRXDGCyly-CxGepDa3Mz8hIIC4JYlCtDvx9Q6g"
     };
 
     async function carregarMesa() {
@@ -132,29 +132,28 @@
     async function acao(mesaId, jogadorId, tipo) {
       const url = `http://localhost:8000/mesa/${mesaId}/${tipo}`;
       const token = tokens[jogadorId];
-      if (!token) {
-        alert(`Token do jogador ${jogadorId} não encontrado.`);
-        return;
-      }
-
-      let body = {};
+      let options = {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      };
+      
       if (tipo === "raise") {
-        const valor = document.getElementById(`raise-${jogadorId}`).value;
-        body = { valor: parseFloat(valor) };
+        const valor = parseFloat(document.getElementById(`raise-${jogadorId}`).value);
+        options.body = JSON.stringify({ valor });
       }
 
       try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          },
-          body: tipo === "raise" ? JSON.stringify(body) : null
-        });
-
+        const res = await fetch(url, options);
         const data = await res.json();
-        alert(`${tipo.toUpperCase()} (J${jogadorId}) → ${data.detail || "OK"}`);
+
+        const msg = data.detail
+          ? data.detail
+          : JSON.stringify(data, null, 2);
+
+        alert(`${tipo.toUpperCase()} (J${jogadorId}) →\n${msg}`);
         carregarMesa();
 
       } catch (err) {

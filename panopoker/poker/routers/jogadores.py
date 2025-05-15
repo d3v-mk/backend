@@ -40,6 +40,7 @@ def listar_jogadores_na_mesa(
             "username": j.jogador.nome if j.jogador else "",
             "email": j.jogador.email if j.jogador else "",
             "is_admin": j.jogador.is_admin if j.jogador else False,
+            "avatarUrl": j.jogador.avatar_url if j.jogador else None,
             "saldo_inicial": j.saldo_inicial,
             "saldo_atual": j.saldo_atual,
             "aposta_atual": j.aposta_atual,

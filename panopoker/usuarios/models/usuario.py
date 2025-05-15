@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean
 from panopoker.core.database import Base
 from sqlalchemy.orm import relationship
 from panopoker.usuarios.models.promotor import Promotor
+from .estatisticas import EstatisticasJogador
 import uuid
 
 
@@ -25,6 +26,9 @@ class Usuario(Base):
     pagamentos = relationship("Pagamento", back_populates="user") # Relacionamento com pagamento
 
     promotor = relationship("Promotor", back_populates="usuario", uselist=False)
+
+    estatisticas = relationship("EstatisticasJogador", back_populates="usuario", uselist=False)
+
 
     def __repr__(self):
         return f"<Usuario {self.id} - {self.nome}>"
