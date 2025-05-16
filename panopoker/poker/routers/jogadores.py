@@ -5,6 +5,10 @@ from panopoker.poker.game.mesa_utils import get_mesa
 from panopoker.poker.game.ControladorDePartida import ControladorDePartida
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.debug import debug_print
+from panopoker.core.security import get_current_user
+from panopoker.usuarios.models.usuario import Usuario
+from panopoker.websocket.manager import connection_manager
+import asyncio
 import json
 
 router = APIRouter(prefix="/mesa", tags=["Jogadores na mesa"])
@@ -60,3 +64,36 @@ def listar_jogadores_na_mesa(
 
     debug_print(f"[LISTAR_JOGADORES] Resposta final montada para mesa {mesa_id}", silent=True)
     return resposta
+
+
+@router.post("/{mesa_id}/revelar_cartas")
+def revelar_cartas(
+    mesa_id: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user)
+):
+    mesa = get_mesa(db, mesa_id)
+
+    jogador = db.query(JogadorNaMesa).filter_by(mesa_id=mesa.id, jogador_id=usuario.id).first()
+    if not jogador:
+        raise HTTPException(status_code=404, detail="Jogador não encontrado na mesa")
+
+    jogador.participando_da_rodada = True
+    db.commit()
+
+    # Notifica via websocket (forma compatível com FastAPI sync route)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    loop.create_task(connection_manager.broadcast_mesa(
+        mesa_id,
+        {
+            "evento": "revelar_cartas",
+            "jogador_id": usuario.id
+        }
+    ))
+
+    return {"message": "Cartas agora são públicas para todos."}

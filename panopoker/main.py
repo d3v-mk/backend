@@ -24,6 +24,8 @@ from panopoker.poker.routers import acoes, jogadores, matchmaking, mesa_cartas, 
 from panopoker.usuarios.routers import admin, usuario
 from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor
 
+from panopoker.websocket import routes as ws_routes
+
 # === Função de criação de tabelas e mesas ===
 def create_tables():
     Base.metadata.create_all(bind=engine)
@@ -99,6 +101,10 @@ app.include_router(loja_promotor.router)
 app.include_router(auth_mp.router)
 app.include_router(loja_web_promoters.router)
 app.include_router(configurar_loja.router)
+
+
+app.include_router(ws_routes.router)
+
 
 # Static files do site
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent

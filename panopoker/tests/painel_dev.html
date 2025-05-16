@@ -62,12 +62,12 @@
 
   <script>
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3MzYxNzQ2fQ.IfmlL_XbBvLlUtyFdGouzU1cNbAfqW9Zxivxu8ORgFU",
-      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ3MzYxNzYwfQ.pbJdO_Wg_Nhi4LvpiQLjSorprPPjCeCJUQhlj_a2jYU",
-      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3MzYxNzczfQ.ORCFiVhO2-Iw6HT3D0XTl53hK27rw65BI4Yh-qXdMIQ",
-      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ3MzYxNzg3fQ.fjJYehbnnFUM_NXoTbtUhAFMkzlebn74rzYUwovyvGY",
-      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ3MzYxODAxfQ.3zwF2J5vCUP_bnKfGXE3rxZTyq91C3ZgbTOktybFjfk",
-      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ3MzYxODE2fQ.HTRYDPRXDGCyly-CxGepDa3Mz8hIIC4JYlCtDvx9Q6g"
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3NDE2ODI0fQ.W9Krfv97Dwvid9ARUi_nmkVDYJmXCYuNhekI3vnf0Uk",
+      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ3NDE2OTA1fQ.UZTcNLvwnzwYblT_wsfkwQYInGtxWR_wxBLPiXQnur0",
+      3: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3NDE2OTE4fQ.0iDttYik5EMotMsjzUPQE4LD6dlk2ZlRzd5tAnaV-qk",
+      4: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ3NDE2OTMxfQ.8D0GgPT0zXO-XXqt5Z2vm6uD11rTUnc2LShOGRaA1zc",
+      5: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzQ3NDE2OTQ0fQ.rblyPXk3vXLa9KTopq0vh5MfR683YebOs42zt31d8s0",
+      6: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzQ3NDE2OTU4fQ.pBTEcyTcH-adFfFonyRgEXNE21gHsFJxQGcpsOWanEE"
     };
 
     async function carregarMesa() {
@@ -119,6 +119,8 @@
             <button onclick="acao(${mesa.id}, ${j.user_id}, 'raise')">Raise</button>
             <br/><br/>
             <button onclick="sairDaMesa(${mesa.id}, ${j.user_id})">🚪 Sair da Mesa</button>
+            <button onclick="revelarCartas(${mesa.id}, ${j.user_id})">🃏 Revelar Cartas</button>
+
           `;
           container.appendChild(div);
         });
@@ -129,8 +131,34 @@
       }
     }
 
+    async function revelarCartas(mesaId, jogadorId) {
+      const token = tokens[jogadorId];
+      if (!token) {
+        alert(`Token do jogador ${jogadorId} não encontrado.`);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8000/mesa/${mesaId}/revelar_cartas`, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const data = await res.json();
+        alert(`🃏 Jogador ${jogadorId} revelou suas cartas!\n${data.message || JSON.stringify(data)}`);
+        carregarMesa();
+
+      } catch (err) {
+        console.error("Erro ao revelar cartas:", err);
+        alert("Erro ao chamar /revelar_cartas: " + err.message);
+      }
+    }
+
+
     async function acao(mesaId, jogadorId, tipo) {
-      const url = `http://localhost:8000/mesa/${mesaId}/${tipo}`;
+      let url = `http://localhost:8000/mesa/${mesaId}/${tipo}`;
       const token = tokens[jogadorId];
       let options = {
         method: "POST",
@@ -139,10 +167,22 @@
           "Content-Type": "application/json"
         }
       };
-      
+
+      // Se for raise, pega o valor e joga na query string
       if (tipo === "raise") {
-        const valor = parseFloat(document.getElementById(`raise-${jogadorId}`).value);
-        options.body = JSON.stringify({ valor });
+        const input = document.getElementById(`raise-${jogadorId}`);
+        if (!input) {
+          alert("Campo de raise não encontrado.");
+          return;
+        }
+        const valor = parseFloat(input.value);
+        if (isNaN(valor) || valor <= 0) {
+          alert("Insira um valor válido para o raise.");
+          return;
+        }
+        url += `?valor=${valor}`;
+        delete options.headers["Content-Type"]; // não precisa de body
+        delete options.body;
       }
 
       try {
@@ -161,6 +201,7 @@
         alert("Erro: " + err.message);
       }
     }
+
 
     async function entrarNaMesa(jogadorId) {
       const mesaId = document.getElementById("mesaId").value;
@@ -218,7 +259,7 @@
     const token = tokens[1];
 
     try {
-      const res = await fetch(`http://localhost:8000/mesa/${mesaId}/debug/forcar_showdown`, {
+      const res = await fetch(`http://localhost:8000/admin/${mesaId}/debug/forcar_showdown`, {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + token
