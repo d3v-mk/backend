@@ -56,6 +56,7 @@ def listar_jogadores_na_mesa(
             "participando_da_rodada": j.participando_da_rodada,
             "is_sb": j.posicao_cadeira == mesa.posicao_sb,
             "is_bb": j.posicao_cadeira == mesa.posicao_bb,
+            "is_dealer": j.posicao_cadeira == mesa.dealer_pos,
         })
         debug_print(
             f"[LISTAR_JOGADORES] Incluído jogador {j.jogador_id} "
