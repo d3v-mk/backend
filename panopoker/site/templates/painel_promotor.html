@@ -40,12 +40,14 @@
         }
 
         .saque {
-            background-color: #222;
+            background-color: #1a1a1a;
+            border-left: 4px solid gold;
             border-radius: 10px;
-            padding: 20px;
+            padding: 16px;
             margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(255,255,255,0.1);
             font-size: 1em;
+            text-align: left;
         }
 
         .botao {
@@ -134,6 +136,15 @@
             border-color: #444;
         }
 
+        .status-confirmado { color: #0f0; }
+        .status-outro { color: #aaa; }
+
+        .status-concluido {
+            color: rgb(24, 223, 24);
+            font-weight: bold;
+        }
+
+
         @media (max-width: 480px) {
             body {
                 padding: 0;
@@ -159,11 +170,21 @@
         <div class="topbar">
             <h1>Painel do Promotor</h1>
 
+            <div style="display: flex; justify-content: space-between; gap: 12px; margin: 20px 0;">
+                <div style="flex: 1; background-color: #1e1e1e; border-radius: 8px; padding: 16px;">
+                    <div style="font-size: 0.9em; color: #bbb;">💰 Repasse</div>
+                    <div style="font-size: 1.4em; font-weight: bold; color: gold;">R$ {{ saldo_repassar if saldo_repassar is defined else '0.00' }}</div>
+                </div>
+                <div style="flex: 1; background-color: #1e1e1e; border-radius: 8px; padding: 16px;">
+                    <div style="font-size: 0.9em; color: #bbb;">🏆 Comissão</div>
+                    <div style="font-size: 1.4em; font-weight: bold; color: #00ffb3;">R$ {{ comissao_total if comissao_total is defined else '0.00' }}</div>
+                </div>
+            </div>
+
             <div class="menu-container">
                 <button type="button" class="logout-btn menu-toggle">☰</button>
                 <div id="dropdown-menu">
                 {% if not usuario.promotor or not usuario.promotor.slug %}
-                    <!-- Botão Criar Loja -->
                     <form method="get" action="https://auth.mercadopago.com.br/authorization">
                         <input type="hidden" name="client_id" value="739906378143588">
                         <input type="hidden" name="response_type" value="code">
@@ -173,27 +194,26 @@
                     </form>
                 {% else %}
                     <form method="get" action="/loja/promotor/{{ usuario.promotor.slug }}">
-                        <button type="submit" class="logout-btn">Ver Loja</button>
+                        <button type="submit" class="logout-btn">🏪 Ver Loja</button>
                     </form>
-
                     <form method="get" action="/loja/configurar">
-                        <button type="submit" class="logout-btn">Configurar Loja</button>
+                        <button type="submit" class="logout-btn">⚙️ Configurar Loja</button>
                     </form>
                 {% endif %}
                     <form method="get" action="/logout">
-                        <button type="submit" class="logout-btn">Sair</button>
+                        <button type="submit" class="logout-btn sair">🚪 Sair</button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <h2>Solicitar novo saque</h2>
+        <h2>📤 Solicitar novo saque</h2>
         <form method="post" action="/painel/promotor/solicitar_saque">
             <label>ID do Jogador:</label>
             <input type="number" name="id_publico" required>
             <label>Valor (R$):</label>
             <input type="number" step="0.01" name="valor" placeholder="" required>
-            <button class="botao" type="submit">Solicitar Saque</button>
+            <button class="botao" type="submit">📤 Solicitar Saque</button>
         </form>
 
         <hr>
@@ -202,13 +222,24 @@
             <div class="saque">
                 <strong>Saque ID:</strong> {{ saque.saque_id_publico }}<br>
                 <strong>Jogador ID:</strong> {{ saque.jogador.id_publico }}<br>
-                <strong>Valor:</strong> R$ {{ saque.valor }}<br>
-                <strong>Status:</strong> {{ saque.status }}<br>
+                <strong>Nome:</strong> {{ saque.jogador.nome }}<br>
+                <strong>Valor:</strong> <span style="color: gold;">R$ {{ saque.valor }}</span><br>
+                <strong>Status:</strong>
+                {% set status_class =
+                    'status-confirmado' if saque.status == 'confirmado_pelo_jogador'
+                    else 'status-concluido' if saque.status == 'concluido'
+                    else 'status-outro'
+                %}
+                <span class="{{ status_class }}">
+                    {{ saque.status.replace('_', ' ').capitalize() }}
+                </span>
+
+
 
                 {% if saque.status == "confirmado_pelo_jogador" %}
-                    <form method="post" action="/painel/promotor/concluir">
-                        <input type="hidden" name="saque_id" value="{{ saque.saque_id_publico }}">
-                        <button class="botao" type="submit">Concluir Saque</button>
+                    <form method="post" action="/painel/promotor/concluir" style="margin-top: 10px;">
+                        <input type="hidden" name="saque_id" value="{{ saque.id }}">
+                        <button class="botao" type="submit">✅ Concluir Saque</button>
                     </form>
                 {% else %}
                     <button class="botao" disabled>Não disponível</button>

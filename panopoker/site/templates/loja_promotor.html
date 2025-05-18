@@ -95,7 +95,8 @@
 </head>
 <body>
 
-    <img src="{{ avatar_url }}" class="avatar" alt="Avatar do promotor">
+    <img src="{{ avatar_url if avatar_url else 'https://i.imgur.com/q0fxp3t.jpeg' }}?v={{ timestamp }}" class="avatar" alt="Avatar do promotor">
+
     <h1>{{ nome }}</h1>
     <p class="descricao">Escolha um valor para gerar o Pix automaticamente:</p>
 

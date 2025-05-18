@@ -22,10 +22,14 @@ class SaqueCreate(BaseModel):
 
 # ============= ENDPOINT QUE CAI NO PAINEL DO PROMOTOR ================
 @router.get("/painel/promotor")
-def painel_promotor(request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user_optional)):
-    if not usuario.is_promoter:
+def painel_promotor(
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user_optional)
+):
+    if usuario is None or not usuario.is_promoter:
         return RedirectResponse("/", status_code=302)
-    
+
     saques = db.query(Saque).options(joinedload(Saque.jogador)).filter(
         Saque.promotor_id == usuario.id
     ).all()
@@ -33,7 +37,9 @@ def painel_promotor(request: Request, db: Session = Depends(get_db), usuario: Us
     return templates.TemplateResponse("painel_promotor.html", {
         "request": request,
         "saques": saques,
-        "usuario": usuario
+        "usuario": usuario,
+        "saldo_repassar": 125.50,
+        "comissao_total": 33.75
     })
 
 

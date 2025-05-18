@@ -6,6 +6,8 @@ from fastapi import Depends
 from fastapi.templating import Jinja2Templates
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
+from sqlalchemy.orm import joinedload
+from time import time
 import requests
 
 router = APIRouter(tags=["Loja Promotores"])
@@ -16,7 +18,10 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 
 @router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
 def loja_promotor(slug: str, request: Request, db: Session = Depends(get_db)):
-    promotor = db.query(Promotor).filter(Promotor.slug == slug).first()
+    promotor = db.query(Promotor)\
+        .options(joinedload(Promotor.usuario))\
+        .filter(Promotor.slug == slug).first()
+    
     if not promotor:
         return HTMLResponse(
             content="<h1>Olá jogador!</h1><h1>Loja não encontrada</h1><h1>Verifique se o link está correto.</h1>",
@@ -27,7 +32,8 @@ def loja_promotor(slug: str, request: Request, db: Session = Depends(get_db)):
         "request": request,
         "nome": promotor.nome,
         "slug": promotor.slug,
-        "avatar_url": promotor.avatar_url
+        "avatar_url": promotor.usuario.avatar_url if promotor.usuario else "",
+        "timestamp": int(time()),
         # Nada de pix_copias aqui
     })
 

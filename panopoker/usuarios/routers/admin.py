@@ -1,16 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa
 from panopoker.usuarios.models.usuario import Usuario
+from panopoker.usuarios.models.promotor import Promotor
+from panopoker.core.security import get_current_user
+from panopoker.core.security import get_current_user_optional
+from fastapi.templating import Jinja2Templates
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(tags=["Admin"])
+
+templates = Jinja2Templates(directory="panopoker/site/templates")
+
+
+@router.get("/painel/admin", response_class=HTMLResponse)
+def painel_admin_promotores(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_user_optional)
+):
+    if not admin:
+        return RedirectResponse(url="/login", status_code=302)
+
+    if not admin.is_admin:
+        return HTMLResponse("<h1>Acesso não autorizado</h1>", status_code=403)
+
+    promotores = db.query(Promotor).all()
+
+    return templates.TemplateResponse("painel_admin.html", {
+        "request": request,
+        "promotores": promotores
+    })
+
 
 # ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
 
-@router.delete("/limparhard/{mesa_id}")
+@router.delete("/admin/limparhard/{mesa_id}")
 def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
     jogadores = db.query(JogadorNaMesa).filter(
         JogadorNaMesa.mesa_id == mesa_id,
@@ -40,7 +68,7 @@ def forcar_limpeza_mesa(mesa_id: int, db: Session = Depends(get_db)):
 
 # ============================= FORCA O SHOWDOWN PRA TESTES =============================
 
-@router.post("/{mesa_id}/debug/forcar_showdown")
+@router.post("/admin/{mesa_id}/debug/forcar_showdown")
 def debug_forcar_showdown(
     mesa_id: int,
     db: Session = Depends(get_db)
@@ -59,11 +87,104 @@ def debug_forcar_showdown(
 
 # ============================= PROMOVER USUARIO A PROMOTER =============================
 
-@router.post("/usuario/promover/{user_id}")
-def promover_usuario(user_id: int, db: Session = Depends(get_db)):
+@router.post("/admin/usuario/promover/{user_id}")
+def promover_usuario(
+    user_id: int,
+    tipo: str,  # "admin" ou "promotor"
+    db: Session = Depends(get_db)
+):
     usuario = db.query(Usuario).get(user_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    usuario.is_promoter = True
+
+    if tipo == "admin":
+        usuario.is_admin = True  # Ativa admin, mantém promotor se já era
+    elif tipo == "promotor":
+        usuario.is_promoter = True  # Ativa promotor, mantém admin se já era
+    else:
+        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
+
     db.commit()
-    return {"msg": "Usuário promovido a promotor"}
+    return {"msg": f"Usuário promovido a {tipo} (sem perder cargos anteriores)"}
+
+
+
+
+
+@router.post("/admin/usuario/despromover/{user_id}")
+def despromover_usuario(
+    user_id: int,
+    tipo: str,  # "admin" ou "promotor"
+    db: Session = Depends(get_db)
+):
+    usuario = db.query(Usuario).get(user_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    if tipo == "admin":
+        usuario.is_admin = False  # Tira só o cargo de admin
+    elif tipo == "promotor":
+        usuario.is_promoter = False  # Tira só o cargo de promotor
+    else:
+        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
+
+    db.commit()
+    return {"msg": f"Usuário removido do cargo de {tipo}"}
+
+
+
+@router.post("/admin/promotor/criar_loja")
+def criar_loja_promotor(
+    user_id: int,
+    nome: str,
+    slug: str,
+    access_token: str = "",
+    refresh_token: str = "",
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_user_optional)
+):
+    if not admin.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    promotor_existente = db.query(Promotor).filter(Promotor.user_id == user_id).first()
+    if promotor_existente:
+        raise HTTPException(status_code=400, detail="Este usuário já possui uma loja.")
+
+    nova_loja = Promotor(
+        user_id=user_id,
+        user_id_mp="manual",
+        nome=nome,
+        slug=slug,
+        access_token=access_token,
+        refresh_token=refresh_token
+    )
+
+    db.add(nova_loja)
+    db.commit()
+
+    return {"status": "ok", "mensagem": "Loja criada com sucesso."}
+
+
+
+@router.post("/admin/promotor/{promotor_id}/apagar_loja")
+def apagar_loja_promotor(
+    promotor_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_user_optional)
+):
+    if not admin.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+
+    promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
+
+    if not promotor:
+        raise HTTPException(status_code=404, detail="Loja do promotor não encontrada.")
+
+    db.delete(promotor)
+    db.commit()
+
+    return {"status": "ok", "mensagem": "Loja do promotor removida com sucesso."}

@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 import os
 
-router = APIRouter(tags=["Painel Promotores"])
+router = APIRouter(tags=[""])
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "../templates"))
@@ -18,10 +18,14 @@ def dashboard_redirect(request: Request, usuario: Usuario = Depends(get_current_
     if not usuario:
         return RedirectResponse(url="/login", status_code=302)
 
-    if not usuario.is_promoter:
-        return RedirectResponse(url="/", status_code=302)
+    if usuario.is_admin:
+        return RedirectResponse(url="/painel/admin", status_code=302)
 
-    return RedirectResponse(url="/painel/promotor", status_code=302)
+    if usuario.is_promoter:
+        return RedirectResponse(url="/painel/promotor", status_code=302)
+
+    return RedirectResponse(url="/", status_code=302)
+
 
 
 @router.get("/login")
