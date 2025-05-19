@@ -6,6 +6,9 @@ import asyncio
 from panopoker.core.timers_async import timers_async, loop_principal
 import panopoker.core.timers_async as timers
 from fastapi import HTTPException
+import json
+
+from panopoker.websocket.manager import connection_manager
 
 def marcar_como_ausente(jogador: JogadorNaMesa):
     jogador.participando_da_rodada = False
@@ -38,7 +41,7 @@ class GerenciadorDeRodada:
         from panopoker.poker.game.ExecutorDeAcoes import ExecutorDeAcoes
         return ExecutorDeAcoes(self.mesa, self.db)
 
-    def avancar_vez(self, posicao_origem: Optional[int] = None, skip_timer = False):
+    async def avancar_vez(self, posicao_origem: Optional[int] = None, skip_timer = False):
         debug_print("🔄 Avançar vez")
         ativos = (
             self.db.query(JogadorNaMesa)
@@ -84,11 +87,16 @@ class GerenciadorDeRodada:
         debug_print("✅ Todos agiram ou sem saldo — fim de rodada")
         self.mesa.jogador_da_vez = None
         self.db.add(self.mesa); self.db.commit()
-        self.verificar_proxima_etapa()
+        await self.verificar_proxima_etapa()
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "vez_atualizada",
+            "jogador_id": self.mesa.jogador_da_vez
+        })
 
 
 
-    def verificar_proxima_etapa(self, posicao_origem: Optional[int] = None):
+    async def verificar_proxima_etapa(self, posicao_origem: Optional[int] = None):
         debug_print("🔎 Verificando próxima etapa")
 
         ativos = (
@@ -101,42 +109,40 @@ class GerenciadorDeRodada:
             .all()
         )
 
-        # 🏆 Vitória automática
         if len(ativos) == 1:
             vencedor = ativos[0]
             debug_print(f"🏆 Vitória automática: jogador {vencedor.jogador_id}")
             self._distribuidor().atualizar_pote_total()
-            self._distribuidor().distribuir_pote(vencedor)
-            self._resetador().nova_rodada()
+            await self._distribuidor().distribuir_pote(vencedor)
+            await connection_manager.broadcast_mesa(
+                self.mesa.id,
+                {"evento": "vitoria_automatica", "jogador_id": vencedor.jogador_id}
+            )
+            await self._resetador().nova_rodada()  # Se for async
             return
 
-        # 🏁 Todos sem saldo — showdown imediato
         if ativos and all(j.saldo_atual == 0 for j in ativos):
             debug_print("🏁 Todos sem saldo restante — showdown imediato")
-            self._distribuidor().realizar_showdown()
+            await self._distribuidor().realizar_showdown()  # Se for async
             return
 
-        # ✅ Todos agiram ou estão all-in + apostas iguais → avançar fase
         if all(j.rodada_ja_agiu or (j.saldo_atual == 0 and j.aposta_atual > 0) for j in ativos) \
-        and len({j.aposta_atual for j in ativos}) == 1:
+            and len({j.aposta_atual for j in ativos}) == 1:
             debug_print("⏭️ Todos agiram/all-in e apostas iguais — avançar fase")
-            self.avancar_fase()
+            await self.avancar_fase()  # Se for async
             return
 
-        # ⚠️ Side-pot sem mais ações possíveis — showdown imediato
-        # aqui detectamos que não há ninguém com saldo > 0 *e* que ainda não tenha agido
         if not any((not j.rodada_ja_agiu) and j.saldo_atual > 0 for j in ativos):
             debug_print("🏁 Sem mais ações possíveis (side-pot) — showdown imediato")
-            self._distribuidor().realizar_showdown()
+            await self._distribuidor().realizar_showdown()
             return
 
-        # 🔁 Repassar vez
         if posicao_origem is not None:
             debug_print(f"↪️ Repassar vez de posição {posicao_origem}")
-            self.avancar_vez(posicao_origem, skip_timer=True)
+            await self.avancar_vez(posicao_origem, skip_timer=True)
         else:
             debug_print("↪️ Iniciando vez padrão")
-            self.avancar_vez()
+            await self.avancar_vez()
 
 
 
@@ -144,7 +150,7 @@ class GerenciadorDeRodada:
 
 
 
-    def avancar_fase(self):
+    async def avancar_fase(self):
         from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
         debug_print(f"📈 Avançar fase ({self.mesa.estado_da_rodada})")
 
@@ -159,8 +165,7 @@ class GerenciadorDeRodada:
             self.mesa.estado_da_rodada = EstadoDaMesa.RIVER
         else:
             debug_print("🎬 Showdown")
-            # passa pra DistribuidorDePote cuidar do showdown e do pote
-            self._distribuidor().realizar_showdown()
+            await self._distribuidor().realizar_showdown()
             return
 
         self.mesa.aposta_atual = 0.0
@@ -177,13 +182,35 @@ class GerenciadorDeRodada:
             j.aposta_atual = 0.0
             self.db.add(j)
 
-        # persiste a mudança de fase + resets
-        self.db.add(self.mesa)
         self.db.commit()
 
         debug_print(f"🔄 Nova fase: {self.mesa.estado_da_rodada}")
-        # define quem começa a agir na street atual
         self._preparador().definir_primeiro_a_agir()
+
+        # ✨ Pega as novas cartas reveladas nessa fase
+        comunitarias = (
+            self.mesa.cartas_comunitarias
+            if isinstance(self.mesa.cartas_comunitarias, dict)
+            else json.loads(self.mesa.cartas_comunitarias)
+        )
+
+        novas_cartas = []
+        if self.mesa.estado_da_rodada == EstadoDaMesa.FLOP:
+            novas_cartas = comunitarias.get("flop", [])
+        elif self.mesa.estado_da_rodada == EstadoDaMesa.TURN:
+            turn = comunitarias.get("turn")
+            if turn:
+                novas_cartas = [turn]
+        elif self.mesa.estado_da_rodada == EstadoDaMesa.RIVER:
+            river = comunitarias.get("river")
+            if river:
+                novas_cartas = [river]
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "fase_avancada",
+            "estado_rodada": self.mesa.estado_da_rodada,
+            "novas_cartas": novas_cartas
+        })
 
 
 
@@ -222,7 +249,7 @@ class GerenciadorDeRodada:
 
         debug_print(f"🟢 Timer terminou — forçando fold do jogador {jogador_id}")
         try:
-            self._chamar_fold().acao_fold(jogador_id)
+            await self._chamar_fold().acao_fold(jogador_id)
         except HTTPException as e:
             debug_print(f"[TIMER] Não consegui forçar fold: {e.detail}")
 

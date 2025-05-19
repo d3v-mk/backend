@@ -24,7 +24,7 @@ class ControladorDePartida:
         return PreparadorDeRodada(self.mesa, self.db)
 
 
-    def iniciar_partida(self):
+    async def iniciar_partida(self):
 
         self.mesa.status = MesaStatus.em_jogo
         self.mesa.estado_da_rodada = EstadoDaMesa.PRE_FLOP

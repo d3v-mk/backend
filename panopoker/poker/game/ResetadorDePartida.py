@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa, EstadoDaMesa, MesaStatus
+from panopoker.websocket.manager import connection_manager
 import json
 
 
@@ -9,11 +10,11 @@ class ResetadorDePartida:
         self.mesa = mesa
         self.db = db
 
-    def nova_rodada(self):
+    async def nova_rodada(self):
         from panopoker.poker.game.ControladorDePartida import ControladorDePartida
 
         # 0) Reset completo (reseta quem ficou e deleta quem saiu/zerou)
-        self.resetar_jogadores()
+        await self.resetar_jogadores()
 
         # 1) Busca quem ainda tem saldo (estes são os ativos)
         jogadores_ativos = (
@@ -48,12 +49,19 @@ class ResetadorDePartida:
         self.db.add(self.mesa)
         self.db.commit()
 
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "nova_rodada"
+        })
+
         # 5) Inicia a nova partida
         controlador = ControladorDePartida(self.mesa, self.db)
-        controlador.iniciar_partida()
+        await controlador.iniciar_partida()
         debug_print("[NOVA_RODADA] Nova partida iniciada ✅✅✅")
 
-    def resetar_jogadores(self):
+
+
+
+    async def resetar_jogadores(self):
         jogadores = (
             self.db.query(JogadorNaMesa)
             .filter(JogadorNaMesa.mesa_id == self.mesa.id)

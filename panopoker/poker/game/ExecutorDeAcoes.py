@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from fastapi import HTTPException
+from panopoker.websocket.manager import connection_manager
 
 
 class ExecutorDeAcoes:
@@ -38,7 +39,7 @@ class ExecutorDeAcoes:
 
 
 
-    def acao_check(self, jogador_id: int):
+    async def acao_check(self, jogador_id: int):
         debug_print(f"[ACAO_CHECK] 🔍 Iniciando CHECK do jogador {jogador_id}")
         
         jogador = self._buscar_jogador(jogador_id)
@@ -61,16 +62,21 @@ class ExecutorDeAcoes:
 
         jogador.rodada_ja_agiu = True
         self.db.commit()
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })
+
         debug_print(f"[ACAO_CHECK] ✅ Jogador {jogador_id} deu CHECK com sucesso")
 
-        self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
         debug_print(f"[ACAO_CHECK] 🔄 Chamando verificar_proxima_etapa() após CHECK do jogador {jogador_id}")
 
 
 
 
 
-    def acao_call(self, jogador_id: int):
+    async def acao_call(self, jogador_id: int):
         from panopoker.poker.game.GerenciadorDeRodada import esta_fora_da_rodada, marcar_como_ausente
         debug_print(f"[ACAO_CALL] jogador {jogador_id} tentando CALL")
         jogador = self._buscar_jogador(jogador_id)
@@ -98,7 +104,11 @@ class ExecutorDeAcoes:
 
         self.db.commit()
 
-        self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })
+
+        await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
 
 
@@ -110,7 +120,7 @@ class ExecutorDeAcoes:
 
 
 
-    def acao_allin(self, jogador_id: int):
+    async def acao_allin(self, jogador_id: int):
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -148,8 +158,13 @@ class ExecutorDeAcoes:
                 o.rodada_ja_agiu = False
 
         self.db.commit()
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })
+        
         debug_print(f"[ACAO_ALLIN] jogador {jogador_id} ALL-IN {allin}")
-        self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
 
 
@@ -158,7 +173,7 @@ class ExecutorDeAcoes:
 
 
 
-    def acao_fold(self, jogador_id: int):
+    async def acao_fold(self, jogador_id: int):
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -173,8 +188,12 @@ class ExecutorDeAcoes:
         self._cancelar_timer()
         self.db.commit()
 
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })
+
         debug_print(f"[ACAO_FOLD] jogador {jogador_id} deu FOLD")
-        self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
 
 
@@ -182,7 +201,7 @@ class ExecutorDeAcoes:
 
 
 
-    def acao_raise(self, jogador_id: int, valor: float):
+    async def acao_raise(self, jogador_id: int, valor: float):
         jogador = self._buscar_jogador(jogador_id)
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
@@ -222,7 +241,12 @@ class ExecutorDeAcoes:
             o.rodada_ja_agiu = False
 
         self.db.commit()
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })
+
         debug_print(f"[ACAO_RAISE_APOSTA_ATUAL] jogador {jogador_id} RAISE de {valor}")
-        self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
+        await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
 
 

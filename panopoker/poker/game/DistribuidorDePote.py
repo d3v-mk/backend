@@ -6,6 +6,8 @@ import time
 from threading import Thread
 from typing import List, Tuple
 from panopoker.poker.game.avaliar_maos import avaliar_mao
+from panopoker.websocket.manager import connection_manager
+import asyncio
 
 class DistribuidorDePote:
     def __init__(self, mesa: Mesa, db: Session):
@@ -16,7 +18,11 @@ class DistribuidorDePote:
         from panopoker.poker.game.ResetadorDePartida import ResetadorDePartida
         return ResetadorDePartida(self.mesa, self.db)
 
-    def realizar_showdown(self):
+
+
+    async def realizar_showdown(self):
+        from panopoker.poker.game.AtualizadorDeEstatisticas import AtualizadorDeEstatisticas
+        from panopoker.poker.game.avaliar_maos import identificar_cartas_usadas
         debug_print(f"[SHOWDOWN] Iniciando showdown na mesa {self.mesa.id}")
 
         if self.mesa.pote_total == 0:
@@ -70,26 +76,49 @@ class DistribuidorDePote:
 
         payload = {
             "mesa_id": self.mesa.id,
-            "showdown": [
-                {
-                    "jogador_id": j.jogador_id,
-                    "cartas": (json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas),
-                    "rank": avaliar_mao((json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas) + cartas_mesa),
-                    "foldado": j.foldado
-                }
-                for j in self.db.query(JogadorNaMesa).filter(JogadorNaMesa.mesa_id == self.mesa.id).all()
-            ],
+            "showdown": [],
             "vencedores": list(set(vencedores_ids))
         }
 
-        def delayed_reset():
-            time.sleep(5)
-            debug_print(f"[SHOWDOWN] Executando nova_rodada após delay de 5s")
-            self._resetador().nova_rodada()
-        Thread(target=delayed_reset, daemon=True).start()
-        debug_print("[SHOWDOWN] nova_rodada agendada em background (5s)")
+        jogadores_na_mesa = self.db.query(JogadorNaMesa).filter(
+            JogadorNaMesa.mesa_id == self.mesa.id
+        ).all()
 
-        return payload
+        for j in jogadores_na_mesa:
+            hole_cards = json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas
+            mao_completa = hole_cards + cartas_mesa
+            rank, valores_usados = avaliar_mao(mao_completa)
+            cartas_vencedoras = identificar_cartas_usadas(mao_completa, valores_usados)
+
+            payload["showdown"].append({
+                "jogador_id": j.jogador_id,
+                "cartas": hole_cards,
+                "rank": [rank, valores_usados],
+                "foldado": j.foldado,
+                "cartas_vencedoras": cartas_vencedoras
+            })
+
+
+        async def reset_com_delay():
+            await asyncio.sleep(5)
+            debug_print(f"[SHOWDOWN] Executando nova_rodada após delay de 5s")
+            await self._resetador().nova_rodada()
+
+        asyncio.create_task(reset_com_delay())
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "showdown",
+            "dados": payload  # payload já contém showdown, vencedores, cartas etc
+        })
+
+        return payload ###
+    
+
+
+
+
+
+
     
     def _calcular_side_pots(self, jogadores: List[JogadorNaMesa]) -> List[Tuple[float, List[JogadorNaMesa]]]:
         # ordena por aposta
@@ -132,7 +161,7 @@ class DistribuidorDePote:
         self.db.commit()
         debug_print(f"[ATUALIZAR_POTE_TOTAL] Adicionado R${total:.2f} ao pote. Total agora R${self.mesa.pote_total:.2f}")
 
-    def distribuir_pote(self, vencedor: JogadorNaMesa):
+    async def distribuir_pote(self, vencedor: JogadorNaMesa):
         from panopoker.poker.models.mesa import EstadoDaMesa
         vencedor = self.db.merge(vencedor)
         self.db.refresh(self.mesa)

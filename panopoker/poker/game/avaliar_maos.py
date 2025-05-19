@@ -88,3 +88,22 @@ def avaliar_mao(mao: List[str]) -> Tuple[int, List[int]]:
 
     top5 = sorted(valores_idx, reverse=True)[:5]
     return RANKING["high_card"], top5
+
+
+
+def identificar_cartas_usadas(mao: List[str], cartas_vencedoras_valores: List[int]) -> List[str]:
+    resultado = []
+    valores_restantes = cartas_vencedoras_valores.copy()
+
+    for carta in mao:
+        valor = extrair_valor(carta)
+        idx = VALORES.index(valor)
+        if idx in valores_restantes:
+            resultado.append(carta)
+            valores_restantes.remove(idx)
+
+        if len(resultado) == 5:
+            break
+
+    return resultado
+
