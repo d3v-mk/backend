@@ -9,11 +9,45 @@ from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
 from panopoker.core.security import get_current_user
 from panopoker.core.security import get_current_user_optional
+from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(tags=["Admin"])
 
 templates = Jinja2Templates(directory="panopoker/site/templates")
+
+
+@router.delete("/admin/reset_estatisticas")
+def resetar_estatisticas(db: Session = Depends(get_db)):
+    estatisticas = db.query(EstatisticasJogador).all()
+    if not estatisticas:
+        raise HTTPException(status_code=404, detail="Nenhuma estatística encontrada")
+
+    for stat in estatisticas:
+        stat.rodadas_jogadas = 0
+        stat.rodadas_ganhas = 0
+        stat.vitorias = 0
+        stat.fichas_ganhas = 0.0
+        stat.fichas_perdidas = 0.0
+        stat.maior_pote = 0.0
+        stat.data_primeira_vitoria = None
+        stat.data_ultima_vitoria = None
+        stat.mao_favorita = None
+        stat.sequencias = 0
+        stat.flushes = 0
+        stat.fullhouses = 0
+        stat.quadras = 0
+        stat.straight_flushes = 0
+        stat.royal_flushes = 0
+        stat.ultimo_update = None
+        db.add(stat)
+
+    db.commit()
+    return {"mensagem": "Estatísticas resetadas com sucesso"}
+
+
+
+
 
 
 @router.get("/painel/admin", response_class=HTMLResponse)

@@ -69,9 +69,8 @@ class ResetadorDePartida:
         )
 
         total_postado = sum(j.aposta_atual for j in jogadores)
+        
         if total_postado > 0:
-            debug_print(f"[RESETAR_JOGADORES] Movendo R${total_postado:.2f} de apostas atuais para pote_total")
-            self.mesa.pote_total = (self.mesa.pote_total or 0) + total_postado
             # zera as apostas antes de prosseguir
             for j in jogadores:
                 j.aposta_atual = 0.0

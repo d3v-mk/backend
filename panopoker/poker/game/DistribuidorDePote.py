@@ -21,7 +21,7 @@ class DistribuidorDePote:
 
 
     async def realizar_showdown(self):
-        from panopoker.poker.game.AtualizadorDeEstatisticas import AtualizadorDeEstatisticas
+        from panopoker.poker.game.utils.estatisticas_helper import registrar_estatisticas_showdown
         from panopoker.poker.game.avaliar_maos import identificar_cartas_usadas
         debug_print(f"[SHOWDOWN] Iniciando showdown na mesa {self.mesa.id}")
 
@@ -105,6 +105,14 @@ class DistribuidorDePote:
             await self._resetador().nova_rodada()
 
         asyncio.create_task(reset_com_delay())
+
+
+        registrar_estatisticas_showdown(
+            participantes=participantes,
+            payload_showdown=payload["showdown"],
+            side_pots=side_pots,
+            db=self.db
+        )
 
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "showdown",
