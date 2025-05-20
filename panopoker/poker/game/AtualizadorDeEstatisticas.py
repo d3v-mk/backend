@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Tuple, Dict
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
-from panopoker.poker.models.mesa import JogadorNaMesa 
+from panopoker.poker.models.mesa import JogadorNaMesa
 
 class AtualizadorDeEstatisticas:
     @staticmethod
@@ -18,49 +18,47 @@ class AtualizadorDeEstatisticas:
                 stats = EstatisticasJogador(usuario_id=jogador.jogador_id)
                 db.add(stats)
 
-            # Aumenta contagem de rodadas jogadas
-            stats.rodadas_jogadas += 1
+            # Proteção contra None nos campos numéricos
+            stats.rodadas_jogadas = (stats.rodadas_jogadas or 0) + 1
 
-            # Se venceu a mão
             if jogador.jogador_id in vencedores_ids:
-                stats.rodadas_ganhas += 1
-                stats.vitorias += 1
+                stats.rodadas_ganhas = (stats.rodadas_ganhas or 0) + 1
+                stats.vitorias = (stats.vitorias or 0) + 1
+
                 ganho = valores_ganhos.get(jogador.jogador_id, 0.0)
-                stats.fichas_ganhas += ganho
+                stats.fichas_ganhas = (stats.fichas_ganhas or 0.0) + ganho
 
                 # Atualiza maior pote
-                if ganho > stats.maior_pote:
-                    stats.maior_pote = ganho
+                stats.maior_pote = max(stats.maior_pote or 0.0, ganho)
 
-                # Atualiza datas de vitória
                 agora = datetime.utcnow()
                 if not stats.data_primeira_vitoria:
                     stats.data_primeira_vitoria = agora
                 stats.data_ultima_vitoria = agora
 
-                # Mão favorita (mais recorrente nas vitórias)
                 mao_formatada = "-".join(sorted(mao))
-                if stats.mao_favorita == mao_formatada:
-                    pass  # já tá
-                elif not stats.mao_favorita:
+                if not stats.mao_favorita:
                     stats.mao_favorita = mao_formatada
-                else:
-                    # aqui você poderia fazer algo mais complexo depois (ex: contagem)
-                    pass
-
+                elif stats.mao_favorita != mao_formatada:
+                    pass  # pode implementar contagem no futuro
             else:
-                stats.fichas_perdidas += jogador.aposta_atual
+                stats.fichas_perdidas = (stats.fichas_perdidas or 0.0) + (jogador.aposta_atual or 0.0)
 
             # Tipo de mão vencida
             match rank:
-                case "straight": stats.sequencias += 1
-                case "flush": stats.flushes += 1
-                case "full_house": stats.fullhouses += 1
-                case "four_of_a_kind": stats.quadras += 1
-                case "straight_flush": stats.straight_flushes += 1
-                case "royal_flush": stats.royal_flushes += 1
+                case "straight":
+                    stats.sequencias = (stats.sequencias or 0) + 1
+                case "flush":
+                    stats.flushes = (stats.flushes or 0) + 1
+                case "full_house":
+                    stats.fullhouses = (stats.fullhouses or 0) + 1
+                case "four_of_a_kind":
+                    stats.quadras = (stats.quadras or 0) + 1
+                case "straight_flush":
+                    stats.straight_flushes = (stats.straight_flushes or 0) + 1
+                case "royal_flush":
+                    stats.royal_flushes = (stats.royal_flushes or 0) + 1
 
-            # Último update
             stats.ultimo_update = datetime.utcnow()
 
         db.commit()

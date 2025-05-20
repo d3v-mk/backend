@@ -67,8 +67,11 @@ def listar_jogadores_na_mesa(
     return resposta
 
 
+
+
+
 @router.post("/{mesa_id}/revelar_cartas")
-def revelar_cartas(
+async def revelar_cartas(
     mesa_id: int,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user)
@@ -82,19 +85,12 @@ def revelar_cartas(
     jogador.participando_da_rodada = True
     db.commit()
 
-    # Notifica via websocket (forma compatível com FastAPI sync route)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    loop.create_task(connection_manager.broadcast_mesa(
+    await connection_manager.broadcast_mesa(
         mesa_id,
         {
             "evento": "revelar_cartas",
             "jogador_id": usuario.id
         }
-    ))
+    )
 
     return {"message": "Cartas agora são públicas para todos."}

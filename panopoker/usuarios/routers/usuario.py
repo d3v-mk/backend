@@ -148,12 +148,38 @@ def get_usuario_por_id(id: int, db: Session = Depends(get_db), user: Usuario = D
 
 @router.get("/perfil/{user_id}", response_model=PerfilResponse)
 def get_perfil_de_usuario(user_id: int, db: Session = Depends(get_db)):
-    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()  # 👈 Aqui tava o erro
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
 
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
     estatisticas = usuario.estatisticas
+
+    if estatisticas is None:
+        return PerfilResponse(
+            id_publico=usuario.id_publico,
+            nome=usuario.nome,
+            avatar_url=usuario.avatar_url,
+            rodadas_ganhas=0,
+            rodadas_jogadas=0,
+            fichas_ganhas=0.0,
+            fichas_perdidas=0.0,
+            sequencias=0,
+            flushes=0,
+            full_houses=0,
+            quadras=0,
+            straight_flushes=0,
+            royal_flushes=0,
+            torneios_vencidos=0,
+            maior_pote=0.0,
+            vitorias=0,
+            mao_favorita=None,
+            ranking_mensal=0,
+            vezes_no_top1=0,
+            data_primeira_vitoria=None,
+            data_ultima_vitoria=None,
+            ultimo_update=None
+        )
 
     return PerfilResponse(
         id_publico=usuario.id_publico,
@@ -179,3 +205,4 @@ def get_perfil_de_usuario(user_id: int, db: Session = Depends(get_db)):
         data_ultima_vitoria=estatisticas.data_ultima_vitoria,
         ultimo_update=estatisticas.ultimo_update
     )
+

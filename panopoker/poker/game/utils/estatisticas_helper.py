@@ -22,7 +22,11 @@ def registrar_estatisticas_showdown(
         jogador_id = resultado["jogador_id"]
         if resultado["foldado"]:
             continue
-        jogador = jogadores_dict[jogador_id]
+        for jogador_id in vencedores_ids:
+            jogador = jogadores_dict.get(jogador_id)
+            if not jogador:
+                continue  # ou loga isso com debug_print e ignora
+
         mao = resultado["cartas"]
         rank = resultado["rank"][0]
         jogadores_avaliados.append((jogador, mao, rank))
