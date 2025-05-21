@@ -22,9 +22,11 @@ class DistribuidorDePote:
 
     async def realizar_showdown(self):
         from panopoker.poker.game.utils.estatisticas_helper import registrar_estatisticas_showdown
-        from panopoker.poker.game.avaliar_maos import identificar_cartas_usadas
+        from panopoker.poker.game.utils.wincards_helper import wincards_helper
+
         debug_print(f"[SHOWDOWN] Iniciando showdown na mesa {self.mesa.id}")
 
+        # Garante que o pote está correto
         if self.mesa.pote_total == 0:
             self.atualizar_pote_total()
 
@@ -32,6 +34,7 @@ class DistribuidorDePote:
         self.db.add(self.mesa)
         self.db.commit()
 
+        # Pega as cartas comunitárias da mesa
         comunitarias = (
             self.mesa.cartas_comunitarias
             if isinstance(self.mesa.cartas_comunitarias, dict)
@@ -43,6 +46,7 @@ class DistribuidorDePote:
         if comunitarias.get("river"): cartas_mesa.append(comunitarias["river"])
         debug_print(f"[SHOWDOWN] Cartas da mesa: {cartas_mesa}")
 
+        # Só jogadores que estão participando da rodada e não deram fold
         participantes = [
             j for j in self.db.query(JogadorNaMesa)
                     .filter(JogadorNaMesa.mesa_id == self.mesa.id)
@@ -50,11 +54,13 @@ class DistribuidorDePote:
             if j.participando_da_rodada and not j.foldado
         ]
 
+        # Mostra info das mãos de cada participante no log
         for j in participantes:
             hole_cards = json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas
             rank = avaliar_mao(hole_cards + cartas_mesa)
             debug_print(f"[SHOWDOWN] Jogador {j.jogador_id} cartas: {hole_cards} – rank: {rank}")
 
+        # Calcula side pots e distribui
         side_pots = self._calcular_side_pots(participantes)
         vencedores_ids = []
         for amount, grupo in side_pots:
@@ -74,50 +80,25 @@ class DistribuidorDePote:
         self.db.add(self.mesa)
         self.db.commit()
 
-        payload = {
-            "mesa_id": self.mesa.id,
-            "showdown": [],
-            "vencedores": list(set(vencedores_ids))
-        }
-
+        # Todos os jogadores da mesa (para mostrar showdown até dos foldados)
         jogadores_na_mesa = self.db.query(JogadorNaMesa).filter(
             JogadorNaMesa.mesa_id == self.mesa.id
         ).all()
 
-        from panopoker.poker.game.utils.wincards_helper import wincards_helper
-
-        # 1) Monte o array combinado aqui:
-        combined = []
-        for j in jogadores_na_mesa:
-            hole = json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas
-            combined.extend(hole)
-        combined.extend(cartas_mesa)
-
-        debug_print(f"[SD DEBUG] combined = {combined}")
-
-        # 2) Agora chame o helper passando esse combined:
-        showdown_payload, comunitarias, indices, cartas_vencedoras_jogador = wincards_helper(
+        # 🚨 Helper novo: retorna showdown detalhado pra cada jogador!
+        showdown_payload = wincards_helper(
             jogadores=jogadores_na_mesa,
             cartas_mesa=cartas_mesa,
-            vencedores_ids=vencedores_ids
+            vencedores_ids=set(vencedores_ids)
         )
 
-
-        debug_print(f"[SD DEBUG] showdown_payload = {showdown_payload}")
-        debug_print(f"[SD DEBUG] comunitarias = {comunitarias}")
-        debug_print(f"[SD DEBUG] vencedoras_indices = {indices}")
-
-        # 3) Monte o payload final:
         payload = {
             "mesa_id": self.mesa.id,
             "showdown": showdown_payload,
-            "vencedores": list(set(vencedores_ids)),
-            "cartas_vencedoras_comunitarias": comunitarias,
-            "vencedoras_indices": indices,
-            "cartas_vencedoras_jogador": cartas_vencedoras_jogador  # 👈 AQUI
+            "vencedores": list(set(vencedores_ids))
         }
 
-
+        # (Opcional) Delay de 5s pra nova rodada
         async def reset_com_delay():
             await asyncio.sleep(5)
             debug_print(f"[SHOWDOWN] Executando nova_rodada após delay de 5s")
@@ -125,6 +106,7 @@ class DistribuidorDePote:
 
         asyncio.create_task(reset_com_delay())
 
+        # Registrar estatísticas (se precisar)
         registrar_estatisticas_showdown(
             participantes=participantes,
             payload_showdown=payload["showdown"],
@@ -132,12 +114,13 @@ class DistribuidorDePote:
             db=self.db
         )
 
+        # Broadcast via WebSocket
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "showdown",
-            "dados": payload  # payload já contém showdown, vencedores, cartas etc
+            "dados": payload
         })
 
-        return payload ###
+        return payload
     
 
 

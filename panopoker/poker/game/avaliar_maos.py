@@ -107,35 +107,112 @@ cartas_por_rank = {
     10: 5   # royal flush
 }
 
-def identificar_cartas_usadas(
+def identificar_cartas_usadas_completo(
     mao: List[str],
+    mesa: List[str],
     cartas_vencedoras_valores: List[int],
     rank: int
-) -> List[str]:
+) -> List[dict]:
     """
-    Retorna apenas as cartas que compõem a mão real (sem kickers),
-    com base no tipo da jogada (rank).
+    Retorna as cartas usadas na melhor mão, indicando origem, índice e tipo (par, kicker, etc).
     """
-    # quantas cartas compõem a mão principal 
+    from collections import Counter
+
     needed = cartas_por_rank.get(rank, 5)
-    # pega só os valores principais (descartando kicker extra)
     principais = cartas_vencedoras_valores[:needed]
-    valores_restantes = Counter(principais)
+    kickers = cartas_vencedoras_valores[needed:] if len(cartas_vencedoras_valores) > needed else []
+
+    # Conta quantas vezes cada valor é usado
+    valores_main = Counter(principais)
+    valores_kicker = Counter(kickers)
 
     resultado = []
-    # ordenar da mais alta pra mais baixa
-    mao_ordenada = sorted(
-        mao,
-        key=lambda c: VALORES.index(extrair_valor(c)),
-        reverse=True
-    )
 
-    for carta in mao_ordenada:
-        idx = VALORES.index(extrair_valor(carta))
-        if valores_restantes[idx] > 0:
-            resultado.append(carta)
-            valores_restantes[idx] -= 1
-        if len(resultado) >= needed:
-            break
+    # Junta tudo para facilitar a busca pelo índice (mão vem antes)
+    combined = mao + mesa
 
+    def valor_da_carta(c):
+        if c.startswith('10'):
+            return '10'
+        return c[:-1]
+
+    # Vai do valor alto ao baixo igual original
+    for tipo, valores_atuais in [("par", valores_main), ("kicker", valores_kicker)]:
+        for valor, count in valores_atuais.items():
+            for _ in range(count):
+                # Acha a carta correspondente (da mão primeiro)
+                for origem, cartas in [('mao', mao), ('mesa', mesa)]:
+                    for idx, carta in enumerate(cartas):
+                        if VALORES.index(valor_da_carta(carta)) == valor and not any(
+                            r["carta"] == carta and r["origem"] == origem and r["indice"] == idx for r in resultado
+                        ):
+                            resultado.append({
+                                "carta": carta,
+                                "origem": origem,
+                                "indice": idx,
+                                "tipo": tipo
+                            })
+                            break
+                    else:
+                        continue
+                    break
     return resultado
+
+
+
+
+VALORES_NOMES = {
+    2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7",
+    8: "8", 9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A"
+}
+
+TIPOS_MAO = {
+    1: "Carta alta",
+    2: "Par",
+    3: "Dois pares",
+    4: "Trinca",
+    5: "Sequência",
+    6: "Flush",
+    7: "Full house",
+    8: "Quadra",
+    9: "Straight flush",
+    10: "Royal flush"
+}
+
+def nome_valor_poker(idx):
+    try:
+        return VALORES[idx]
+    except Exception:
+        return f"?{idx}?"
+
+def descrever_mao(tipo_mao, valores_mao):
+    def nome(idx):
+        try: return VALORES[idx]
+        except: return f"?{idx}?"
+
+    if tipo_mao == 1:
+        # High card: sempre mostra as 5 cartas
+        return "Carta alta " + ", ".join(nome(v) for v in valores_mao)
+    elif tipo_mao == 2:
+        # Par: mostra todos os kickers
+        return f"Par de {nome(valores_mao[0])}, kickers: {', '.join(nome(v) for v in valores_mao[2:])}"
+    elif tipo_mao == 3:
+        # Dois pares: kicker é o último valor
+        return f"Dois pares: {nome(valores_mao[0])} e {nome(valores_mao[2])}, kicker {nome(valores_mao[4])}"
+    elif tipo_mao == 4:
+        # Trinca: dois kickers
+        return f"Trinca de {nome(valores_mao[0])}, kickers: {', '.join(nome(v) for v in valores_mao[3:])}"
+    elif tipo_mao == 5:
+        return f"Sequência até {nome(valores_mao[0])}"
+    elif tipo_mao == 6:
+        return f"Flush até {nome(valores_mao[0])}"
+    elif tipo_mao == 7:
+        return f"Full house: {nome(valores_mao[0])} com {nome(valores_mao[3])}"
+    elif tipo_mao == 8:
+        return f"Quadra de {nome(valores_mao[0])}, kicker {nome(valores_mao[4])}"
+    elif tipo_mao == 9:
+        return f"Straight flush até {nome(valores_mao[0])}"
+    elif tipo_mao == 10:
+        return "Royal flush"
+    else:
+        return "Mão desconhecida"
