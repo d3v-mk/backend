@@ -11,6 +11,7 @@ from panopoker.core.security import get_current_user
 from panopoker.core.security import get_current_user_optional
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from fastapi.templating import Jinja2Templates
+from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
 
 router = APIRouter(tags=["Admin"])
 
@@ -222,3 +223,15 @@ def apagar_loja_promotor(
     db.commit()
 
     return {"status": "ok", "mensagem": "Loja do promotor removida com sucesso."}
+
+
+# ==== so pra ver oq o showdown ta retornando ====
+@router.post("/admin/{mesa_id}/debug/executar_showdown")
+async def executar_showdown_debug(mesa_id: int, db: Session = Depends(get_db)):
+    mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
+    if not mesa:
+        raise HTTPException(status_code=404, detail="Mesa não encontrada")
+
+    controlador = DistribuidorDePote(mesa=mesa, db=db)
+    resultado = await controlador.realizar_showdown()
+    return resultado

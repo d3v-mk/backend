@@ -91,19 +91,51 @@ def avaliar_mao(mao: List[str]) -> Tuple[int, List[int]]:
 
 
 
-def identificar_cartas_usadas(mao: List[str], cartas_vencedoras_valores: List[int]) -> List[str]:
+from collections import Counter
+
+# Mantenha VALORES e extrair_valor no escopo
+cartas_por_rank = {
+    1: 1,   # high card
+    2: 2,   # one pair
+    3: 4,   # two pair
+    4: 3,   # three of a kind
+    5: 5,   # straight
+    6: 5,   # flush
+    7: 5,   # full house (3 + 2)
+    8: 4,   # four of a kind
+    9: 5,   # straight flush
+    10: 5   # royal flush
+}
+
+def identificar_cartas_usadas(
+    mao: List[str],
+    cartas_vencedoras_valores: List[int],
+    rank: int
+) -> List[str]:
+    """
+    Retorna apenas as cartas que compõem a mão real (sem kickers),
+    com base no tipo da jogada (rank).
+    """
+    # quantas cartas compõem a mão principal 
+    needed = cartas_por_rank.get(rank, 5)
+    # pega só os valores principais (descartando kicker extra)
+    principais = cartas_vencedoras_valores[:needed]
+    valores_restantes = Counter(principais)
+
     resultado = []
-    valores_restantes = cartas_vencedoras_valores.copy()
+    # ordenar da mais alta pra mais baixa
+    mao_ordenada = sorted(
+        mao,
+        key=lambda c: VALORES.index(extrair_valor(c)),
+        reverse=True
+    )
 
-    for carta in mao:
-        valor = extrair_valor(carta)
-        idx = VALORES.index(valor)
-        if idx in valores_restantes:
+    for carta in mao_ordenada:
+        idx = VALORES.index(extrair_valor(carta))
+        if valores_restantes[idx] > 0:
             resultado.append(carta)
-            valores_restantes.remove(idx)
-
-        if len(resultado) == 5:
+            valores_restantes[idx] -= 1
+        if len(resultado) >= needed:
             break
 
     return resultado
-

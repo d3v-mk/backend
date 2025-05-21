@@ -84,19 +84,38 @@ class DistribuidorDePote:
             JogadorNaMesa.mesa_id == self.mesa.id
         ).all()
 
-        for j in jogadores_na_mesa:
-            hole_cards = json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas
-            mao_completa = hole_cards + cartas_mesa
-            rank, valores_usados = avaliar_mao(mao_completa)
-            cartas_vencedoras = identificar_cartas_usadas(mao_completa, valores_usados)
+        from panopoker.poker.game.utils.wincards_helper import wincards_helper
 
-            payload["showdown"].append({
-                "jogador_id": j.jogador_id,
-                "cartas": hole_cards,
-                "rank": [rank, valores_usados],
-                "foldado": j.foldado,
-                "cartas_vencedoras": cartas_vencedoras
-            })
+        # 1) Monte o array combinado aqui:
+        combined = []
+        for j in jogadores_na_mesa:
+            hole = json.loads(j.cartas) if isinstance(j.cartas, str) else j.cartas
+            combined.extend(hole)
+        combined.extend(cartas_mesa)
+
+        debug_print(f"[SD DEBUG] combined = {combined}")
+
+        # 2) Agora chame o helper passando esse combined:
+        showdown_payload, comunitarias, indices, cartas_vencedoras_jogador = wincards_helper(
+            jogadores=jogadores_na_mesa,
+            cartas_mesa=cartas_mesa,
+            vencedores_ids=vencedores_ids
+        )
+
+
+        debug_print(f"[SD DEBUG] showdown_payload = {showdown_payload}")
+        debug_print(f"[SD DEBUG] comunitarias = {comunitarias}")
+        debug_print(f"[SD DEBUG] vencedoras_indices = {indices}")
+
+        # 3) Monte o payload final:
+        payload = {
+            "mesa_id": self.mesa.id,
+            "showdown": showdown_payload,
+            "vencedores": list(set(vencedores_ids)),
+            "cartas_vencedoras_comunitarias": comunitarias,
+            "vencedoras_indices": indices,
+            "cartas_vencedoras_jogador": cartas_vencedoras_jogador  # 👈 AQUI
+        }
 
 
         async def reset_com_delay():
@@ -105,7 +124,6 @@ class DistribuidorDePote:
             await self._resetador().nova_rodada()
 
         asyncio.create_task(reset_com_delay())
-
 
         registrar_estatisticas_showdown(
             participantes=participantes,
