@@ -1,4 +1,4 @@
-from sqlalchemy import func
+'''from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.poker.models.mesa import Mesa
@@ -85,4 +85,4 @@ def matchmaking_ouro(db: Session = Depends(get_db)):
         if len(mesa.jogadores) < 6:
             return mesa
 
-    raise HTTPException(status_code=404, detail="Nenhuma mesa bronze disponível com vaga.")
+    raise HTTPException(status_code=404, detail="Nenhuma mesa bronze disponível com vaga.")'''

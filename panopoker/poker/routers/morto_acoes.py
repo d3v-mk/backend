@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+'''from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import Mesa
@@ -113,4 +113,4 @@ async def entrar_na_mesa(
     controlador = ControladorDeMesa(mesa, db)
     await controlador.entrar_na_mesa(current_user)
 
-    return {"message": f"Jogador {current_user.id} entrou na mesa {mesa.nome}"}
+    return {"message": f"Jogador {current_user.id} entrou na mesa {mesa.nome}"}'''

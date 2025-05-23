@@ -27,6 +27,10 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=2
     return encoded_jwt
 
 
+def decode_jwt(token: str):
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    return payload
+
 
 # Função para obter o token de autorização (Bearer)
 def get_current_user(

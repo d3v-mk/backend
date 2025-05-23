@@ -20,7 +20,7 @@ from panopoker.usuarios.models.promotor import Promotor
 # Importa rotas
 from panopoker.auth import login, register
 from panopoker.financeiro.routers import webhook_mp, auth_mp
-from panopoker.poker.routers import acoes, jogadores, matchmaking, mesa_cartas, mesas_abertas, vez, mesa, loja_web_promoters
+from panopoker.poker.routers import jogadores, mesa_cartas, mesas_abertas, vez, mesa, loja_web_promoters
 from panopoker.usuarios.routers import admin, usuario
 from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor
 
@@ -86,10 +86,10 @@ app.include_router(webhook_mp.router)
 app.include_router(saques.router)
 app.include_router(mesas_abertas.router)
 app.include_router(mesa_cartas.router)
-app.include_router(matchmaking.router)
+#app.include_router(matchmaking.router)
 app.include_router(jogadores.router)
 app.include_router(vez.router)
-app.include_router(acoes.router)
+#app.include_router(morto_acoes.router)
 app.include_router(mesa.router)
 app.include_router(admin.router)
 app.include_router(login.router)

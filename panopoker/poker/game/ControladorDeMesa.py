@@ -59,23 +59,33 @@ class ControladorDeMesa:
 
 
     async def entrar_na_mesa(self, usuario: Usuario):
+        print(f"[PRINT] === INICIANDO entrar_na_mesa ===")
+        print(f"[PRINT] Mesa: {self.mesa.id} | Usuário: {usuario.id}")
+
         jogador_existente = self.db.query(JogadorNaMesa)\
             .filter(JogadorNaMesa.mesa_id == self.mesa.id)\
             .filter(JogadorNaMesa.jogador_id == usuario.id)\
             .first()
 
+        print(f"[PRINT] Jogador já existe? {'SIM' if jogador_existente else 'NÃO'}")
+
         if jogador_existente:
+            print(f"[PRINT] ⚠️ Jogador já está na mesa. ABORTANDO")
             raise HTTPException(status_code=400, detail="Jogador já está na mesa.")
 
+        print(f"[PRINT] Saldo do usuário: {usuario.saldo} | Buy-in da mesa: {self.mesa.buy_in}")
         if usuario.saldo < self.mesa.buy_in:
+            print(f"[PRINT] ❌ Saldo insuficiente! ABORTANDO")
             raise HTTPException(status_code=400, detail="Saldo insuficiente para entrar na mesa.")
 
         # Debitar o buy-in do saldo do usuário
         usuario.saldo -= self.mesa.buy_in
         self.db.add(usuario)
+        print(f"[PRINT] Debitado buy-in. Novo saldo do usuário: {usuario.saldo}")
 
         # Pegar próxima posição livre
         posicao = self._cadeira_posicao_disponivel()
+        print(f"[PRINT] Próxima posição disponível: {posicao}")
 
         jogador_na_mesa = JogadorNaMesa(
             mesa_id=self.mesa.id,
@@ -92,28 +102,33 @@ class ControladorDeMesa:
 
         # 🔥 AJUSTE IMPORTANTE: Se a mesa já estiver em jogo, ele NÃO participa da rodada atual
         if self.mesa.status == MesaStatus.em_jogo:
+            print("[PRINT] Mesa já está em jogo, não participa da rodada atual")
             jogador_na_mesa.participando_da_rodada = False
         else:
+            print("[PRINT] Mesa NÃO está em jogo, já participa da rodada")
             jogador_na_mesa.participando_da_rodada = True
 
         self.db.add(jogador_na_mesa)
+        print(f"[PRINT] Jogador adicionado no banco. Commitando...")
         self.db.commit()
+        print(f"[PRINT] Commit realizado.")
 
-        debug_print(f"[ENTRAR_NA_MESA] Jogador {usuario.id} entrou na mesa {self.mesa.nome}")
+        print(f"[PRINT] [ENTRAR_NA_MESA] Jogador {usuario.id} entrou na mesa {self.mesa.nome}")
 
         # Atualiza status da mesa se tiver pelo menos 2 jogadores
         jogadores = self.db.query(JogadorNaMesa)\
             .filter(JogadorNaMesa.mesa_id == self.mesa.id)\
             .all()
+        print(f"[PRINT] Total de jogadores na mesa: {len(jogadores)}")
 
         if len(jogadores) >= 2 and self.mesa.status == "aberta":
+            print(f"[PRINT] Mesa aberta e já tem 2 jogadores ou mais. Iniciando partida...")
             self.db.refresh(self.mesa)
             controlador = self._controlador()
             await controlador.iniciar_partida()
+            
+        print(f"[PRINT] === FIM entrar_na_mesa ===")
 
-        await connection_manager.broadcast_mesa(self.mesa.id, {
-            "evento": "mesa_atualizada"
-        })
 
             
 
