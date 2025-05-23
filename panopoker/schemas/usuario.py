@@ -31,6 +31,7 @@ class PerfilResponse(BaseModel):
     id_publico: str
     nome: str
     avatar_url: Optional[str]
+    is_promoter: bool = False
 
     # Estatísticas principais
     rodadas_ganhas: int

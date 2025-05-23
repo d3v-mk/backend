@@ -20,7 +20,7 @@ def listar_promotores_com_loja(db: Session = Depends(get_db)):
             "nome": p.usuario.nome,
             "slug": p.slug,
             "whatsapp": p.whatsapp,
-            "avatarUrl": p.avatar_url
+            "avatarUrl": p.usuario.avatar_url
         }
         for p in promotores
     ]

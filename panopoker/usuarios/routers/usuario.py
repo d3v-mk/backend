@@ -104,6 +104,7 @@ def get_perfil_completo(
         "id_publico": user.id_publico,
         "nome": user.nome,
         "avatar_url": avatar_url,
+        "is_promoter": getattr(user, "is_promoter", False),
 
         # Estatísticas principais
         "rodadas_ganhas": stats.rodadas_ganhas if stats else 0,
@@ -160,6 +161,7 @@ def get_perfil_de_usuario(user_id: int, db: Session = Depends(get_db)):
             id_publico=usuario.id_publico,
             nome=usuario.nome,
             avatar_url=usuario.avatar_url,
+            is_promoter=getattr(usuario, "is_promotor", False),
             rodadas_ganhas=0,
             rodadas_jogadas=0,
             fichas_ganhas=0.0,
@@ -185,6 +187,7 @@ def get_perfil_de_usuario(user_id: int, db: Session = Depends(get_db)):
         id_publico=usuario.id_publico,
         nome=usuario.nome,
         avatar_url=usuario.avatar_url,
+        is_promotor=getattr(usuario, "is_promotor", False),
         rodadas_ganhas=estatisticas.rodadas_ganhas,
         rodadas_jogadas=estatisticas.rodadas_jogadas,
         fichas_ganhas=estatisticas.fichas_ganhas,
