@@ -23,6 +23,7 @@ class DistribuidorDePote:
     async def realizar_showdown(self):
         from panopoker.poker.game.utils.estatisticas_helper import registrar_estatisticas_showdown
         from panopoker.poker.game.utils.wincards_helper import wincards_helper
+        from panopoker.lobby.utils.noticias_helper import registrar_eventos_showdown
 
         debug_print(f"[SHOWDOWN] Iniciando showdown na mesa {self.mesa.id}")
 
@@ -107,12 +108,29 @@ class DistribuidorDePote:
         asyncio.create_task(reset_com_delay())
 
         # Registrar estatísticas (se precisar)
-        registrar_estatisticas_showdown(
-            participantes=participantes,
-            payload_showdown=payload["showdown"],
-            side_pots=side_pots,
-            db=self.db
-        )
+        try:
+            registrar_estatisticas_showdown(
+                participantes=participantes,
+                payload_showdown=payload["showdown"],
+                side_pots=side_pots,
+                db=self.db
+            )
+        except Exception as e:
+            debug_print(f"[SHOWDOWN][WARN] Erro ao registrar estatisticas: {e}")
+
+        # Registrar eventos (newsmarquee)
+        try:
+            registrar_eventos_showdown(
+                participantes=participantes,
+                cartas_mesa=cartas_mesa,
+                side_pots=side_pots,
+                mesa=self.mesa,
+                #identificar_vencedores=self._identificar_vencedores,  # se necessário
+                #avaliar_mao=avaliar_mao,  # se necessário
+                db=self.db
+            )
+        except Exception as e:
+            debug_print(f"[SHOWDOWN][WARN] Erro ao registrar eventos: {e}")
 
         # Broadcast via WebSocket
         await connection_manager.broadcast_mesa(self.mesa.id, {

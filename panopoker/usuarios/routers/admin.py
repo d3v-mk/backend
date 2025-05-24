@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
@@ -12,6 +12,8 @@ from panopoker.core.security import get_current_user_optional
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from fastapi.templating import Jinja2Templates
 from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
+from panopoker.lobby.models.noticias import Noticia
+from panopoker.schemas.usuario import NoticiaAdminCreate
 
 router = APIRouter(tags=["Admin"])
 
@@ -47,6 +49,47 @@ def resetar_estatisticas(db: Session = Depends(get_db)):
     return {"mensagem": "Estatísticas resetadas com sucesso"}
 
 
+from sqlalchemy import text
+
+@router.delete("/noticias/limpar")
+def limpar_noticias(
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(get_current_user)
+):
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sem permissão, jovem gafanhoto."
+        )
+
+    qtd = db.query(Noticia).delete()
+    db.commit()
+
+    db.execute(text("DELETE FROM sqlite_sequence WHERE name='noticias';")) #arrumar isso qnd migrar pro PostgreSQL
+    db.commit()
+
+    return {"ok": True, "msg": f"notícias deletadas e IDs resetados"}
+
+
+
+@router.post("/noticias/admin", status_code=201)
+def criar_noticia_admin(
+    payload: NoticiaAdminCreate,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user)
+):
+    if not getattr(usuario, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Sem permissão, jovem padawan.")
+
+    noticia = Noticia(
+        mensagem=payload.mensagem,
+        tipo="admin",
+        usuario_id=usuario.id
+    )
+    db.add(noticia)
+    db.commit()
+    db.refresh(noticia)
+    return noticia  # Retorna o SQLAlchemy model (de preferência, faça um DTO/Schema, mas pra admin pode ser assim)
 
 
 

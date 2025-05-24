@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from panopoker.core.database import Base
 from sqlalchemy.orm import relationship
-from panopoker.usuarios.models.promotor import Promotor
-from .estatisticas import EstatisticasJogador
 import uuid
 
 
@@ -21,14 +19,20 @@ class Usuario(Base):
     
     auth_provider = Column(String, default="local") # Identifica se foi registrado localmente ou com o google
 
+
+    #Relationships
     mesas = relationship("JogadorNaMesa", back_populates="jogador")  # Relacionamento com mesas
-
     pagamentos = relationship("Pagamento", back_populates="user") # Relacionamento com pagamento
-
     promotor = relationship("Promotor", back_populates="usuario", uselist=False)
-
     estatisticas = relationship("EstatisticasJogador", back_populates="usuario", uselist=False)
+    noticias = relationship("Noticia", back_populates="usuario", lazy="select")
 
 
     def __repr__(self):
         return f"<Usuario {self.id} - {self.nome}>"
+
+
+# Late Lazy import
+from panopoker.usuarios.models.promotor import Promotor
+from .estatisticas import EstatisticasJogador
+from panopoker.lobby.models.noticias import Noticia

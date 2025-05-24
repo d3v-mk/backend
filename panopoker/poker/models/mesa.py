@@ -55,6 +55,8 @@ class Mesa(Base):
 
     jogadores = relationship("JogadorNaMesa", back_populates="mesa", lazy="select")
 
+    noticias = relationship("Noticia", back_populates="mesa", lazy="select")
+
     def __repr__(self):
         return f"<Mesa {self.id} - {self.nome} ({self.status})>"
     

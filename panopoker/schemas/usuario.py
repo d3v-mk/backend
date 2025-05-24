@@ -27,6 +27,9 @@ class User(UserBase):
         from_attributes = True  # Isso permite que o Pydantic converta o modelo SQLAlchemy para Pydantic
 
 
+class NoticiaAdminCreate(BaseModel):
+    mensagem: str
+
 class PerfilResponse(BaseModel):
     id_publico: str
     nome: str

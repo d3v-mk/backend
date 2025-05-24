@@ -23,6 +23,7 @@ from panopoker.financeiro.routers import webhook_mp, auth_mp
 from panopoker.poker.routers import jogadores, mesa_cartas, mesas_abertas, vez, mesa, loja_web_promoters
 from panopoker.usuarios.routers import admin, usuario
 from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor
+from panopoker.lobby.routers import lobby
 
 from panopoker.websocket import routes as ws_routes
 
@@ -102,6 +103,7 @@ app.include_router(auth_mp.router)
 app.include_router(loja_web_promoters.router)
 app.include_router(configurar_loja.router)
 
+app.include_router(lobby.router)
 
 app.include_router(ws_routes.router)
 

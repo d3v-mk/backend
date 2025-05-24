@@ -45,6 +45,9 @@ class ExecutorDeAcoes:
         jogador = self._buscar_jogador(jogador_id)
         debug_print(f"[ACAO_CHECK] 👤 Jogador encontrado: {jogador.jogador_id} (posição {jogador.posicao_cadeira})")
 
+        if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
+            raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
+
         if jogador.jogador_id != self.mesa.jogador_da_vez:
             debug_print(f"[ACAO_CHECK] ❌ Jogador {jogador.jogador_id} tentou agir fora da vez (vez do jogador {self.mesa.jogador_da_vez})")
             raise HTTPException(400, "Não é sua vez de agir.")
@@ -81,8 +84,12 @@ class ExecutorDeAcoes:
         debug_print(f"[ACAO_CALL] jogador {jogador_id} tentando CALL")
         jogador = self._buscar_jogador(jogador_id)
 
+        if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
+            raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
+
         if jogador.jogador_id != self.mesa.jogador_da_vez:
             raise HTTPException(400, "Não é sua vez de agir.")
+        
         if jogador.rodada_ja_agiu or jogador.foldado or not jogador.participando_da_rodada:
             raise HTTPException(400, "Jogador não pode agir.")
 
@@ -122,6 +129,9 @@ class ExecutorDeAcoes:
 
     async def acao_allin(self, jogador_id: int):
         jogador = self._buscar_jogador(jogador_id)
+
+        if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
+            raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
             raise HTTPException(400, "Não é sua vez de agir.")
@@ -176,6 +186,9 @@ class ExecutorDeAcoes:
     async def acao_fold(self, jogador_id: int):
         jogador = self._buscar_jogador(jogador_id)
 
+        if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
+            raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
+
         if jogador.jogador_id != self.mesa.jogador_da_vez:
             raise HTTPException(400, "Não é sua vez de agir.")
         if jogador.rodada_ja_agiu or jogador.foldado or not jogador.participando_da_rodada:
@@ -203,6 +216,9 @@ class ExecutorDeAcoes:
 
     async def acao_raise(self, jogador_id: int, valor: float):
         jogador = self._buscar_jogador(jogador_id)
+
+        if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
+            raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
 
         if jogador.jogador_id != self.mesa.jogador_da_vez:
             raise HTTPException(400, "Não é sua vez de agir.")
