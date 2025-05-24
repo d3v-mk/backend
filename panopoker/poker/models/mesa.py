@@ -31,6 +31,7 @@ class Mesa(Base):
 
 
     id = Column(Integer, primary_key=True, index=True) # ID da mesa
+    rodada_id = Column(Integer, default=1) # Identifica a rodada
     nome = Column(String, index=True) # Nome da mesa
     buy_in = Column(Float)  # Valor mínimo da mesa (buy-in)
     status = Column(String, default="aberta")  # Status da mesa ('aberta', 'em_jogo', 'fechada')

@@ -43,11 +43,15 @@ class ResetadorDePartida:
         self.mesa.posicao_sb = None
         self.mesa.posicao_bb = None
 
+        # Incrementa +1 no rodada_id
+        self.mesa.rodada_id += 1
+
         # 4) Já chamamos resetar_jogadores() no topo, não precisa aqui de novo
 
         self.mesa.dealer_pos = dealer_ant
         self.db.add(self.mesa)
         self.db.commit()
+        print(f"🟡 [NOVA_RODADA] rodada_id agora é {self.mesa.rodada_id}")
 
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "nova_rodada"

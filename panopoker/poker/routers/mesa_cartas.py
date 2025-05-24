@@ -139,32 +139,3 @@ def get_cartas_comunitarias(
 
     return {"cartas_comunitarias": cartas_visiveis} ##
 
-
-
-
-
-@router.get("/{mesa_id}")
-def get_mesa_completa(
-    mesa_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
-):
-    mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
-    if not mesa:
-        raise HTTPException(status_code=404, detail="Mesa não encontrada.")
-
-    return {
-        "id": mesa.id,
-        "nome": mesa.nome,
-        "buy_in": mesa.buy_in,
-        "status": mesa.status,
-        "limite_jogadores": mesa.limite_jogadores,
-        "jogador_da_vez": mesa.jogador_da_vez,
-        "estado_da_rodada": mesa.estado_da_rodada,
-        "dealer_pos": mesa.dealer_pos,
-        "small_blind": mesa.small_blind,
-        "big_blind": mesa.big_blind,
-        "pote_total": mesa.pote_total,
-        "aposta_atual": mesa.aposta_atual,
-        "cartas_comunitarias": mesa.cartas_comunitarias,
-    }

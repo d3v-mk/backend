@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import Mesa
+from panopoker.core.security import get_current_user
 from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
 from panopoker.poker.game.avaliar_maos import RANKING
 from panopoker.core.debug import debug_print
@@ -102,4 +103,33 @@ def obter_resultado_showdown(
         "vencedores": nomes,
         "mao_formada": mao_legivel,
         "pote": pote_distribuido
+    }
+
+
+
+@router.get("/{mesa_id}")
+def get_mesa_completa(
+    mesa_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
+    if not mesa:
+        raise HTTPException(status_code=404, detail="Mesa não encontrada.")
+
+    return {
+        "id": mesa.id,
+        "rodada_id": mesa.rodada_id,
+        "nome": mesa.nome,
+        "buy_in": mesa.buy_in,
+        "status": mesa.status,
+        "limite_jogadores": mesa.limite_jogadores,
+        "jogador_da_vez": mesa.jogador_da_vez,
+        "estado_da_rodada": mesa.estado_da_rodada,
+        "dealer_pos": mesa.dealer_pos,
+        "small_blind": mesa.small_blind,
+        "big_blind": mesa.big_blind,
+        "pote_total": mesa.pote_total,
+        "aposta_atual": mesa.aposta_atual,
+        "cartas_comunitarias": mesa.cartas_comunitarias,
     }
