@@ -107,7 +107,22 @@ class ResetadorDePartida:
         for j in jogadores:
             if j.saldo_atual <= 0 and not j.participando_da_rodada:
                 debug_print(f"[RESETAR_JOGADORES] Removendo jogador {j.jogador_id} — ausente e zerado")
+
+                # 🔥 Envia aviso individual antes de remover
+                await connection_manager.enviar_para_jogador(
+                    mesa_id=self.mesa.id,
+                    user_id=j.jogador_id,
+                    message={
+                        "type": "removido_sem_saldo",
+                        "mensagem": "Você ficou sem fichas e foi removido da mesa. Fale com um promotor para recarregar!"
+                    }
+                )
+
                 self.db.delete(j)
         self.db.commit()  # commit da remoção!
 
         debug_print("[RESETAR_JOGADORES] Jogadores resetados com sucesso.")
+
+        await connection_manager.broadcast_mesa(self.mesa.id, {
+            "evento": "mesa_atualizada"
+        })

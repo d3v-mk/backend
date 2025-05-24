@@ -109,6 +109,7 @@ class GerenciadorDeRodada:
             .all()
         )
 
+        # 1️⃣ Vitória automática se só sobrar 1
         if len(ativos) == 1:
             vencedor = ativos[0]
             debug_print(f"🏆 Vitória automática: jogador {vencedor.jogador_id}")
@@ -118,31 +119,56 @@ class GerenciadorDeRodada:
                 self.mesa.id,
                 {"evento": "vitoria_automatica", "jogador_id": vencedor.jogador_id}
             )
-            await self._resetador().nova_rodada()  # Se for async
+            await self._resetador().nova_rodada()
             return
 
+        # 2️⃣ Showdown imediato se todo mundo zerou o stack
         if ativos and all(j.saldo_atual == 0 for j in ativos):
-            debug_print("🏁 Todos sem saldo restante — showdown imediato")
-            await self._distribuidor().realizar_showdown()  # Se for async
-            return
-
-        if all(j.rodada_ja_agiu or (j.saldo_atual == 0 and j.aposta_atual > 0) for j in ativos) \
-            and len({j.aposta_atual for j in ativos}) == 1:
-            debug_print("⏭️ Todos agiram/all-in e apostas iguais — avançar fase")
-            await self.avancar_fase()  # Se for async
-            return
-
-        if not any((not j.rodada_ja_agiu) and j.saldo_atual > 0 for j in ativos):
-            debug_print("🏁 Sem mais ações possíveis (side-pot) — showdown imediato")
+            debug_print("🏁 Todos sem saldo — showdown imediato")
             await self._distribuidor().realizar_showdown()
             return
 
+        # 3️⃣ Avança fase NORMAL só quando:
+        #    • TODOS já agiram
+        #    • As apostas estão todas iguais
+        #    • NINGUÉM está all-in (saldo > 0 para todo mundo)
+        if (
+            all(j.rodada_ja_agiu for j in ativos)
+            and len({j.aposta_atual for j in ativos}) == 1
+            and all(j.saldo_atual > 0 for j in ativos)
+        ):
+            debug_print("⏭️ Todos agiram e apostas iguais (sem all-in) — avançar fase")
+            await self.avancar_fase()
+            return
+
+        # 4️⃣ Showdown imediato se rolou all-in + call:
+        #    • Todos ou agiram ou estão no all-in
+        #    • As apostas estão iguais
+        if (
+            all(j.rodada_ja_agiu or j.saldo_atual == 0 for j in ativos)
+            and len({j.aposta_atual for j in ativos}) == 1
+        ):
+            debug_print("🏁 All-in + call detectado — showdown imediato")
+            await self._distribuidor().realizar_showdown()
+            return
+
+        # 5️⃣ Showdown de side-pot extremo: só se alguém estiver all-in e ninguém mais puder agir
+        if (
+            any(j.saldo_atual == 0 for j in ativos)
+            and not any((not j.rodada_ja_agiu) and j.saldo_atual > 0 for j in ativos)
+        ):
+            debug_print("🏁 Side-pot completo — showdown imediato")
+            await self._distribuidor().realizar_showdown()
+            return
+
+        # 6️⃣ Repasse de vez ou início padrão
         if posicao_origem is not None:
             debug_print(f"↪️ Repassar vez de posição {posicao_origem}")
             await self.avancar_vez(posicao_origem, skip_timer=True)
         else:
             debug_print("↪️ Iniciando vez padrão")
             await self.avancar_vez()
+
 
 
 

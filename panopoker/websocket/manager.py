@@ -35,4 +35,13 @@ class ConnectionManager:
                         # Remove só essa conexão zoada
                         self.disconnect(mid, uid, ws)
 
+    async def enviar_para_jogador(self, mesa_id: int, user_id: int, message: dict):
+        key = (mesa_id, user_id)
+        if key in self.active_connections:
+            for ws in list(self.active_connections[key]):
+                try:
+                    await ws.send_json(message)
+                except Exception:
+                    self.disconnect(mesa_id, user_id, ws)
+
 connection_manager = ConnectionManager()
