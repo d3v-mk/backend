@@ -1,20 +1,14 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
-from panopoker.service.mercadopago import sdk
 from panopoker.financeiro.models.pagamento import Pagamento
 from panopoker.usuarios.models.usuario import Usuario
-import logging
-
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-import requests
 from panopoker.core.security import get_current_user_optional
-from panopoker.core.database import get_db
 from panopoker.usuarios.models.promotor import Promotor
-
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
 
+import logging
+import requests
 import uuid
 
 logging.basicConfig(level=logging.INFO)

@@ -11,7 +11,7 @@ from panopoker.core.database import engine, Base, SessionLocal
 from panopoker.core import timers_async
 
 # Importa os modelos para garantir criação das tabelas
-from panopoker.poker.financeiro.routers import pagamentos, saques
+from panopoker.poker.financeiro.routers import saques
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor

@@ -5,13 +5,10 @@ from panopoker.core.database import get_db
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
 from panopoker.core.security import get_current_user_optional
+from panopoker.core.config import settings
 import requests, os
 
 router = APIRouter()
-
-CLIENT_ID = os.getenv("MERCADO_PAGO_CLIENT_ID")
-CLIENT_SECRET = os.getenv("MERCADO_PAGO_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("MERCADO_PAGO_REDIRECT_URI")
 
 @router.get("/auth/callback-mp")
 def callback_oauth(
@@ -20,15 +17,17 @@ def callback_oauth(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
 ):
+    
+
     if not usuario or not usuario.is_promoter:
         raise HTTPException(status_code=403, detail="Usuário não autenticado ou não é promotor.")
 
     payload = {
         "grant_type": "authorization_code",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        "client_id": settings.MERCADO_PAGO_CLIENT_ID,
+        "client_secret": settings.MERCADO_PAGO_CLIENT_SECRET,
         "code": code,
-        "redirect_uri": REDIRECT_URI
+        "redirect_uri": settings.MERCADO_PAGO_REDIRECT_URI
     }
 
     response = requests.post("https://api.mercadopago.com/oauth/token", data=payload)
