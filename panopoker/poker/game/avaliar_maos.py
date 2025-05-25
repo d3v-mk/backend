@@ -21,12 +21,18 @@ def extrair_valor(carta: str) -> str:
 
 def encontrar_straight(valores: List[int]) -> List[int] | None:
     s = sorted(set(valores))
-    for i in range(len(s) - 4):
+    n = len(s)
+    # 1) busca de trás pra frente, pra achar a straight mais alta primeiro
+    for i in range(n - 5, -1, -1):
+        # ex.: i = n-5 => s[i:i+5] é último window de 5 valores
         if s[i+4] - s[i] == 4:
+            # devolve em ordem descendente [alto,...,baixo]
             return sorted(s[i:i+5], reverse=True)
+    # 2) roda wheel (A-2-3-4-5) só se não achou nada acima
     if set([12, 0, 1, 2, 3]).issubset(s):
         return [3, 2, 1, 0, 12]
     return None
+
 
 def avaliar_mao(mao: List[str]) -> Tuple[int, List[int]]:
     valores_idx = [VALORES.index(extrair_valor(c)) for c in mao]
@@ -93,19 +99,23 @@ def avaliar_mao(mao: List[str]) -> Tuple[int, List[int]]:
 
 from collections import Counter
 
-# Mantenha VALORES e extrair_valor no escopo
+# Quantidade de cartas usadas para cada tipo de mão
 cartas_por_rank = {
-    1: 1,   # high card
+    1: 5,   # high card
     2: 2,   # one pair
-    3: 4,   # two pair
+    3: 4,   # two pair (2+2)
     4: 3,   # three of a kind
     5: 5,   # straight
     6: 5,   # flush
-    7: 5,   # full house (3 + 2)
+    7: 5,   # full house (3+2)
     8: 4,   # four of a kind
     9: 5,   # straight flush
     10: 5   # royal flush
 }
+
+def extrair_valor(carta: str) -> str:
+    return "10" if carta.startswith("10") else carta[:-1]
+
 
 def identificar_cartas_usadas_completo(
     mao: List[str],
@@ -114,49 +124,78 @@ def identificar_cartas_usadas_completo(
     rank: int
 ) -> List[dict]:
     """
-    Retorna as cartas usadas na melhor mão, indicando origem, índice e tipo (par, kicker, etc).
+    Retorna as cartas usadas na melhor mão, indicando origem, índice e tipo.
+    Agora filtra por naipe em casos de flush.
     """
-    from collections import Counter
-
+    # Número de cartas que compõem a mão principal
     needed = cartas_por_rank.get(rank, 5)
     principais = cartas_vencedoras_valores[:needed]
-    kickers = cartas_vencedoras_valores[needed:] if len(cartas_vencedoras_valores) > needed else []
+    kickers = cartas_vencedoras_valores[needed:]
 
-    # Conta quantas vezes cada valor é usado
+    # Contagem de valores
     valores_main = Counter(principais)
     valores_kicker = Counter(kickers)
 
+    # Define o tipo principal conforme ranking
+    if rank == RANKING["royal_flush"]:
+        tipo_main = "royal_flush"
+    elif rank == RANKING["straight_flush"]:
+        tipo_main = "straight_flush"
+    elif rank == RANKING["four_of_a_kind"]:
+        tipo_main = "quadra"
+    elif rank == RANKING["full_house"]:
+        tipo_main = "full_house"
+    elif rank == RANKING["flush"]:
+        tipo_main = "flush"
+    elif rank == RANKING["straight"]:
+        tipo_main = "sequencia"
+    elif rank == RANKING["three_of_a_kind"]:
+        tipo_main = "trinca"
+    elif rank == RANKING["two_pair"]:
+        tipo_main = "dois_pares"
+    elif rank == RANKING["one_pair"]:
+        tipo_main = "par"
+    else:
+        tipo_main = "high_card"
+
     resultado = []
 
-    # Junta tudo para facilitar a busca pelo índice (mão vem antes)
-    combined = mao + mesa
+    def valor_da_carta(c: str) -> str:
+        return extrair_valor(c)
 
-    def valor_da_carta(c):
-        if c.startswith('10'):
-            return '10'
-        return c[:-1]
+    # Detecta naipe de flush caso necessário
+    flush_suit = None
+    if tipo_main in ("flush", "straight_flush", "royal_flush"):
+        suit_counts = Counter(c[-1] for c in mao + mesa)
+        flush_suit = next((s for s, cnt in suit_counts.items() if cnt >= 5), None)
 
-    # Vai do valor alto ao baixo igual original
-    for tipo, valores_atuais in [("par", valores_main), ("kicker", valores_kicker)]:
-        for valor, count in valores_atuais.items():
+    # Busca cartas principais e kickers (mão primeiro, depois mesa)
+    for tipo, count_map in ((tipo_main, valores_main), ("kicker", valores_kicker)):
+        for valor, count in count_map.items():
             for _ in range(count):
-                # Acha a carta correspondente (da mão primeiro)
-                for origem, cartas in [('mao', mao), ('mesa', mesa)]:
+                # procura na mão, depois na mesa
+                for origem, cartas in (('mao', mao), ('mesa', mesa)):
                     for idx, carta in enumerate(cartas):
+                        # filtra por naipe de flush quando aplicável (exceto kickers)
+                        if flush_suit and tipo != 'kicker' and carta[-1] != flush_suit:
+                            continue
                         if VALORES.index(valor_da_carta(carta)) == valor and not any(
-                            r["carta"] == carta and r["origem"] == origem and r["indice"] == idx for r in resultado
+                            r['carta'] == carta and r['origem'] == origem and r['indice'] == idx
+                            for r in resultado
                         ):
                             resultado.append({
-                                "carta": carta,
-                                "origem": origem,
-                                "indice": idx,
-                                "tipo": tipo
+                                'carta': carta,
+                                'origem': origem,
+                                'indice': idx,
+                                'tipo': tipo
                             })
                             break
                     else:
                         continue
                     break
     return resultado
+
+
 
 
 

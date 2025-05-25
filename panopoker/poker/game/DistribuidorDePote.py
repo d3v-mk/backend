@@ -63,6 +63,7 @@ class DistribuidorDePote:
 
         # Calcula side pots e distribui
         side_pots = self._calcular_side_pots(participantes)
+        side_pots = [(amt, grp) for amt, grp in side_pots if amt > 0] #### nova linha, se der merda, tira isso
         vencedores_ids = []
         for amount, grupo in side_pots:
             resultados = []
@@ -81,6 +82,14 @@ class DistribuidorDePote:
         self.db.add(self.mesa)
         self.db.commit()
 
+        side_pots_info = [
+            {
+                "valor": pot,
+                "jogadores": [j.jogador_id for j in grupo]
+            }
+            for pot, grupo in side_pots
+        ]
+
         # Todos os jogadores da mesa (para mostrar showdown até dos foldados)
         jogadores_na_mesa = self.db.query(JogadorNaMesa).filter(
             JogadorNaMesa.mesa_id == self.mesa.id
@@ -96,7 +105,8 @@ class DistribuidorDePote:
         payload = {
             "mesa_id": self.mesa.id,
             "showdown": showdown_payload,
-            "vencedores": list(set(vencedores_ids))
+            "vencedores": list(set(vencedores_ids)),
+            "side_pots": side_pots_info  # 👈 adiciona aqui!
         }
 
         # (Opcional) Delay de 5s pra nova rodada
