@@ -13,6 +13,16 @@ router = APIRouter(prefix="/usuario", tags=["Usuario"])
 
 DOMINIOS_VALIDOS = {"gmail.com", "hotmail.com", "outlook.com", "yahoo.com"}
 
+def conq_beta_tester(usuario: Usuario, db: Session):
+    from panopoker.usuarios.models.estatisticas import EstatisticasJogador
+    from datetime import datetime, timezone
+
+    estatisticas = EstatisticasJogador(usuario_id=usuario.id)
+    if datetime.now(timezone.utc) < datetime(2025, 7, 1, tzinfo=timezone.utc):
+        estatisticas.beta_tester = 1
+    db.add(estatisticas)
+    db.commit()
+
 # Endpoint para criar um novo usuário
 @router.post("/register", response_model=User)
 def registrar(user: UserCreate, db: Session = Depends(get_db)):
@@ -47,10 +57,12 @@ def registrar(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
+    conq_beta_tester(db_user, db)
+
     return db_user
 
 def verificar_email_valido(email: str):
-    if not re.match(r"[^@]+@[^@]+\\.[^@]+", email):
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         raise HTTPException(status_code=400, detail="Formato de email inválido.")
 
     dominio = email.split("@")[-1].lower()

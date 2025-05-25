@@ -2,6 +2,9 @@ from sqlalchemy import Column, Integer, String, Float, Boolean
 from panopoker.core.database import Base
 from sqlalchemy.orm import relationship
 import uuid
+from sqlalchemy import DateTime, Column
+from datetime import datetime, timezone
+
 
 
 class Usuario(Base):
@@ -9,6 +12,7 @@ class Usuario(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     id_publico = Column(String, unique=True, default=lambda: str(uuid.uuid4().int)[:8])
+    data_registro = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     nome = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     senha_hash = Column(String)

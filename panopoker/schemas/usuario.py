@@ -59,3 +59,6 @@ class PerfilResponse(BaseModel):
     data_primeira_vitoria: Optional[datetime]
     data_ultima_vitoria: Optional[datetime]
     ultimo_update: Optional[datetime]
+
+    # Conquistas
+    beta_tester: Optional[int] = 0

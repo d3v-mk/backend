@@ -35,4 +35,10 @@ class EstatisticasJogador(Base):
 
     ultimo_update = Column(DateTime, default=datetime.utcnow)
 
+
+
+    # Conquistas
+    beta_tester = Column(Integer, default=0)  # 0 = não tem, 1 = tem
+
+
     usuario = relationship("Usuario", back_populates="estatisticas")

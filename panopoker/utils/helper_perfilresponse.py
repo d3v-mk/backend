@@ -44,4 +44,5 @@ def build_perfil_response(
         data_primeira_vitoria=stats.data_primeira_vitoria if stats and stats.data_primeira_vitoria else None,
         data_ultima_vitoria=stats.data_ultima_vitoria if stats and stats.data_ultima_vitoria else None,
         ultimo_update=stats.ultimo_update if stats and stats.ultimo_update else None,
+        beta_tester=stats.beta_tester if stats else 0
     )

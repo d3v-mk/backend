@@ -13,6 +13,17 @@ from panopoker.core.config import GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
+def conq_beta_tester(usuario: Usuario, db: Session):
+    from panopoker.usuarios.models.estatisticas import EstatisticasJogador
+    from datetime import datetime, timezone
+
+    estatisticas = EstatisticasJogador(usuario_id=usuario.id)
+    if datetime.now(timezone.utc) < datetime(2025, 7, 1, tzinfo=timezone.utc):
+        estatisticas.beta_tester = 1
+    db.add(estatisticas)
+    db.commit()
+
+
 class LoginRequest(BaseModel):
     nome: str | None = None
     password: str | None = None
@@ -51,6 +62,8 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
             db.add(usuario)
             db.commit()
             db.refresh(usuario)
+
+            conq_beta_tester(usuario, db) ######### <<---- remover qnd sair do betinha
 
         jwt_token = create_access_token(data={"sub": str(usuario.id)})
         return {
