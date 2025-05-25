@@ -9,19 +9,12 @@ from panopoker.core.debug import debug_print
 import re
 from fastapi import HTTPException
 
+from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
+
 router = APIRouter(prefix="/usuario", tags=["Usuario"])
 
 DOMINIOS_VALIDOS = {"gmail.com", "hotmail.com", "outlook.com", "yahoo.com"}
 
-def conq_beta_tester(usuario: Usuario, db: Session):
-    from panopoker.usuarios.models.estatisticas import EstatisticasJogador
-    from datetime import datetime, timezone
-
-    estatisticas = EstatisticasJogador(usuario_id=usuario.id)
-    if datetime.now(timezone.utc) < datetime(2025, 7, 1, tzinfo=timezone.utc):
-        estatisticas.beta_tester = 1
-    db.add(estatisticas)
-    db.commit()
 
 # Endpoint para criar um novo usuário
 @router.post("/register", response_model=User)

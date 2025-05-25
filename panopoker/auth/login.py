@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from panopoker.schemas.auth_schema import LoginRequest
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.usuarios.models.usuario import Usuario
@@ -9,25 +9,11 @@ from google.auth.transport import requests as google_requests
 from panopoker.core.debug import debug_print
 import httpx
 from fastapi.responses import RedirectResponse
-from panopoker.core.config import GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, GOOGLE_WEB_CLIENT_SECRET
+from panopoker.core.config import GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, GOOGLE_WEB_CLIENT_SECRET, GOOGLE_TOKEN_URL, GOOGLE_REDIRECT_URI_WEB
+
+from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
-
-def conq_beta_tester(usuario: Usuario, db: Session):
-    from panopoker.usuarios.models.estatisticas import EstatisticasJogador
-    from datetime import datetime, timezone
-
-    estatisticas = EstatisticasJogador(usuario_id=usuario.id)
-    if datetime.now(timezone.utc) < datetime(2025, 7, 1, tzinfo=timezone.utc):
-        estatisticas.beta_tester = 1
-    db.add(estatisticas)
-    db.commit()
-
-
-class LoginRequest(BaseModel):
-    nome: str | None = None
-    password: str | None = None
-    id_token: str | None = None
 
 
 # === LOGIN DO APP ===
@@ -102,17 +88,15 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
         }
     
 
-# === LOGIN DOS PROMOTRES HTML WEB ===
-from fastapi.responses import RedirectResponse
-
+# === LOGIN DOS PROMOTRES HTML WEB BOTAO GOOGLE ===
 @router.get("/callback-web")
 def google_callback_web(request: Request, db: Session = Depends(get_db)):
     code = request.query_params.get("code")
     if not code:
         raise HTTPException(status_code=400, detail="Código ausente")
 
-    token_url = "https://oauth2.googleapis.com/token"
-    redirect_uri = "http://localhost:8000/auth/callback-web"
+    token_url = GOOGLE_TOKEN_URL
+    redirect_uri = GOOGLE_REDIRECT_URI_WEB
 
     data = {
         "code": code,
