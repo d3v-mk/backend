@@ -84,7 +84,7 @@ def upload_avatar(
     
 
 # ==================== ROTA PERFIL PARA EXIBIR PERFIL NO FRONT ====================
-from panopoker.utils.helper_perfilresponse import build_perfil_response
+from panopoker.schemas.utils.helper_perfilresponse import build_perfil_response
 @router.get("/perfil", response_model=PerfilResponse)
 def get_perfil_completo(
     request: Request,
