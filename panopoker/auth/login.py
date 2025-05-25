@@ -9,7 +9,7 @@ from google.auth.transport import requests as google_requests
 from panopoker.core.debug import debug_print
 import httpx
 from fastapi.responses import RedirectResponse
-from panopoker.core.config import GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, GOOGLE_WEB_CLIENT_SECRET, GOOGLE_TOKEN_URL, GOOGLE_REDIRECT_URI_WEB
+from panopoker.core.config import settings
 
 from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
 
@@ -27,7 +27,7 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
             )
 
             aud = idinfo.get("aud")
-            if aud not in [GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID]:
+            if aud not in [settings.GOOGLE_ANDROID_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID]:
                 raise HTTPException(status_code=401, detail="Client ID inválido")
 
             email = idinfo.get("email")
@@ -95,14 +95,13 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
     if not code:
         raise HTTPException(status_code=400, detail="Código ausente")
 
-    token_url = GOOGLE_TOKEN_URL
-    redirect_uri = GOOGLE_REDIRECT_URI_WEB
+    token_url = settings.GOOGLE_TOKEN_URL
 
     data = {
         "code": code,
-        "client_id": GOOGLE_WEB_CLIENT_ID,
-        "client_secret": GOOGLE_WEB_CLIENT_SECRET,
-        "redirect_uri": redirect_uri,
+        "client_id": settings.GOOGLE_WEB_CLIENT_ID,
+        "client_secret": settings.GOOGLE_WEB_CLIENT_SECRET,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI_WEB,
         "grant_type": "authorization_code"
     }
 

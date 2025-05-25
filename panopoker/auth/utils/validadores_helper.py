@@ -1,14 +1,13 @@
 from fastapi import HTTPException
 import re
-from panopoker.core.config import EMAIL_DOMINIOS_VALIDOS
-
+from panopoker.core.config import settings
 
 def verificar_email_valido(email: str):
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         raise HTTPException(status_code=400, detail="Formato de email inválido.")
 
     dominio = email.split("@")[-1].lower()
-    if dominio not in EMAIL_DOMINIOS_VALIDOS:
+    if dominio not in settings.EMAIL_DOMINIOS_VALIDOS:
         raise HTTPException(status_code=400, detail="Domínio de email não permitido.")
 
 

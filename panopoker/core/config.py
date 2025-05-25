@@ -1,24 +1,44 @@
 from pydantic_settings import BaseSettings
+from typing import Set
 from dotenv import load_dotenv
 import os
 
+load_dotenv(".env")
+
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./panopoker.db"
-    SECRET_KEY: str = "123"  # Substitua com uma chave mais segura
+    SECRET_KEY: str = "supersegredo_lendario"  # Trocar em produção
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
 
+    # OAuth Google
+    GOOGLE_WEB_CLIENT_ID: str
+    GOOGLE_WEB_CLIENT_SECRET: str
+    GOOGLE_ANDROID_CLIENT_ID: str
+    GOOGLE_TOKEN_URL: str
+    GOOGLE_REDIRECT_URI_WEB: str
+
+    # Mercado Pago
+    MERCADO_PAGO_ACCESS_TOKEN: str
+    MERCADO_PAGO_CLIENT_SECRET: str
+    MERCADO_PAGO_CLIENT_ID: str
+    MERCADO_PAGO_REDIRECT_URI: str
+
+
+    # E-mail
+    EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"
+
+    @property
+    def EMAIL_DOMINIOS_VALIDOS(self) -> set[str]:
+        import json
+        try:
+            return set(json.loads(self.EMAIL_DOMINIOS_VALIDOS_RAW))
+        except Exception as e:
+            raise ValueError(f"EMAIL_DOMINIOS_VALIDOS inválido: {e}")
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
 settings = Settings()
-
-### DOTENV DO GOOGLE ###
-
-load_dotenv()
-
-GOOGLE_WEB_CLIENT_ID = os.getenv("GOOGLE_WEB_CLIENT_ID")
-GOOGLE_WEB_CLIENT_SECRET = os.getenv("GOOGLE_WEB_CLIENT_SECRET")
-GOOGLE_ANDROID_CLIENT_ID = os.getenv("GOOGLE_ANDROID_CLIENT_ID")
-
-GOOGLE_TOKEN_URL = os.getenv("GOOGLE_TOKEN_URL")
-GOOGLE_REDIRECT_URI_WEB = os.getenv("GOOGLE_REDIRECT_URI_WEB")
-
-EMAIL_DOMINIOS_VALIDOS = set(os.getenv("EMAIL_DOMINIOS_VALIDOS", "").split(","))

@@ -9,9 +9,11 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import requests
-from panopoker.core.security import get_current_user_optional, renovar_token_do_promotor
+from panopoker.core.security import get_current_user_optional
 from panopoker.core.database import get_db
 from panopoker.usuarios.models.promotor import Promotor
+
+from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
 
 import uuid
 
