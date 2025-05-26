@@ -1,5 +1,6 @@
 from fastapi import WebSocket
 from typing import Dict, List, Tuple
+import pprint
 
 class ConnectionManager:
     def __init__(self):
@@ -25,14 +26,19 @@ class ConnectionManager:
                 del self.active_connections[key]
 
     async def broadcast_mesa(self, mesa_id: int, message: dict):
-        # Manda para todos os sockets dessa mesa (de todos os users)
+        print(f"\n[BROADCAST_MESA] -- Enviando '{message.get('evento')}' para mesa {mesa_id}")
+        print("[BROADCAST_MESA] Conexões ativas no momento:")
+        pprint.pprint(self.active_connections)  # Vai printar TUDO mesmo, depois pode filtrar
+
         for (mid, uid), ws_list in list(self.active_connections.items()):
             if mid == mesa_id:
-                for ws in list(ws_list):  # copia pra não bugar se remover
+                print(f"  > User {uid}: {len(ws_list)} sockets")
+                for ws in list(ws_list):
                     try:
                         await ws.send_json(message)
-                    except Exception:
-                        # Remove só essa conexão zoada
+                        print(f"    - Enviado para user {uid}")
+                    except Exception as e:
+                        print(f"    - Falhou para user {uid}, removendo. Motivo: {e}")
                         self.disconnect(mid, uid, ws)
 
     async def enviar_para_jogador(self, mesa_id: int, user_id: int, message: dict):

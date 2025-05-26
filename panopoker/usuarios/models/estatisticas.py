@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, String
+from sqlalchemy import Column, Integer, Numeric, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from panopoker.core.database import Base
-
 
 class EstatisticasJogador(Base):
     __tablename__ = "estatisticas_jogador"
@@ -12,8 +11,8 @@ class EstatisticasJogador(Base):
 
     # Estatísticas padrão
     rodadas_ganhas = Column(Integer, default=0)
-    fichas_ganhas = Column(Float, default=0.0)
-    fichas_perdidas = Column(Float, default=0.0)
+    fichas_ganhas = Column(Numeric(12, 2), default=0)
+    fichas_perdidas = Column(Numeric(12, 2), default=0)
     flushes = Column(Integer, default=0)
     full_houses = Column(Integer, default=0)
 
@@ -24,7 +23,7 @@ class EstatisticasJogador(Base):
     royal_flushes = Column(Integer, default=0)
     torneios_vencidos = Column(Integer, default=0)
 
-    maior_pote = Column(Float, default=0.0)
+    maior_pote = Column(Numeric(12, 2), default=0)
     vitorias = Column(Integer, default=0)
     rodadas_jogadas = Column(Integer, default=0)
     mao_favorita = Column(String, nullable=True)  # Ex: "7C-7D"

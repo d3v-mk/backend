@@ -6,7 +6,7 @@ from panopoker.usuarios.models.usuario import Usuario
 from panopoker.core.security import get_current_user_optional
 from panopoker.usuarios.models.promotor import Promotor
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
-
+from decimal import Decimal  # <--- Adiciona isso!
 import logging
 import requests
 import uuid
@@ -15,17 +15,16 @@ logging.basicConfig(level=logging.INFO)
 
 router = APIRouter(prefix="", tags=["Webhook"])
 
-
 # ==================== WEBHOOK ====================
 
-def calcular_liquido(valor: float) -> float:
-    if valor <= 5:
-        margem = 0.20
-    elif valor <= 20:
-        margem = 0.50
+def calcular_liquido(valor: Decimal) -> Decimal:
+    if valor <= Decimal("5"):
+        margem = Decimal("0.20")
+    elif valor <= Decimal("20"):
+        margem = Decimal("0.50")
     else:
-        margem = 1.00
-    return round(valor - margem, 2)
+        margem = Decimal("1.00")
+    return valor - margem
 
 @router.post("/mercadopago")
 async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
@@ -76,7 +75,7 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
 
                 usuario = db.query(Usuario).filter(Usuario.id == pagamento.user_id).first()
                 if usuario:
-                    valor_liquido = calcular_liquido(pagamento.valor)
+                    valor_liquido = calcular_liquido(Decimal(str(pagamento.valor)))  # <--- converte para Decimal
                     usuario.saldo += valor_liquido
                     db.add(usuario)
                     logging.info(f"✅ Fichas adicionadas: R${valor_liquido} para usuário ID {usuario.id}")
@@ -90,13 +89,10 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
     return {"status": "ok"}
 
 
-
-
-
 # ==================== GERA O PIX DINAMICO NA LOJA DO PROMOTOR ====================
 
 @router.get("/api/gerar_pix/{slug}/{valor}")
-def gerar_pix(slug: str, valor: int,
+def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
               db: Session = Depends(get_db),
               usuario: Usuario | None = Depends(get_current_user_optional)):
 
@@ -107,7 +103,7 @@ def gerar_pix(slug: str, valor: int,
     email = usuario.email if usuario else f"wwwhoo_{slug}@panopoker.com"
 
     payload = {
-        "transaction_amount": float(valor),
+        "transaction_amount": float(valor),  # MercadoPago só aceita float na API deles, então só aqui converte pra float!
         "description": f"PanoClubs Sells",
         "payment_method_id": "pix",
         "payer": {

@@ -1,9 +1,8 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey, String, DateTime
+from sqlalchemy import Column, Integer, Numeric, ForeignKey, String, DateTime 
 from datetime import datetime
 from panopoker.core.database import Base
 from sqlalchemy.orm import relationship
 import uuid
-
 
 class Saque(Base):
     __tablename__ = "saques"
@@ -11,7 +10,7 @@ class Saque(Base):
     id = Column(Integer, primary_key=True)
     jogador_id = Column(Integer, ForeignKey("usuarios.id"))
     promotor_id = Column(Integer, ForeignKey("usuarios.id"))
-    valor = Column(Float, nullable=False)
+    valor = Column(Numeric(10, 2), nullable=False)  # 👈 Troca aqui: Numeric(10,2) é padrão para dinheiro!
     status = Column(String, default="aguardando")  # 'aguardando', 'confirmado_pelo_jogador', 'concluido'
     criado_em = Column(DateTime(timezone=True), default=datetime.utcnow)
 

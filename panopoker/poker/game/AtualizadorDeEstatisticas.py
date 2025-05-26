@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List, Tuple, Dict
+from decimal import Decimal  # Adicionado!
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from panopoker.poker.models.mesa import JogadorNaMesa
 
@@ -8,7 +9,7 @@ class AtualizadorDeEstatisticas:
     def atualizar(
         jogadores_avaliados: List[Tuple[JogadorNaMesa, List[str], str]],
         vencedores_ids: List[int],
-        valores_ganhos: Dict[int, float],
+        valores_ganhos: Dict[int, Decimal],
         db
     ):
         for jogador, mao, rank in jogadores_avaliados:
@@ -18,18 +19,24 @@ class AtualizadorDeEstatisticas:
                 stats = EstatisticasJogador(usuario_id=jogador.jogador_id)
                 db.add(stats)
 
-            # Proteção contra None nos campos numéricos
             stats.rodadas_jogadas = (stats.rodadas_jogadas or 0) + 1
 
             if jogador.jogador_id in vencedores_ids:
                 stats.rodadas_ganhas = (stats.rodadas_ganhas or 0) + 1
                 stats.vitorias = (stats.vitorias or 0) + 1
 
-                ganho = valores_ganhos.get(jogador.jogador_id, 0.0)
-                stats.fichas_ganhas = (stats.fichas_ganhas or 0.0) + ganho
+                ganho = valores_ganhos.get(jogador.jogador_id, Decimal("0.00"))
+                # Se stats.fichas_ganhas não for Decimal, converte agora:
+                fichas_atuais = stats.fichas_ganhas or Decimal("0.00")
+                if not isinstance(fichas_atuais, Decimal):
+                    fichas_atuais = Decimal(str(fichas_atuais))
+                stats.fichas_ganhas = fichas_atuais + ganho
 
                 # Atualiza maior pote
-                stats.maior_pote = max(stats.maior_pote or 0.0, ganho)
+                maior_pote = stats.maior_pote or Decimal("0.00")
+                if not isinstance(maior_pote, Decimal):
+                    maior_pote = Decimal(str(maior_pote))
+                stats.maior_pote = max(maior_pote, ganho)
 
                 agora = datetime.utcnow()
                 if not stats.data_primeira_vitoria:
@@ -42,7 +49,13 @@ class AtualizadorDeEstatisticas:
                 elif stats.mao_favorita != mao_formatada:
                     pass  # pode implementar contagem no futuro
             else:
-                stats.fichas_perdidas = (stats.fichas_perdidas or 0.0) + (jogador.aposta_atual or 0.0)
+                perdidas = stats.fichas_perdidas or Decimal("0.00")
+                if not isinstance(perdidas, Decimal):
+                    perdidas = Decimal(str(perdidas))
+                aposta = jogador.aposta_atual or Decimal("0.00")
+                if not isinstance(aposta, Decimal):
+                    aposta = Decimal(str(aposta))
+                stats.fichas_perdidas = perdidas + aposta
 
             # Tipo de mão vencida
             match rank:

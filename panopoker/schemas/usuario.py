@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from decimal import Decimal
 
 class UserAuthenticated(BaseModel):
     email: EmailStr
@@ -21,7 +22,7 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     id: int
-    saldo: float = 0.0  # Valor inicial de saldo do usuário
+    saldo: Decimal = Decimal("0.00")  # Valor inicial de saldo do usuário
 
     class Config:
         from_attributes = True  # Isso permite que o Pydantic converta o modelo SQLAlchemy para Pydantic
@@ -38,8 +39,8 @@ class PerfilResponse(BaseModel):
 
     # Estatísticas principais
     rodadas_ganhas: int
-    fichas_ganhas: float
-    fichas_perdidas: float
+    fichas_ganhas: Decimal
+    fichas_perdidas: Decimal
     flushes: int
     full_houses: int
 
@@ -50,7 +51,7 @@ class PerfilResponse(BaseModel):
     royal_flushes: int
     torneios_vencidos: int
 
-    maior_pote: float
+    maior_pote: Decimal
     vitorias: int
     rodadas_jogadas: int
     mao_favorita: Optional[str]

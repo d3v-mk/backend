@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, DECIMAL
 from sqlalchemy.orm import relationship
 from panopoker.core.database import Base
 from datetime import datetime, timezone
@@ -15,7 +15,7 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     senha_hash = Column(String, nullable=False)
 
-    saldo = Column(Float, default=0.0)
+    saldo = Column(DECIMAL(10, 2), default=0.00)
     is_admin = Column(Boolean, default=False)
     is_promoter = Column(Boolean, default=False)
     avatar_url = Column(String, nullable=True)

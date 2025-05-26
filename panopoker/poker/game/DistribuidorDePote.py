@@ -7,8 +7,20 @@ from threading import Thread
 from typing import List, Tuple
 from panopoker.poker.game.avaliar_maos import avaliar_mao
 from panopoker.websocket.manager import connection_manager
+from decimal import Decimal
 import asyncio
 
+
+def decimal_to_float(obj):
+    if isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(i) for i in obj]
+    elif isinstance(obj, Decimal):
+        return float(obj)
+    else:
+        return obj
+    
 class DistribuidorDePote:
     def __init__(self, mesa: Mesa, db: Session):
         self.db = db
@@ -142,11 +154,13 @@ class DistribuidorDePote:
         except Exception as e:
             debug_print(f"[SHOWDOWN][WARN] Erro ao registrar eventos: {e}")
 
+        debug_print(f"[WS][SHOWDOWN] Broadcast showdown mesa {self.mesa.id}")
         # Broadcast via WebSocket
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "showdown",
-            "dados": payload
+            "dados": decimal_to_float(payload)
         })
+        debug_print(f"[WS][SHOWDOWN] Broadcast terminado")
 
         return payload
     
@@ -157,18 +171,21 @@ class DistribuidorDePote:
 
 
     
-    def _calcular_side_pots(self, jogadores: List[JogadorNaMesa]) -> List[Tuple[float, List[JogadorNaMesa]]]:
-        # ordena por aposta
-        bets = sorted([(j, j.aposta_acumulada) for j in jogadores], key=lambda x: x[1])
-        side_pots: List[Tuple[float, List[JogadorNaMesa]]] = []
-        prev_amount = 0.0
+    def _calcular_side_pots(self, jogadores: List[JogadorNaMesa]) -> List[Tuple[Decimal, List[JogadorNaMesa]]]:
+        # Ordena apostas acumuladas, tudo decimal!
+        bets = sorted(
+            [(j, Decimal(j.aposta_acumulada)) for j in jogadores],
+            key=lambda x: x[1]
+        )
+        side_pots: List[Tuple[Decimal, List[JogadorNaMesa]]] = []
+        prev_amount = Decimal("0.00")
         remaining = bets.copy()
 
         while remaining:
             _, amount = remaining[0]
             delta = amount - prev_amount
             contributors = [j for j, _ in remaining]
-            pot = delta * len(contributors)
+            pot = (delta * len(contributors)).quantize(Decimal("0.01"))
             side_pots.append((pot, contributors.copy()))
             debug_print(f"📦 Side pot de R${pot:.2f} entre {[j.jogador_id for j in contributors]}")
             prev_amount = amount

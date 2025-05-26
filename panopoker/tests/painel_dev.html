@@ -13,12 +13,13 @@
       background: #1e1e1e;
       width: 290px;
       flex-shrink: 0;
+      transition: border-color 0.3s ease;
     }
-    #jogadores {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+    .jogador.vez {
+      border: 3px solid #00ff88;
+      background-color: #223322;
     }
+    #jogadores { display: flex; flex-wrap: wrap; gap: 12px; }
     button {
       margin: 5px;
       padding: 6px 12px;
@@ -31,7 +32,11 @@
     button:hover { background: #555; }
     input[type="number"] { width: 60px; }
     .mesa { margin-bottom: 30px; }
-    .vez { color: #00ff88; font-weight: bold; }
+    .vez-tag {
+      color: #00ff88;
+      font-weight: bold;
+      margin-left: 5px;
+    }
     .entradas { margin-bottom: 20px; }
   </style>
 </head>
@@ -61,43 +66,76 @@
   <div id="jogadores"></div>
 
   <script>
-    // TOKENS para autenticar jogadores
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ4MTc5NTk2fQ.DIUoF6mymNv2a9Wa9nDA8FB0s4j7UXiqSO5SiaS67dg",
-      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ4MTc5ODkyfQ.rHd79SASSAAfqb1qSXejZG68mF1CPv1jwnq_rLyF6yU",
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ4MzU4MTQ2fQ.Qn5Y882eF5tEN0FWCSGUg-wPIQLDqmxU_6dwgV8m094",
+      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ4MzY5ODQyfQ.WsvUR_-zWiofQwfZ_lHPk-nPxcnaTioXZa0e-BR_Xrs",
       3: "TOKEN_JOGADOR_3",
       4: "TOKEN_JOGADOR_4",
       5: "TOKEN_JOGADOR_5",
       6: "TOKEN_JOGADOR_6"
     };
 
-    // WS de painel (apenas para escutar/broadcast)
     let wsPainel = null;
     let wsMesaId = null;
+    const wsJogadores = {};
 
-    // Função para conectar WS para entrar na mesa
     function entrarNaMesaWs(jogadorId) {
       const mesaId = document.getElementById("mesaId").value;
       const token = tokens[jogadorId];
       if (!token) return alert("Token não encontrado!");
 
-      // Cada jogador só pode ter um WS ativo. Cria um novo WS dedicado pra entrar.
+      if (wsJogadores[jogadorId] && wsJogadores[jogadorId].readyState === WebSocket.OPEN) {
+        alert(`Jogador ${jogadorId} já está conectado na mesa!`);
+        return;
+      }
+
       const ws = new WebSocket(`ws://localhost:8000/ws/mesa/${mesaId}`);
+      wsJogadores[jogadorId] = ws;
       ws.onopen = () => {
-        // 1. AUTH
         ws.send(JSON.stringify({ type: "auth", token }));
-        // 2. Depois de autenticado, manda 'entrar'
         setTimeout(() => {
           ws.send(JSON.stringify({ action: "entrar" }));
           alert(`🎮 JOGADOR ${jogadorId} entrou na mesa ${mesaId}!`);
-          ws.close();
           setTimeout(carregarMesa, 300);
         }, 250);
       };
-      ws.onerror = (e) => alert("Erro WS entrar na mesa: " + e.message);
+      ws.onclose = () => {
+        delete wsJogadores[jogadorId];
+        carregarMesa();
+      };
+      ws.onerror = (e) => {
+        alert("Erro WS entrar na mesa: " + e.message);
+        ws.close();
+      };
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.evento === "mesa_atualizada" || data.evento === "nova_rodada") {
+          carregarMesa();
+        }
+      };
     }
 
-    // Painel de espectador (recebe updates em tempo real da mesa)
+    function acaoJogadorWs(mesaId, jogadorId, tipo, valor = null) {
+      const ws = wsJogadores[jogadorId];
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert(`Jogador ${jogadorId} não está conectado à mesa!`);
+        return;
+      }
+      const msg = { action: tipo };
+      if (valor !== null) msg.valor = valor;
+      ws.send(JSON.stringify(msg));
+    }
+
+    function sairDaMesaWs(mesaId, jogadorId) {
+      const ws = wsJogadores[jogadorId];
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert(`Jogador ${jogadorId} não está conectado à mesa!`);
+        return;
+      }
+      ws.send(JSON.stringify({ action: "sair" }));
+      setTimeout(() => ws.close(), 200);
+    }
+
     function conectarPainelWs(mesaId, token) {
       if (wsPainel && wsPainel.readyState === WebSocket.OPEN) {
         if (wsMesaId === mesaId) return;
@@ -110,9 +148,6 @@
       };
       wsPainel.onmessage = (e) => {
         const data = JSON.parse(e.data);
-        console.log("[WS][Painel]", data);
-
-        // Atualiza painel quando receber evento relevante
         if (data.evento === "mesa_atualizada" || data.evento === "nova_rodada") {
           carregarMesa();
         }
@@ -123,146 +158,102 @@
 
     async function carregarMesa() {
       const mesaId = document.getElementById("mesaId").value;
-      const token = tokens[1]; // Jogador 1 só pra visualizar info
+      const token = tokens[1];
 
-      // Sempre conecta (ou reusa) WS pra escutar updates
       conectarPainelWs(mesaId, token);
 
       try {
         const mesaRes = await fetch(`http://localhost:8000/mesa/${mesaId}`, {
           headers: { "Authorization": "Bearer " + token }
         });
+        if (!mesaRes.ok) throw new Error("Falha ao buscar dados da mesa");
         const mesa = await mesaRes.json();
 
         const jogadoresRes = await fetch(`http://localhost:8000/mesa/${mesaId}/jogadores`, {
           headers: { "Authorization": "Bearer " + token }
         });
+        if (!jogadoresRes.ok) throw new Error("Falha ao buscar jogadores");
         const jogadores = await jogadoresRes.json();
+
+        const jogadorDaVez = jogadores.find(j => Boolean(j.vez));
 
         document.getElementById("mesaInfo").innerHTML = `
           <h2>Mesa ${mesa.id} — Estado: ${mesa.estado_da_rodada}</h2>
           <p>Cartas comunitárias: ${JSON.stringify(mesa.cartas_comunitarias)}</p>
-          <p>Pote: R$ ${mesa.pote_total}</p>
-          <p>Jogador da vez: ${mesa.jogador_da_vez}</p>
+          <p>Pote: R$ ${mesa.pote_total.toFixed(2)}</p>
+          <p>Jogador da vez: ${jogadorDaVez ? jogadorDaVez.user_id : 'Nenhum'}</p>
         `;
 
         const container = document.getElementById("jogadores");
         container.innerHTML = "";
+
         jogadores.forEach(j => {
-          const vezTag = j.vez ? `<span class="vez">● VEZ</span>` : "";
+          const isVez = Boolean(j.vez);
+
+          console.log(`Jogador ${j.user_id} - vez: ${isVez}`);
+
+          const vezTag = isVez ? `<span class="vez-tag">● VEZ</span>` : "";
           const sbTag = j.is_sb ? "🟢 SB" : "";
           const bbTag = j.is_bb ? "🔴 BB" : "";
-          const dealerTag = j.posicao_cadeira === mesa.dealer_pos ? "⚪ DEALER" : "";
+          const dealerTag = j.is_dealer ? "⚪ DEALER" : "";
+          const conectado = wsJogadores[j.user_id] && wsJogadores[j.user_id].readyState === WebSocket.OPEN
+            ? "🟢 Online"
+            : "⚪ Desconectado";
 
           const div = document.createElement("div");
           div.className = "jogador";
+          if (isVez) div.classList.add("vez");
+
           div.innerHTML = `
-            <h3>Jogador ${j.user_id} — posição ${j.posicao_cadeira} ${vezTag}</h3>
-            <p>Saldo atual: R$ ${j.saldo_atual}</p>
-            <p>Aposta atual: R$ ${j.aposta_atual}</p>
+            <h3>Jogador ${j.user_id} — posição ${j.posicao_cadeira} ${vezTag} (${conectado})</h3>
+            <p>Saldo atual: R$ ${parseFloat(j.saldo_atual).toFixed(2)}</p>
+            <p>Aposta atual: R$ ${parseFloat(j.aposta_atual).toFixed(2)}</p>
             <p>Foldado: ${j.foldado}</p>
             <p>Agiu nesta rodada: ${j.rodada_ja_agiu}</p>
             <p>${sbTag} ${bbTag} ${dealerTag}</p>
             <p>Cartas: ${j.cartas?.join(", ")}</p>
-            <button onclick="acaoPainelWs(${mesa.id}, ${j.user_id}, 'check')">Check</button>
-            <button onclick="acaoPainelWs(${mesa.id}, ${j.user_id}, 'call')">Call</button>
-            <button onclick="acaoPainelWs(${mesa.id}, ${j.user_id}, 'fold')">Fold</button>
-            <button onclick="acaoPainelWs(${mesa.id}, ${j.user_id}, 'allin')">All-In</button>
+            <button onclick="acaoJogadorWs(${mesa.id}, ${j.user_id}, 'check')">Check</button>
+            <button onclick="acaoJogadorWs(${mesa.id}, ${j.user_id}, 'call')">Call</button>
+            <button onclick="acaoJogadorWs(${mesa.id}, ${j.user_id}, 'fold')">Fold</button>
+            <button onclick="acaoJogadorWs(${mesa.id}, ${j.user_id}, 'allin')">All-In</button>
             <br/>
-            <label>Raise: R$ <input type="number" id="raise-${j.user_id}" value="0.05"/></label>
-            <button onclick="acaoPainelWs(${mesa.id}, ${j.user_id}, 'raise', document.getElementById('raise-${j.user_id}').value)">Raise</button>
+            <label>Raise: R$ <input type="number" id="raise-${j.user_id}" value="0.05" step="0.01" min="0.01"/></label>
+            <button onclick="acaoJogadorWs(${mesa.id}, ${j.user_id}, 'raise', parseFloat(document.getElementById('raise-${j.user_id}').value))">Raise</button>
             <br/><br/>
             <button onclick="sairDaMesaWs(${mesa.id}, ${j.user_id})">🚪 Sair da Mesa</button>
             <button onclick="revelarCartas(${mesa.id}, ${j.user_id})">🃏 Revelar Cartas</button>
           `;
           container.appendChild(div);
         });
-
       } catch (err) {
-        console.error("💥 Erro ao carregar mesa:", err);
-        alert("Erro: " + err.message);
+        alert("Erro ao carregar mesa: " + err.message);
+        console.error(err);
       }
     }
 
-    // WS pra mandar ação poker (igual o app)
-    function acaoPainelWs(mesaId, jogadorId, tipo, valor = null) {
-      const token = tokens[jogadorId];
-      if (!token) {
-        alert("Token não encontrado!");
-        return;
-      }
-      const ws = new WebSocket(`ws://localhost:8000/ws/mesa/${mesaId}`);
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ type: "auth", token }));
-        setTimeout(() => {
-          const msg = { action: tipo };
-          if (valor !== null) msg.valor = valor;
-          ws.send(JSON.stringify(msg));
-          ws.close();
-        }, 200);
-      };
-    }
-
-    function sairDaMesaWs(mesaId, jogadorId) {
-      const token = tokens[jogadorId];
-      if (!token) {
-        alert("Token não encontrado!");
-        return;
-      }
-      const ws = new WebSocket(`ws://localhost:8000/ws/mesa/${mesaId}`);
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ type: "auth", token }));
-        setTimeout(() => {
-          ws.send(JSON.stringify({ action: "sair" }));
-          ws.close();
-          setTimeout(carregarMesa, 300);
-        }, 200);
-      };
-    }
-
-    async function revelarCartas(mesaId, jogadorId) {
-      const token = tokens[jogadorId];
-      if (!token) {
-        alert(`Token do jogador ${jogadorId} não encontrado.`);
-        return;
-      }
-      try {
-        const res = await fetch(`http://localhost:8000/mesa/${mesaId}/revelar_cartas`, {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token
-          }
-        });
-        const data = await res.json();
-        alert(`🃏 Jogador ${jogadorId} revelou suas cartas!\n${data.message || JSON.stringify(data)}`);
-        carregarMesa();
-      } catch (err) {
-        console.error("Erro ao revelar cartas:", err);
-        alert("Erro ao chamar /revelar_cartas: " + err.message);
-      }
-    }
-
-    async function forcarShowdown() {
+    function forcarShowdown() {
       const mesaId = document.getElementById("mesaId").value;
-      const token = tokens[1];
-      try {
-        const res = await fetch(`http://localhost:8000/admin/${mesaId}/debug/forcar_showdown`, {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token
-          }
-        });
-        const data = await res.json();
-        alert(`🏆 Mesa ${mesaId} forçada para SHOWDOWN!\n${data.detail || "OK"}`);
-        carregarMesa();
-      } catch (err) {
-        console.error("Erro ao forçar showdown:", err);
-        alert("Erro ao chamar /debug/forcar_showdown: " + err.message);
-      }
+      fetch(`http://localhost:8000/mesa/${mesaId}/showdown`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + tokens[1] }
+      }).then(res => {
+        if (res.ok) alert("Showdown forçado!");
+        else alert("Erro ao forçar showdown");
+      });
     }
 
-    // Auto-carrega a mesa ao abrir o painel
-    carregarMesa();
+    function revelarCartas(mesaId, jogadorId) {
+      fetch(`http://localhost:8000/mesa/${mesaId}/jogador/${jogadorId}/revelar`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + tokens[1] }
+      }).then(res => {
+        if (res.ok) alert(`Cartas do jogador ${jogadorId} reveladas!`);
+        else alert("Erro ao revelar cartas");
+      });
+    }
+
+    // Auto-load mesa ao abrir
+    window.onload = carregarMesa;
   </script>
 </body>
 </html>

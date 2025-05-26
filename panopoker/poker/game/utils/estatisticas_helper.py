@@ -1,20 +1,19 @@
 from typing import List, Tuple, Dict
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.poker.game.AtualizadorDeEstatisticas import AtualizadorDeEstatisticas
-import json
-
+from decimal import Decimal
 
 def registrar_estatisticas_showdown(
     participantes: List[JogadorNaMesa],
     payload_showdown: List[dict],
-    side_pots: List[Tuple[float, List[JogadorNaMesa]]],
+    side_pots: List[Tuple[Decimal, List[JogadorNaMesa]]],  # Agora é Decimal!
     db
 ):
     """
     Atualiza estatísticas de showdown, ignorando side-pots zero e usando dados do payload.
     """
     jogadores_avaliados: List[Tuple[JogadorNaMesa, List[str], int]] = []
-    valores_ganhos: Dict[int, float] = {}
+    valores_ganhos: Dict[int, Decimal] = {}
     vencedores_ids: List[int] = []
 
     # Mapeia id -> jogador para buscas eficientes
@@ -34,7 +33,9 @@ def registrar_estatisticas_showdown(
 
     # Distribui os side pots, ignorando valores zero
     for amount, grupo in side_pots:
-        if amount <= 0:
+        # Se vier float por acidente, força pra Decimal:
+        amount = Decimal(str(amount))
+        if amount <= Decimal("0.00"):
             continue
         resultados = []  # List[Tuple[JogadorNaMesa, Tuple[int,List[int]]]]
         for j in grupo:
@@ -47,9 +48,9 @@ def registrar_estatisticas_showdown(
         resultados.sort(key=lambda x: (x[1][0], x[1][1]), reverse=True)
         melhor_hand = resultados[0][1]
         winners = [j for j, hand in resultados if hand == melhor_hand]
-        ganho = amount / len(winners)
+        ganho = (amount / Decimal(len(winners))).quantize(Decimal("0.01"))
         for w in winners:
-            valores_ganhos[w.jogador_id] = valores_ganhos.get(w.jogador_id, 0) + ganho
+            valores_ganhos[w.jogador_id] = valores_ganhos.get(w.jogador_id, Decimal("0.00")) + ganho
             vencedores_ids.append(w.jogador_id)
 
     # Grava no banco

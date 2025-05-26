@@ -3,6 +3,7 @@ from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from fastapi import HTTPException
 from panopoker.websocket.manager import connection_manager
+from decimal import Decimal
 
 
 class ExecutorDeAcoes:
@@ -45,6 +46,9 @@ class ExecutorDeAcoes:
         jogador = self._buscar_jogador(jogador_id)
         debug_print(f"[ACAO_CHECK] 👤 Jogador encontrado: {jogador.jogador_id} (posição {jogador.posicao_cadeira})")
 
+        aposta_jogador = Decimal(str(jogador.aposta_atual))
+        aposta_mesa = self.mesa.aposta_atual  # já deve ser Decimal
+
         if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
             raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
 
@@ -56,8 +60,8 @@ class ExecutorDeAcoes:
             debug_print(f"[ACAO_CHECK] ❌ Jogador {jogador.jogador_id} está foldado ou fora da rodada")
             raise HTTPException(400, "Jogador não pode agir.")
 
-        if self.mesa.aposta_atual > 0 and not abs(jogador.aposta_atual - self.mesa.aposta_atual) < 1e-6:
-            debug_print(f"[ACAO_CHECK] ❌ CHECK inválido: aposta atual da mesa = {self.mesa.aposta_atual}, aposta do jogador = {jogador.aposta_atual}")
+        if aposta_mesa > Decimal('0') and aposta_jogador != aposta_mesa:
+            debug_print(f"[ACAO_CHECK] ❌ CHECK inválido: aposta atual da mesa = {aposta_mesa}, aposta do jogador = {aposta_jogador}")
             raise HTTPException(400, "CHECK inválido: aposte ou all-in primeiro.")
 
         self._cancelar_timer()
@@ -214,7 +218,10 @@ class ExecutorDeAcoes:
 
 
 
+
     async def acao_raise(self, jogador_id: int, valor: float):
+        # Recebe valor float, mas converte pra Decimal imediatamente
+        valor = Decimal(str(valor))
         jogador = self._buscar_jogador(jogador_id)
 
         if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
@@ -225,17 +232,17 @@ class ExecutorDeAcoes:
         if jogador.foldado or not jogador.participando_da_rodada or valor <= 0:
             raise HTTPException(400, "Jogador não pode agir.")
 
-        to_call = self.mesa.aposta_atual - jogador.aposta_atual
-        if jogador.saldo_atual < to_call + valor:
+        to_call = Decimal(str(self.mesa.aposta_atual)) - Decimal(str(jogador.aposta_atual))
+        if Decimal(str(jogador.saldo_atual)) < to_call + valor:
             raise HTTPException(400, "Saldo insuficiente para CALL+RAISE.")
 
-        novo_total = self.mesa.aposta_atual + valor
+        novo_total = Decimal(str(self.mesa.aposta_atual)) + valor
         total_aposta = to_call + valor
 
-        jogador.saldo_atual -= total_aposta
-        jogador.saldo_atual = round(jogador.saldo_atual, 2)
+        jogador.saldo_atual = Decimal(str(jogador.saldo_atual)) - total_aposta
+        jogador.saldo_atual = jogador.saldo_atual.quantize(Decimal("0.01"))
         jogador.aposta_atual = novo_total
-        jogador.aposta_acumulada += total_aposta
+        jogador.aposta_acumulada = Decimal(str(jogador.aposta_acumulada)) + total_aposta
         jogador.rodada_ja_agiu = True
 
         debug_print(f"[ACAO_RAISE_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do raise: {jogador.saldo_atual}")
@@ -249,7 +256,8 @@ class ExecutorDeAcoes:
                 JogadorNaMesa.mesa_id == self.mesa.id,
                 JogadorNaMesa.participando_da_rodada == True,
                 JogadorNaMesa.foldado == False,
-                JogadorNaMesa.jogador_id != jogador_id
+                JogadorNaMesa.jogador_id != jogador_id,
+                JogadorNaMesa.rodada_ja_agiu == True  # só quem já tinha agido
             )
             .all()
         )
@@ -257,6 +265,7 @@ class ExecutorDeAcoes:
             o.rodada_ja_agiu = False
 
         self.db.commit()
+        self.db.flush()
 
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
@@ -264,5 +273,3 @@ class ExecutorDeAcoes:
 
         debug_print(f"[ACAO_RAISE_APOSTA_ATUAL] jogador {jogador_id} RAISE de {valor}")
         await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
-
-

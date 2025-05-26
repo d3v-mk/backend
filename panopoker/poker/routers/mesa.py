@@ -16,7 +16,7 @@ from panopoker.usuarios.models.usuario import Usuario
 router = APIRouter(prefix="/mesa", tags=["Showdown"])
 
 @router.get("/{mesa_id}/showdown")
-def obter_resultado_showdown(
+async def obter_resultado_showdown(
     mesa_id: int,
     db: Session = Depends(get_db)
 ):
@@ -67,7 +67,7 @@ def obter_resultado_showdown(
         }
     else:
         controlador = DistribuidorDePote(mesa, db)
-        resultado = controlador.realizar_showdown()
+        resultado = await controlador.realizar_showdown()
 
     # Pega nomes com base nos IDs
     vencedores_nomes = (
@@ -100,7 +100,7 @@ def obter_resultado_showdown(
     pote_distribuido = round(sum(j.aposta_atual for j in jogadores), 2)
 
     return {
-        "vencedores": nomes,
+        "vencedores": resultado["vencedores"],
         "mao_formada": mao_legivel,
         "pote": pote_distribuido
     }

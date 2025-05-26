@@ -1,24 +1,22 @@
 from fastapi import APIRouter, Depends, Request, Form
-from fastapi.responses import HTMLResponse
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from panopoker.core.database import get_db
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.financeiro.models.saque import Saque
 from panopoker.core.security import get_current_user_optional
 from pydantic import BaseModel
 from datetime import datetime
-from sqlalchemy.orm import joinedload
+from decimal import Decimal
 
-
-router = APIRouter(prefix = "", tags= ["Painel Promotores"])
-templates = Jinja2Templates(directory="panopoker/site/templates")  # ajusta se necessário
+router = APIRouter(prefix="", tags=["Painel Promotores"])
+templates = Jinja2Templates(directory="panopoker/site/templates")
 
 class SaqueCreate(BaseModel):
     jogador_id: int
     promotor_id: int
-    valor: float
+    valor: Decimal  # <-- Decimal aqui
 
 # ============= ENDPOINT QUE CAI NO PAINEL DO PROMOTOR ================
 @router.get("/painel/promotor")
@@ -38,14 +36,17 @@ def painel_promotor(
         "request": request,
         "saques": saques,
         "usuario": usuario,
-        "saldo_repassar": 125.50,
-        "comissao_total": 33.75
+        "saldo_repassar": Decimal("125.50"),
+        "comissao_total": Decimal("33.75")
     })
-
 
 # ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
 @router.post("/painel/promotor/concluir")
-def concluir_saque_web(saque_id: int = Form(...), db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user_optional)):
+def concluir_saque_web(
+    saque_id: int = Form(...), 
+    db: Session = Depends(get_db), 
+    usuario: Usuario = Depends(get_current_user_optional)
+):
     if not usuario.is_promoter:
         return RedirectResponse("/", status_code=302)
 
@@ -62,7 +63,7 @@ def criar_saque(request: SaqueCreate, db: Session = Depends(get_db)):
     novo_saque = Saque(
         jogador_id=request.jogador_id,
         promotor_id=request.promotor_id,
-        valor=request.valor,
+        valor=Decimal(request.valor),
         status="aguardando"
     )
     db.add(novo_saque)
@@ -73,7 +74,7 @@ def criar_saque(request: SaqueCreate, db: Session = Depends(get_db)):
 def solicitar_saque(
     request: Request,
     id_publico: str = Form(...),
-    valor: float = Form(...),
+    valor: str = Form(...),  # <-- Recebe como str pra garantir precisão ao virar Decimal
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
 ):
@@ -85,9 +86,9 @@ def solicitar_saque(
         return HTMLResponse("Jogador não encontrado", status_code=404)
 
     saque = Saque(
-        jogador_id=jogador.id,  # usa o ID real aqui, mas buscou com segurança
+        jogador_id=jogador.id,
         promotor_id=usuario.id,
-        valor=valor,
+        valor=Decimal(valor),
         status="aguardando",
         criado_em=datetime.utcnow()
     )
