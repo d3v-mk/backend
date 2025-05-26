@@ -3,11 +3,12 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from panopoker.core.database import Base
 
+
 class EstatisticasJogador(Base):
     __tablename__ = "estatisticas_jogador"
 
     id = Column(Integer, primary_key=True, index=True)
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), unique=True)
 
     # Estatísticas padrão
     rodadas_ganhas = Column(Integer, default=0)
@@ -30,15 +31,14 @@ class EstatisticasJogador(Base):
     ranking_mensal = Column(Integer, nullable=True)
     vezes_no_top1 = Column(Integer, default=0)
 
-    data_primeira_vitoria = Column(DateTime, nullable=True)
-    data_ultima_vitoria = Column(DateTime, nullable=True)
-
-    ultimo_update = Column(DateTime, default=datetime.utcnow)
-
-
+    data_primeira_vitoria = Column(DateTime(timezone=True), nullable=True)
+    data_ultima_vitoria = Column(DateTime(timezone=True), nullable=True)
+    ultimo_update = Column(DateTime(timezone=True), default=datetime.utcnow)
 
     # Conquistas
     beta_tester = Column(Integer, default=0)  # 0 = não tem, 1 = tem
 
+    usuario = relationship("Usuario", back_populates="estatisticas", lazy="joined")
 
-    usuario = relationship("Usuario", back_populates="estatisticas")
+    def __repr__(self):
+        return f"<Stats UID={self.usuario_id} | Vitórias: {self.vitorias} | Rodadas: {self.rodadas_jogadas}>"

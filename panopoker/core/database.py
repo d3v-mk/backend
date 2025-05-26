@@ -5,7 +5,8 @@ from panopoker.core.config import settings  # Para pegar as configurações do b
 
 DATABASE_URL = settings.DATABASE_URL  # Vamos buscar a URL do banco de dados nas configurações
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})  # Usado no SQLite
+#engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})  # Usado no SQLite
+engine = create_engine(DATABASE_URL) #Usado no postgresql
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

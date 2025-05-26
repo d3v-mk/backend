@@ -6,8 +6,8 @@ import os
 load_dotenv(".env")
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./panopoker.db"
-    SECRET_KEY: str = "supersegredo_lendario"  # Trocar em produção
+    DATABASE_URL: str = "postgresql://mking:Tandal98@localhost:5432/panopoker" #migrar pro .env dps
+    SECRET_KEY: str = "supersegredo_lendario"  # Trocar em produção e migrar pro .env dps
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
 
