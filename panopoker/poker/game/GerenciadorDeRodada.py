@@ -43,6 +43,7 @@ class GerenciadorDeRodada:
         return ExecutorDeAcoes(self.mesa, self.db)
 
     async def avancar_vez(self, posicao_origem: Optional[int] = None, skip_timer=False):
+        debug_print(f"[DEBUG] skip_timer={skip_timer}")
         debug_print("🔄 [avancar_vez] Iniciando avanço da vez")
         ativos = (
             self.db.query(JogadorNaMesa)
@@ -198,7 +199,7 @@ class GerenciadorDeRodada:
         # Caso normal: repassa vez ou inicia vez padrão
         if posicao_origem is not None:
             debug_print(f"↪️ [verificar_proxima_etapa] Repassar vez de posição {posicao_origem}")
-            await self.avancar_vez(posicao_origem, skip_timer=True)
+            await self.avancar_vez(posicao_origem, skip_timer=False)
         else:
             debug_print("↪️ [verificar_proxima_etapa] Iniciando vez padrão")
             await self.avancar_vez()

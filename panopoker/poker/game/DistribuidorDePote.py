@@ -11,15 +11,19 @@ from decimal import Decimal
 import asyncio
 
 
-def decimal_to_float(obj):
+def json_safe(obj):
     if isinstance(obj, dict):
-        return {k: decimal_to_float(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [decimal_to_float(i) for i in obj]
+        return {k: json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return [json_safe(i) for i in obj]
     elif isinstance(obj, Decimal):
         return float(obj)
+    elif hasattr(obj, "__dict__"):  # objetos custom tipo SQLAlchemy
+        return json_safe(vars(obj))
     else:
         return obj
+
+
     
 class DistribuidorDePote:
     def __init__(self, mesa: Mesa, db: Session):
@@ -114,6 +118,7 @@ class DistribuidorDePote:
             vencedores_ids=set(vencedores_ids)
         )
 
+
         payload = {
             "mesa_id": self.mesa.id,
             "showdown": showdown_payload,
@@ -154,13 +159,11 @@ class DistribuidorDePote:
         except Exception as e:
             debug_print(f"[SHOWDOWN][WARN] Erro ao registrar eventos: {e}")
 
-        debug_print(f"[WS][SHOWDOWN] Broadcast showdown mesa {self.mesa.id}")
         # Broadcast via WebSocket
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "showdown",
-            "dados": decimal_to_float(payload)
+            "dados": json_safe(payload)
         })
-        debug_print(f"[WS][SHOWDOWN] Broadcast terminado")
 
         return payload
     

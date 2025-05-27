@@ -67,9 +67,9 @@
 
   <script>
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzQ4MzU4MTQ2fQ.Qn5Y882eF5tEN0FWCSGUg-wPIQLDqmxU_6dwgV8m094",
-      2: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ4MzY5ODQyfQ.WsvUR_-zWiofQwfZ_lHPk-nPxcnaTioXZa0e-BR_Xrs",
-      3: "TOKEN_JOGADOR_3",
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ4Mzk1MzA2fQ.E_deGuATF0cqqTRd-sMfBQSI2WGoynRJC-uVCVjdRRY",
+      2: "",
+      3: "",
       4: "TOKEN_JOGADOR_4",
       5: "TOKEN_JOGADOR_5",
       6: "TOKEN_JOGADOR_6"
@@ -174,6 +174,7 @@
         });
         if (!jogadoresRes.ok) throw new Error("Falha ao buscar jogadores");
         const jogadores = await jogadoresRes.json();
+        console.log("Jogadores recebidos:", jogadores);
 
         const jogadorDaVez = jogadores.find(j => Boolean(j.vez));
 
