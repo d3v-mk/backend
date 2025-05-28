@@ -3,6 +3,7 @@ from sqlalchemy import (Column, Integer, Numeric, ForeignKey, Boolean, String)
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSON
 from panopoker.core.database import Base
+from sqlalchemy import BigInteger
 
 
 class MesaStatus(str, enum.Enum):
@@ -33,6 +34,7 @@ class Mesa(Base):
     id = Column(Integer, primary_key=True, index=True)
     rodada_id = Column(Integer, default=1)
     nome = Column(String, index=True)
+    timestamp_inicio_rodada = Column(BigInteger, nullable=True)
 
     buy_in = Column(Numeric(10, 2), nullable=False)
     status = Column(String, default="aberta")

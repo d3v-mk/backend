@@ -6,10 +6,11 @@ from panopoker.usuarios.models.usuario import Usuario
 from panopoker.core.security import get_current_user_optional
 from panopoker.usuarios.models.promotor import Promotor
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
-from decimal import Decimal  # <--- Adiciona isso!
+from decimal import Decimal
 import logging
 import requests
 import uuid
+import random
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,11 +20,11 @@ router = APIRouter(prefix="", tags=["Webhook"])
 
 def calcular_liquido(valor: Decimal) -> Decimal:
     if valor <= Decimal("5"):
-        margem = Decimal("0.20")
+        margem = Decimal("0.20") #rake de 0.20
     elif valor <= Decimal("20"):
-        margem = Decimal("0.50")
+        margem = Decimal("0.40")# rake de 0.40
     else:
-        margem = Decimal("1.00")
+        margem = Decimal("0.60") # rake de 0.60 acima de 20
     return valor - margem
 
 @router.post("/mercadopago")
@@ -100,12 +101,25 @@ def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
     if not promotor or not promotor.access_token:
         raise HTTPException(status_code=404, detail="Promotor não encontrado ou sem token")
 
-    email = usuario.email if usuario else f"wwwhoo_{slug}@panopoker.com"
+    email = usuario.email if usuario else f"cliente.{slug}@servicosdigital.com"
+
+
+    # 📃 Descrição com leve variação só pra não parecer clone
+    descricoes_possiveis = [
+        "Serviço digital contratado",
+        "Cobrança por acesso online",
+        "Assinatura de sistema virtual",
+        "Produto digital adquirido",
+        "Pagamento via plataforma"
+    ]
+
+    descricao = random.choice(descricoes_possiveis)
 
     payload = {
         "transaction_amount": float(valor),  # MercadoPago só aceita float na API deles, então só aqui converte pra float!
-        "description": f"PanoClubs Sells",
+        "description": descricao,
         "payment_method_id": "pix",
+        "external_reference": f"pedido_{uuid.uuid4()}",
         "payer": {
             "email": email
         }

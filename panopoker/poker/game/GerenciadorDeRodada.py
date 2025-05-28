@@ -5,6 +5,7 @@ from typing import Optional
 import asyncio
 from panopoker.core.timers_async import timers_async, loop_principal
 import panopoker.core.timers_async as timers
+from time import time
 from fastapi import HTTPException
 import json
 
@@ -91,6 +92,11 @@ class GerenciadorDeRodada:
             candidato = mapa[posicoes[(idx + i + 1) % len(posicoes)]]
             if not candidato.rodada_ja_agiu and candidato.saldo_atual > 0:
                 self.mesa.jogador_da_vez = candidato.jogador_id
+
+                if not skip_timer:
+                    self.mesa.timestamp_inicio_rodada = int(time() * 1000)  # timestamp em milissegundos
+                    debug_print(f"⏱️ [avancar_vez] [STAMP] Timer iniciado em {self.mesa.timestamp_inicio_rodada}")
+
                 self.db.add(self.mesa)
                 self.db.commit()
                 self.db.refresh(self.mesa)
@@ -127,7 +133,8 @@ class GerenciadorDeRodada:
 
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "vez_atualizada",
-            "jogador_id": self.mesa.jogador_da_vez
+            "jogador_id": self.mesa.jogador_da_vez,
+            "vez_timestamp": self.mesa.timestamp_inicio_rodada
         })
 
     async def verificar_proxima_etapa(self, posicao_origem: Optional[int] = None):
