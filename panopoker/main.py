@@ -2,10 +2,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.staticfiles import StaticFiles
 import asyncio
-import pathlib
-import os
 
 from panopoker.core.database import engine, Base, SessionLocal
 from panopoker.core import timers_async
@@ -16,15 +13,12 @@ from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
 
-
-# Importa rotas
+# Importa rotas backend
 from panopoker.auth import login, register
 from panopoker.financeiro.routers import webhook_mp, auth_mp
 from panopoker.poker.routers import jogadores, mesa_cartas, vez, mesa, loja_web_promoters
 from panopoker.usuarios.routers import admin, usuario
-from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor
 from panopoker.lobby.routers import lobby
-
 from panopoker.websocket import routes as ws_routes
 
 # === Função de criação de tabelas e mesas ===
@@ -80,7 +74,7 @@ app.add_middleware(
 # Middleware de sessão
 app.add_middleware(SessionMiddleware, secret_key="alguma_chave_segura_aqui")
 
-# Inclui as rotas
+# Inclui as rotas backend
 app.include_router(usuario.router)
 app.include_router(webhook_mp.router)
 app.include_router(saques.router)
@@ -91,27 +85,10 @@ app.include_router(mesa.router)
 app.include_router(admin.router)
 app.include_router(login.router)
 app.include_router(register.router)
-app.include_router(site_pages.router)
-app.include_router(login_web.router)
-app.include_router(painel_promotor.router)
-app.include_router(loja_promotor.router)
 app.include_router(auth_mp.router)
 app.include_router(loja_web_promoters.router)
-app.include_router(configurar_loja.router)
-
 app.include_router(lobby.router)
-
 app.include_router(ws_routes.router)
-
-
-# Static files do site
-BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
-STATIC_DIR = BASE_DIR / "panopoker" / "site" / "static"
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-
-# Media dos avatars
-app.mount("/media", StaticFiles(directory=os.path.join("panopoker", "usuarios", "media")), name="media")
 
 # Swagger JWT personalizado
 def custom_openapi():

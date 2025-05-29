@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import JogadorNaMesa
@@ -91,27 +90,6 @@ def criar_noticia_admin(
     db.refresh(noticia)
     return noticia  # Retorna o SQLAlchemy model (de preferência, faça um DTO/Schema, mas pra admin pode ser assim)
 
-
-
-
-@router.get("/painel/admin", response_class=HTMLResponse)
-def painel_admin_promotores(
-    request: Request,
-    db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_user_optional)
-):
-    if not admin:
-        return RedirectResponse(url="/login", status_code=302)
-
-    if not admin.is_admin:
-        return HTMLResponse("<h1>Acesso não autorizado</h1>", status_code=403)
-
-    promotores = db.query(Promotor).all()
-
-    return templates.TemplateResponse("painel_admin.html", {
-        "request": request,
-        "promotores": promotores
-    })
 
 
 # ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
