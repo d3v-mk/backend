@@ -21,6 +21,9 @@ from panopoker.usuarios.routers import admin, usuario
 from panopoker.lobby.routers import lobby
 from panopoker.websocket import routes as ws_routes
 
+import os
+from fastapi.staticfiles import StaticFiles
+
 # === Função de criação de tabelas e mesas ===
 def create_tables():
     Base.metadata.create_all(bind=engine)
@@ -61,6 +64,12 @@ def create_tables():
 create_tables()
 
 app = FastAPI()
+
+app.mount(
+    "/media",
+    StaticFiles(directory=os.path.join("panopoker", "usuarios", "media")),
+    name="media"
+)
 
 # Middleware CORS
 app.add_middleware(

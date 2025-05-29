@@ -14,8 +14,10 @@ def build_perfil_response(
         base_url = str(request.base_url).rstrip("/")
         if avatar_url.startswith("/"):
             avatar_url = f"{base_url}{avatar_url}"
-        elif avatar_url.startswith("http://192.168.") or avatar_url.startswith("http://localhost"):
-            avatar_url = avatar_url.replace("http://192.168.0.9:8000", base_url)
+        elif avatar_url.startswith("http://api.panopoker.com") or avatar_url.startswith("https://api.panopoker.com"):
+            avatar_url = avatar_url.replace("http://api.panopoker.com", base_url)
+            avatar_url = avatar_url.replace("https://api.panopoker.com", base_url)
+
 
     # Campos de estatísticas, ou zero/null se não tiver
     stats = estatisticas
