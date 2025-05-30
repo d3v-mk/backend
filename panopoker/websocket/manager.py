@@ -50,4 +50,24 @@ class ConnectionManager:
                 except Exception:
                     self.disconnect(mesa_id, user_id, ws)
 
+    async def send_som_jogada(self, mesa_id: int, tipo: str, jogador_id: int = None):
+        """
+        Envia um evento de som para todos os jogadores da mesa.
+        Pode ser usado também para personalizar sons por jogador no futuro.
+        """
+        message = {
+            "evento": "som_jogada",
+            "tipo": tipo,  # "check", "call", "raise", etc.
+            "jogador_id": jogador_id
+        }
+
+        for (mid, uid), ws_list in list(self.active_connections.items()):
+            if mid == mesa_id:
+                for ws in list(ws_list):
+                    try:
+                        await ws.send_json(message)
+                    except Exception as e:
+                        self.disconnect(mid, uid, ws)
+
+
 connection_manager = ConnectionManager()

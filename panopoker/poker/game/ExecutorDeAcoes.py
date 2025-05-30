@@ -74,6 +74,9 @@ class ExecutorDeAcoes:
             "evento": "mesa_atualizada"
         })
 
+        await connection_manager.send_som_jogada(self.mesa.id, tipo="check", jogador_id=jogador_id)
+
+
         debug_print(f"[ACAO_CHECK] ✅ Jogador {jogador_id} deu CHECK com sucesso")
 
         await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
@@ -114,6 +117,8 @@ class ExecutorDeAcoes:
         debug_print(f"[ACAO_CALL] ❌ Timer cancelado para jogador {jogador_id}")
 
         self.db.commit()
+
+        await connection_manager.send_som_jogada(self.mesa.id, tipo="call", jogador_id=jogador_id)
 
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
@@ -176,6 +181,8 @@ class ExecutorDeAcoes:
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
         })
+
+        await connection_manager.send_som_jogada(self.mesa.id, tipo="allin", jogador_id=jogador_id)
         
         debug_print(f"[ACAO_ALLIN] jogador {jogador_id} ALL-IN {allin}")
         await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
@@ -208,6 +215,9 @@ class ExecutorDeAcoes:
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
         })
+
+        await connection_manager.send_som_jogada(self.mesa.id, tipo="fold", jogador_id=jogador_id)
+
 
         debug_print(f"[ACAO_FOLD] jogador {jogador_id} deu FOLD")
         await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
@@ -270,6 +280,9 @@ class ExecutorDeAcoes:
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
         })
+
+        await connection_manager.send_som_jogada(self.mesa.id, tipo="raise", jogador_id=jogador_id)
+
 
         debug_print(f"[ACAO_RAISE_APOSTA_ATUAL] jogador {jogador_id} RAISE de {valor}")
         await self._gerenciador().verificar_proxima_etapa(posicao_origem=jogador.posicao_cadeira)
