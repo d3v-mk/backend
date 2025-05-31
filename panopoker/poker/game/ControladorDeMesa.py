@@ -227,6 +227,13 @@ class ControladorDeMesa:
         })
 
 
+    def desconectar_jogador(self, jogador_id: int):
+        key = (self.mesa.id, jogador_id)
+        if key in connection_manager.active_connections:
+            ws_list = connection_manager.active_connections[key].copy()
+            for ws in ws_list:
+                connection_manager.disconnect(self.mesa.id, jogador_id, ws)
+
 
     def _cadeira_posicao_disponivel(self):
         jogadores = self.db.query(JogadorNaMesa)\

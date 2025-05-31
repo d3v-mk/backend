@@ -67,6 +67,8 @@ class ExecutorDeAcoes:
         self._cancelar_timer()
         debug_print(f"[ACAO_CHECK] ⏹️ Timer cancelado para jogador {jogador_id}")
 
+        jogador.folds_seguidos_por_inatividade = 0
+
         jogador.rodada_ja_agiu = True
         self.db.commit()
 
@@ -112,6 +114,7 @@ class ExecutorDeAcoes:
         jogador.aposta_atual += paid
         jogador.aposta_acumulada += paid
         jogador.rodada_ja_agiu = True
+        jogador.folds_seguidos_por_inatividade = 0
 
         self._cancelar_timer()
         debug_print(f"[ACAO_CALL] ❌ Timer cancelado para jogador {jogador_id}")
@@ -153,6 +156,7 @@ class ExecutorDeAcoes:
         jogador.saldo_atual = 0.0
         jogador.saldo_atual = round(jogador.saldo_atual, 2)
         jogador.rodada_ja_agiu = True
+        jogador.folds_seguidos_por_inatividade = 0
         self._cancelar_timer()
 
         debug_print(f"[ACAO_ALLIN_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do allin: {jogador.saldo_atual}")
@@ -209,6 +213,7 @@ class ExecutorDeAcoes:
         jogador.participando_da_rodada = False
         jogador.rodada_ja_agiu = True
         self.mesa.jogador_da_vez = None
+        #jogador.folds_seguidos_por_inatividade = 0
         self._cancelar_timer()
         self.db.commit()
 
@@ -254,6 +259,7 @@ class ExecutorDeAcoes:
         jogador.aposta_atual = novo_total
         jogador.aposta_acumulada = Decimal(str(jogador.aposta_acumulada)) + total_aposta
         jogador.rodada_ja_agiu = True
+        jogador.folds_seguidos_por_inatividade = 0
 
         debug_print(f"[ACAO_RAISE_SALDO_ATUAL] Saldo do jogador {jogador_id} depois do raise: {jogador.saldo_atual}")
 

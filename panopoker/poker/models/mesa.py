@@ -75,6 +75,8 @@ class JogadorNaMesa(Base):
     rodada_ja_agiu = Column(Boolean, default=False)
     participando_da_rodada = Column(Boolean, default=True)
 
+    folds_seguidos_por_inatividade = Column(Integer, default=0)
+
     saldo_inicial = Column(Numeric(10, 2), nullable=False)
     saldo_atual = Column(Numeric(10, 2), nullable=False)
 

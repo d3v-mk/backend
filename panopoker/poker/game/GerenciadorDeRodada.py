@@ -294,15 +294,47 @@ class GerenciadorDeRodada:
             debug_print(f"❌ [cancelar_timer] Timer da mesa {self.mesa.id} cancelado")
 
     async def _timer_coroutine(self, jogador_id: int):
+        from panopoker.core.security import Usuario
+        from panopoker.poker.game.ControladorDeMesa import ControladorDeMesa
+
         debug_print(f"🟡 [_timer_coroutine] Entrando no timer do jogador {jogador_id}")
         try:
             await asyncio.sleep(20)
+            debug_print(f"⏰ [_timer_coroutine] Sleep finalizado para jogador {jogador_id}")
         except asyncio.CancelledError:
             debug_print(f"❌ [_timer_coroutine] Timer CANCELADO para jogador {jogador_id}")
             return
 
         debug_print(f"🟢 [_timer_coroutine] Timer terminou — forçando fold do jogador {jogador_id}")
         try:
+            debug_print(f"➡️ [_timer_coroutine] Chamando acao_fold para jogador {jogador_id}")
             await self._chamar_fold().acao_fold(jogador_id)
+            debug_print(f"✅ [_timer_coroutine] acao_fold finalizado para jogador {jogador_id}")
+
+            debug_print(f"🔍 [_timer_coroutine] Buscando jogador na DB {jogador_id}")
+            jogador = self.db.query(JogadorNaMesa).filter_by(jogador_id=jogador_id, mesa_id=self.mesa.id).first()
+            if jogador:
+                debug_print(f"👀 [_timer_coroutine] Jogador encontrado, folds seguidos antes: {jogador.folds_seguidos_por_inatividade}")
+                jogador.folds_seguidos_por_inatividade += 1
+                self.db.add(jogador)
+                self.db.commit()
+                debug_print(f"📉 [_timer_coroutine] folds_seguidos_por_inatividade agora: {jogador.folds_seguidos_por_inatividade}")
+
+                if jogador.folds_seguidos_por_inatividade >= 2:
+                    debug_print(f"❌ [_timer_coroutine] Removendo jogador {jogador_id} da mesa por 2 folds seguidos")
+
+                    usuario = self.db.query(Usuario).filter_by(id=jogador_id).first()
+                    if usuario:
+                        debug_print(f"👤 [_timer_coroutine] Usuário encontrado, instanciando controlador e chamando sair_da_mesa_por_inatividade")
+                        controlador = ControladorDeMesa(self.mesa, self.db)
+                        await controlador.sair_da_mesa(usuario)
+                        controlador.desconectar_jogador(jogador_id)
+                        debug_print(f"✅ [_timer_coroutine] saiu_da_mesa_por_inatividade finalizado para jogador {jogador_id}")
+                    else:
+                        debug_print(f"❌ [_timer_coroutine] Usuário {jogador_id} não encontrado pra sair_da_mesa")
+            else:
+                debug_print(f"❌ [_timer_coroutine] Jogador {jogador_id} não encontrado na mesa")
         except HTTPException as e:
             debug_print(f"[TIMER] Não consegui forçar fold: {e.detail}")
+        except Exception as ex:
+            debug_print(f"[TIMER] ERRO inesperado: {ex}")
