@@ -32,7 +32,7 @@ def minhas_cartas(
     if not jogador:
         raise HTTPException(status_code=404, detail="Jogador não encontrado na mesa")
 
-    if jogador.saldo_atual <= 0 or not jogador.participando_da_rodada:
+    if not jogador.participando_da_rodada:
         return {
             "cartas": [],
             "mao_formada": ""

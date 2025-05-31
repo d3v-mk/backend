@@ -27,7 +27,6 @@ async def websocket_mesa(websocket: WebSocket, mesa_id: int):
 
         # Autenticação
         auth_msg = await websocket.receive_json()
-        print(f"[WS][AUTH_MSG] {auth_msg}")
         if not (isinstance(auth_msg, dict) and auth_msg.get("type") == "auth" and auth_msg.get("token")):
             print(f"[WS][AUTH_FAIL] msg={auth_msg}")
             await websocket.close(code=4003)
@@ -63,6 +62,12 @@ async def websocket_mesa(websocket: WebSocket, mesa_id: int):
             try:
                 msg = await websocket.receive_json()
                 print(f"[WS][RECEIVED_MSG] {msg}")
+
+                # --- PING/PONG ---
+                if msg.get("evento") == "pong":
+                    connection_manager.receber_pong(websocket)
+                    print(f"[WS][PONG_RECEBIDO] user_id={user_id}")
+                    continue
             except WebSocketDisconnect:
                 print(f"[WS][DISCONNECT] mesa {mesa_id}, user_id {user_id}")
                 break
@@ -210,10 +215,25 @@ async def websocket_mesa(websocket: WebSocket, mesa_id: int):
         try:
             print(f"[WS][FINALLY] Desconectando mesa={mesa_id} user={user_id}")
             connection_manager.disconnect(mesa_id, user_id, websocket)
+
+            key = (mesa_id, user_id)
+            # Se não tem mais nenhuma conexão ativa para esse user na mesa
+            if key not in connection_manager.active_connections:
+                usuario = db.query(Usuario).get(user_id)
+                if usuario:
+                    try:
+                        await controlador_mesa.sair_da_mesa(usuario)
+                        await connection_manager.broadcast_mesa(mesa_id, {"evento": "mesa_atualizada"})
+                        print(f"[WS][FINALLY] Usuário {user_id} saiu da mesa {mesa_id} por desconexão")
+                    except Exception as e:
+                        print(f"[WS][FINALLY][ERRO_SAIR_DA_MESA] {e}")
+                        traceback.print_exc()
+
             if hasattr(db, 'is_active'):
                 print(f"[WS][FINALLY] DB is_active={db.is_active}")
+
             try:
-                db.rollback()  # Garante rollback se ficou sujo
+                db.rollback()
                 print(f"[WS][FINALLY] DB rollback realizado")
             except Exception as e:
                 print(f"[WS][FINALLY][DB_ROLLBACK_EXCEPTION] {e}")
@@ -221,3 +241,4 @@ async def websocket_mesa(websocket: WebSocket, mesa_id: int):
         except Exception as e:
             print(f"[WS][FINALLY][DISCONNECT_EXCEPTION] {e}")
             traceback.print_exc()
+
