@@ -65,9 +65,9 @@ create_tables()
 
 # Desativa tudo em producao para seguranca!!!
 app = FastAPI(
-#    docs_url=None,         # Desativa a Swagger UI (/docs)
-#    redoc_url=None,        # Desativa a ReDoc UI (/redoc)
-#    openapi_url=None       # Desativa o esquema OpenAPI (/openapi.json)
+   docs_url=None,         # Desativa a Swagger UI (/docs)
+   redoc_url=None,        # Desativa a ReDoc UI (/redoc)
+   openapi_url=None       # Desativa o esquema OpenAPI (/openapi.json)
 )
 
 app.mount(
@@ -77,24 +77,24 @@ app.mount(
 )
 
 # Middleware CORS producao!
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=[
-#         "https://www.panopoker.com",
-#         "https://api.panopoker.com"
-#     ],
-#     allow_credentials=True,
-#     allow_methods=["GET", "POST", "DELETE", "PUT"],
-#     allow_headers=["Authorization", "Content-Type"],
-# )
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://www.panopoker.com",
+        "https://api.panopoker.com"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "PUT"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 
 # Middleware de sessão
