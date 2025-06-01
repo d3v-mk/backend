@@ -63,7 +63,12 @@ def create_tables():
 # === Inicialização ===
 create_tables()
 
-app = FastAPI()
+# Desativa tudo em producao para seguranca!!!
+app = FastAPI(
+#    docs_url=None,         # Desativa a Swagger UI (/docs)
+#    redoc_url=None,        # Desativa a ReDoc UI (/redoc)
+#    openapi_url=None       # Desativa o esquema OpenAPI (/openapi.json)
+)
 
 app.mount(
     "/media",
@@ -71,7 +76,18 @@ app.mount(
     name="media"
 )
 
-# Middleware CORS
+# Middleware CORS producao!
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "https://www.panopoker.com",
+#         "https://api.panopoker.com"
+#     ],
+#     allow_credentials=True,
+#     allow_methods=["GET", "POST", "DELETE", "PUT"],
+#     allow_headers=["Authorization", "Content-Type"],
+# )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -80,8 +96,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Middleware de sessão
-app.add_middleware(SessionMiddleware, secret_key="alguma_chave_segura_aqui")
+secret_key = os.getenv("SESSION_SECRET_KEY")
+if not secret_key:
+    raise RuntimeError("🚨 SESSION_SECRET_KEY não definida no .env")
+
+app.add_middleware(SessionMiddleware, secret_key=secret_key)
+
 
 # Inclui as rotas backend
 app.include_router(usuario.router)

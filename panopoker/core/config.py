@@ -6,8 +6,8 @@ import os
 load_dotenv(".env")
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://mking:Tangodown98@localhost:5432/panopoker" #migrar pro .env dps
-    SECRET_KEY: str = "supersegredo_lendario"  # Trocar em produção e migrar pro .env dps
+    DATABASE_URL: str
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
 
@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     MERCADO_PAGO_CLIENT_ID: str
     MERCADO_PAGO_REDIRECT_URI: str
 
-
+    # MiddleWare CORS
+    SESSION_SECRET_KEY: str
+    
     # E-mail
     EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"
 

@@ -67,7 +67,7 @@
 
   <script>
     const tokens = {
-      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ4NzE1MTE4fQ.UYE4JEUPpo1kDW82ITkH8hveKxMur2H7MSnwy6eMD3s",
+      1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ4ODIyNzc3fQ.b9qjU3ZCnJEM5aFy8HdrjWGqy-tw3P7A3adYFYzSLNw",
       2: "",
       3: "",
       4: "TOKEN_JOGADOR_4",
@@ -89,7 +89,7 @@
         return;
       }
 
-      const ws = new WebSocket(`ws://localhost:8000/ws/mesa/${mesaId}`);
+      const ws = new WebSocket(`ws://localhost:8080/ws/mesa/${mesaId}`);
       wsJogadores[jogadorId] = ws;
       ws.onopen = () => {
         ws.send(JSON.stringify({ type: "auth", token }));
@@ -142,7 +142,7 @@
         wsPainel.close();
       }
       wsMesaId = mesaId;
-      wsPainel = new WebSocket(`ws://localhost:8000/ws/mesa/${mesaId}`);
+      wsPainel = new WebSocket(`ws://localhost:8080/ws/mesa/${mesaId}`);
       wsPainel.onopen = () => {
         wsPainel.send(JSON.stringify({ type: "auth", token }));
       };
@@ -163,13 +163,13 @@
       conectarPainelWs(mesaId, token);
 
       try {
-        const mesaRes = await fetch(`http://localhost:8000/mesa/${mesaId}`, {
+        const mesaRes = await fetch(`http://localhost:8080/mesa/${mesaId}`, {
           headers: { "Authorization": "Bearer " + token }
         });
         if (!mesaRes.ok) throw new Error("Falha ao buscar dados da mesa");
         const mesa = await mesaRes.json();
 
-        const jogadoresRes = await fetch(`http://localhost:8000/mesa/${mesaId}/jogadores`, {
+        const jogadoresRes = await fetch(`http://localhost:8080/mesa/${mesaId}/jogadores`, {
           headers: { "Authorization": "Bearer " + token }
         });
         if (!jogadoresRes.ok) throw new Error("Falha ao buscar jogadores");
@@ -234,7 +234,7 @@
 
     function forcarShowdown() {
       const mesaId = document.getElementById("mesaId").value;
-      fetch(`http://localhost:8000/mesa/${mesaId}/showdown`, {
+      fetch(`http://localhost:8080/mesa/${mesaId}/showdown`, {
         method: "POST",
         headers: { "Authorization": "Bearer " + tokens[1] }
       }).then(res => {
@@ -244,7 +244,7 @@
     }
 
     function revelarCartas(mesaId, jogadorId) {
-      fetch(`http://localhost:8000/mesa/${mesaId}/jogador/${jogadorId}/revelar`, {
+      fetch(`http://localhost:8080/mesa/${mesaId}/jogador/${jogadorId}/revelar`, {
         method: "POST",
         headers: { "Authorization": "Bearer " + tokens[1] }
       }).then(res => {

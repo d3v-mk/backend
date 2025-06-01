@@ -3,7 +3,12 @@ from fastapi.staticfiles import StaticFiles
 from panopoker.site.routers import configurar_loja, loja_promotor, site_pages, login_web, painel_promotor, painel_admin
 from panopoker.usuarios.routers import admin
 
-app_site = FastAPI()
+# Desativa tudo em producao para seguranca!!!
+app_site = FastAPI(
+    docs_url=None,         # Desativa a Swagger UI (/docs)
+    redoc_url=None,        # Desativa a ReDoc UI (/redoc)
+    openapi_url=None       # Desativa o esquema OpenAPI (/openapi.json)
+)
 
 app_site.include_router(configurar_loja.router)
 app_site.include_router(loja_promotor.router)
