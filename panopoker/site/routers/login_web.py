@@ -32,7 +32,7 @@ def dashboard_redirect(request: Request, usuario: Usuario = Depends(get_current_
 def exibir_login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
-@router.get("/finaliza-login")
+@router.get("/finaliza_login")
 def finaliza_login(request: Request):
     return templates.TemplateResponse("finaliza_login.html", {"request": request})
 
