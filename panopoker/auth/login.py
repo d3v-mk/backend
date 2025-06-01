@@ -10,6 +10,7 @@ from panopoker.core.debug import debug_print
 import httpx
 from fastapi.responses import RedirectResponse
 from panopoker.core.config import settings
+import sys
 
 from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
 
@@ -107,6 +108,8 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
 
     response = httpx.post(token_url, data=data)
     if response.status_code != 200:
+        print("🚨 GOOGLE TOKEN ERROR:", response.text)
+        sys.stdout.flush()
         raise HTTPException(status_code=400, detail="Falha ao obter token")
 
     tokens = response.json()
