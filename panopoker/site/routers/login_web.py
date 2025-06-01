@@ -55,7 +55,8 @@ def processar_login(request: Request, response: Response,
     value=token,
     httponly=True,
     secure=True,          # 🔒 obrigatório em HTTPS (ngrok é HTTPS)
-    samesite="None"       # 🔁 permite redirecionamento entre domínios
+    samesite="None",       # 🔁 permite redirecionamento entre domínios
+    domain=".panopoker.com"
     )
     return resp
 
