@@ -118,7 +118,7 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
     access_token = resultado["access_token"]
 
     # ✅ Redireciona e salva o token em cookie
-    resp = RedirectResponse(url="https://www.panopoker.com/dashboard", status_code=302)
+    resp = RedirectResponse(url="https://www.panopoker.com/finaliza-login?token=" + access_token, status_code=302)
     resp.set_cookie(key="access_token", value=access_token, httponly=True)
     return resp
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Finalizando login...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: #0f0f0f;
+            color: #ffffff;
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .loading {
+            margin-top: 1rem;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Finalizando login...</h1>
+    <p class="loading">Aguarde um instante...</p>
+
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+
+            if (token) {
+                // Cria cookie válido para todo o domínio .panopoker.com
+                document.cookie = `access_token=${token}; path=/; domain=.panopoker.com; secure; samesite=None`;
+
+                // Redireciona pro painel
+                window.location.href = "/dashboard";
+            } else {
+                // Sem token? Joga de volta pro login
+                window.location.href = "/login";
+            }
+        })();
+    </script>
+</body>
+</html>
