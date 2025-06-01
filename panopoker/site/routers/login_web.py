@@ -34,7 +34,7 @@ def exibir_login(request: Request):
 
 @router.get("/finaliza-login")
 def finaliza_login(request: Request):
-    return templates.TemplateResponse("finaliza-login.html", {"request": request})
+    return templates.TemplateResponse("finaliza_login.html", {"request": request})
 
 
 
