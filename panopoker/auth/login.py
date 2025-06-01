@@ -10,15 +10,10 @@ from panopoker.core.debug import debug_print
 import httpx
 from fastapi.responses import RedirectResponse
 from panopoker.core.config import settings
-import sys
 
 from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
-
-import logging
-
-logger = logging.getLogger("uvicorn.error")
 
 # === LOGIN DO APP ===
 @router.post("/login")
@@ -111,7 +106,6 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
 
     response = httpx.post(token_url, data=data)
     if response.status_code != 200:
-        logger.error(f"🚨 GOOGLE TOKEN ERROR: {response.text}")
         raise HTTPException(status_code=400, detail="Falha ao obter token")
 
     tokens = response.json()
@@ -124,7 +118,7 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
     access_token = resultado["access_token"]
 
     # ✅ Redireciona e salva o token em cookie
-    resp = RedirectResponse(url="/dashboard", status_code=302)
+    resp = RedirectResponse(url="https://www.panopoker.com/dashboard", status_code=302)
     resp.set_cookie(key="access_token", value=access_token, httponly=True)
     return resp
 
