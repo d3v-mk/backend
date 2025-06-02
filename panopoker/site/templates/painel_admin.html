@@ -210,6 +210,11 @@
     <a href="/admin/promotores/exportar" class="botao">📄 Exportar CSV</a>
   </div>
 
+  <h2>🕹️ Jogadores Online por Mesa</h2>
+  <div id="contador-jogadores">
+    <p>Carregando jogadores online...</p>
+  </div>
+
   <h2>Gerenciar Cargo de Promotor</h2>
   <div class="form-promover">
     <div class="card-form">
@@ -469,6 +474,46 @@
     window.addEventListener("click", () => {
       document.querySelectorAll(".dropdown").forEach(el => el.classList.remove("show"));
     });
+
+
+
+    // contador players online
+    async function atualizarContadorJogadores() {
+      try {
+        const res = await fetch('/admin/mesas/ativos');
+        if (!res.ok) throw new Error('Erro ao buscar dados');
+        const dados = await res.json();
+
+        const div = document.getElementById('contador-jogadores');
+        div.innerHTML = '';  // limpa o conteúdo
+
+        if (Object.keys(dados).length === 0) {
+          div.innerHTML = '<p>Nenhuma mesa com jogadores online agora.</p>';
+          return;
+        }
+
+        // Cria uma lista simples das mesas com quantos jogadores online tem
+        const ul = document.createElement('ul');
+        for (const mesa_id in dados) {
+          const jogadores = dados[mesa_id];
+          const li = document.createElement('li');
+          li.textContent = `Mesa ${mesa_id}: ${jogadores.length} jogador(es) online`;
+          ul.appendChild(li);
+        }
+        div.appendChild(ul);
+
+      } catch (error) {
+        console.error('Erro ao atualizar contador:', error);
+        const div = document.getElementById('contador-jogadores');
+        div.innerHTML = '<p>Erro ao carregar dados dos jogadores.</p>';
+      }
+    }
+
+    // Atualiza já ao carregar e depois a cada 10s (10000ms)
+    atualizarContadorJogadores();
+    setInterval(atualizarContadorJogadores, 10000);
+    // fim contador players online
+    
   </script>
 </body>
 </html>
