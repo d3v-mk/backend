@@ -19,23 +19,6 @@ router = APIRouter(tags=["Admin"])
 
 templates = Jinja2Templates(directory="panopoker/site/templates")
 
-@router.get("/admin/mesas/ativos")
-def listar_jogadores_online_por_mesa():
-    from panopoker.websocket.manager import connection_manager
-    stats = {}
-
-    for (mesa_id, jogador_id), sockets in connection_manager.active_connections.items():
-        if mesa_id not in stats:
-            stats[mesa_id] = []
-        stats[mesa_id].append(jogador_id)
-
-    # Remove duplicatas, caso algum jogador tenha múltiplos devices
-    for mesa_id in stats:
-        stats[mesa_id] = list(set(stats[mesa_id]))
-
-    return JSONResponse(content=stats)
-
-
 # @router.delete("/admin/reset_estatisticas")
 # def resetar_estatisticas(
 #     db: Session = Depends(get_db),
