@@ -9,6 +9,7 @@ from sqlalchemy import BigInteger
 class MesaStatus(str, enum.Enum):
     aberta = "aberta"
     em_jogo = "em_jogo"
+    manutencao = "manutencao"
 
 
 class EstadoDaMesa:
@@ -35,6 +36,8 @@ class Mesa(Base):
     rodada_id = Column(Integer, default=1)
     nome = Column(String, index=True)
     timestamp_inicio_rodada = Column(BigInteger, nullable=True)
+
+    manutencao_pendente = Column(Boolean, default=False)
 
     buy_in = Column(Numeric(10, 2), nullable=False)
     status = Column(String, default="aberta")

@@ -40,6 +40,7 @@ class DistribuidorDePote:
         from panopoker.poker.game.utils.estatisticas_helper import registrar_estatisticas_showdown
         from panopoker.poker.game.utils.wincards_helper import wincards_helper
         from panopoker.lobby.utils.noticias_helper import registrar_eventos_showdown
+        from panopoker.poker.models.mesa import MesaStatus
 
         debug_print(f"[SHOWDOWN] Iniciando showdown na mesa {self.mesa.id}")
 
@@ -165,7 +166,56 @@ class DistribuidorDePote:
             "dados": json_safe(payload)
         })
 
+        # 👇 Lógica da manutenção aqui:
+        if self.mesa.manutencao_pendente:
+            rodada_anterior = self.mesa.rodada_id
+            self.mesa.rodada_id += 1  # rodada avança normalmente
+
+            if self.mesa.rodada_id > rodada_anterior:
+                await self.kickar_todos()  # <- se for async, não esquece
+                self.mesa.status = MesaStatus.manutencao
+                self.mesa.manutencao_pendente = False
+                self.db.add(self.mesa)
+                self.db.commit()
+                return payload  # <- encerra aqui, nem precisa nova_rodada()
+
         return payload
+    
+
+
+
+
+    # ==== kikar todos qnd a mesa tiver em manutencao (usado no final do showdown ali em cima)
+    async def kickar_todos(self):
+        from panopoker.core.security import Usuario
+        from panopoker.poker.game.ControladorDeMesa import ControladorDeMesa
+
+        jogadores = self.db.query(JogadorNaMesa).filter(
+            JogadorNaMesa.mesa_id == self.mesa.id
+        ).all()
+
+        for j in jogadores:
+            usuario = self.db.query(Usuario).filter(Usuario.id == j.jogador_id).first()
+            if usuario:
+                controlador = ControladorDeMesa(mesa=self.mesa, db=self.db)
+                await controlador.sair_da_mesa(usuario)
+                debug_print(f"[KICK] Jogador {j.jogador_id} removido por manutenção")
+
+                key = (self.mesa.id, j.jogador_id)
+                if key in connection_manager.active_connections:
+                    websockets = list(connection_manager.active_connections[key])  # copia pra não dar problema no loop
+                    for ws in websockets:
+                        try:
+                            await ws.close()
+                            debug_print(f"[KICK] WS do jogador {j.jogador_id} fechado")
+                        except Exception as e:
+                            debug_print(f"[KICK] Erro ao fechar WS do jogador {j.jogador_id}: {e}")
+                        finally:
+                            connection_manager.disconnect(self.mesa.id, j.jogador_id, ws)
+
+
+
+
     
 
 

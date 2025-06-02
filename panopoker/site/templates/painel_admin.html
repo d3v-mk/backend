@@ -225,6 +225,71 @@
     </div>
   </div>
 
+
+  <h2>Manutenção do Sistema</h2>
+  <div class="form-promover">
+    <div class="card-form">
+      <h3>🛠️ Ativar Manutenção</h3>
+      <form id="form-manutencao" method="post" action="/admin/ativar-manutencao" onsubmit="return confirmarAtivarManutencao();">
+        <p>
+          Essa ação vai colocar as mesas em manutenção.<br />
+          Mesas em jogo terão manutenção na próxima rodada.<br />
+          Mesas abertas entram em manutenção imediata.
+        </p>
+        <div style="text-align: center;">
+          <button type="submit" class="botao botao-danger">⚠️ Ativar Manutenção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <h2>Manutenção do Sistema</h2>
+  <div class="form-promover">
+    <div class="card-form">
+      <h3>🛠️ Encerrar Manutenção</h3>
+      <form id="form-encerrar-manutencao" method="post" action="/admin/encerrar-manutencao" onsubmit="return confirmarEncerrarManutencao();">
+        <p>
+          Essa ação vai reabrir as mesas que estão em manutenção.<br />
+          Mesas em manutenção terão status alterado para "aberta".
+        </p>
+        <div style="text-align: center;">
+          <button type="submit" class="botao botao-danger">✅ Encerrar Manutenção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <h2>📢 Criar Notícia Admin</h2>
+  <div class="form-promover">
+    <div class="card-form">
+      <h3>📝 Nova Notícia</h3>
+      <form id="form-noticia-admin" method="post" action="/criar/noticias/admin" onsubmit="return validarNoticiaAdmin();">
+        <label for="mensagem">Mensagem:</label>
+        <textarea id="mensagem" name="mensagem" rows="4" required
+          placeholder="Escreva a notícia aqui..." style="width: 100%; padding: 10px; border-radius: 6px; border: none; background-color: #333; color: white; font-size: 1em;"></textarea>
+        <div style="text-align: center; margin-top: 15px;">
+          <button type="submit" class="botao">🚀 Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <h2>🧹 Limpar Notícias</h2>
+  <div class="form-promover">
+    <div class="card-form">
+      <h3>⚠️ Apagar todas as notícias</h3>
+      <p style="color: #f39c12; text-align:center; margin-bottom: 20px;">
+        Isso vai apagar <strong>todas</strong> as notícias e resetar os IDs.<br>
+        <strong>Não tem volta!</strong>
+      </p>
+      <div style="text-align: center;">
+        <button id="btn-limpar-noticias" class="botao botao-danger" style="width: 180px;">🗑️ Apagar Tudo</button>
+      </div>
+    </div>
+  </div>
+
+
   <input type="text" id="filtro" onkeyup="filtrarPromotores()" placeholder="🔍 Buscar por nome, ID ou slug..." />
 
   <select onchange="filtrarPorStatus(this.value)">
@@ -302,6 +367,63 @@
     function setAcao(tipo) {
       acaoSelecionada = tipo;
     }
+
+    function confirmarAtivarManutencao() {
+      return confirm('Confirma ativar manutenção para as mesas?');
+    }
+
+    function confirmarEncerrarManutencao() {
+      return confirm('Tem certeza que deseja encerrar a manutenção e reabrir as mesas?');
+    }
+
+    // limpar noticias admin
+    document.getElementById('btn-limpar-noticias').addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!confirm("Você tem certeza que quer apagar todas as notícias? Esta ação não pode ser desfeita.")) {
+        return;
+      }
+      try {
+        const res = await fetch('/noticias/limpar', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!res.ok) throw new Error('Erro ao apagar notícias');
+        const data = await res.json();
+        alert(data.msg);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    // fim do limpar noticias admin
+
+    // Criar noticias admin
+    const form = document.getElementById('form-noticia-admin');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mensagem = form.mensagem.value.trim();
+      if (!mensagem) {
+        alert('Escreva a mensagem da notícia.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/criar/noticias/admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ mensagem })
+        });
+        if (!res.ok) throw new Error('Erro ao criar notícia');
+        alert('Notícia criada com sucesso!');
+        form.reset();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    // Fim Criar noticias admin
 
     function definirAcao(form) {
       const id = form.querySelector('input[name="user_id"]').value;

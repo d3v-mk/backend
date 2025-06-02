@@ -62,6 +62,12 @@ class ControladorDeMesa:
         print(f"[PRINT] === INICIANDO entrar_na_mesa ===")
         print(f"[PRINT] Mesa: {self.mesa.id} | Usuário: {usuario.id}")
 
+        # 🔒 BLOQUEIO se mesa estiver em manutenção
+        status_atual = MesaStatus(self.mesa.status) if isinstance(self.mesa.status, str) else self.mesa.status
+        if status_atual == MesaStatus.manutencao:
+            print(f"[PRINT] ⚠️ Mesa está em manutenção! ABORTANDO")
+            raise HTTPException(status_code=403, detail="A mesa está em manutenção no momento.")
+
         jogador_existente = self.db.query(JogadorNaMesa)\
             .filter(JogadorNaMesa.mesa_id == self.mesa.id)\
             .filter(JogadorNaMesa.jogador_id == usuario.id)\

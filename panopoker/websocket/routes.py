@@ -83,24 +83,48 @@ async def websocket_mesa(websocket: WebSocket, mesa_id: int):
             # Matchmaking
             if mesa_id == 0 and acao == "matchmaking":
                 tipo = msg.get("tipo")
-                buy_in = {"bronze":0.30, "prata":2, "ouro":5}.get(tipo)
+                buy_in = {"bronze": 0.30, "prata": 2, "ouro": 5}.get(tipo)
                 print(f"[WS][MATCHMAKING] tipo={tipo} buy_in={buy_in}")
+
                 if buy_in:
                     mesa_disp = matchmaking_helper(db, buy_in)
                     print(f"[WS][MATCH_FOUND] {mesa_disp}")
+
                     try:
-                        await websocket.send_json({"evento":"match_encontrado","mesa_id":mesa_disp.id})
+                        if mesa_disp:
+                            await websocket.send_json({
+                                "evento": "match_encontrado",
+                                "mesa_id": mesa_disp.id
+                            })
+                        else:
+                            await websocket.send_json({
+                                "evento": "match_nao_encontrado",
+                                "mensagem": "Nenhuma mesa disponível no momento."
+                            })
+                            print(f"[WS] Encerrando conexão por falta de mesa.")
+                            await websocket.close(code=1000)
+                            return
                     except Exception as e:
                         print(f"[WS][EXC_SEND_JSON][MATCH] {type(e)} {e}")
                         traceback.print_exc()
+                        await websocket.close(code=1011)
+                        return
                 else:
-                    print(f"[WS][MATCH_NOT_FOUND]")
+                    print(f"[WS][MATCH_NOT_FOUND] Tipo inválido: {tipo}")
                     try:
-                        await websocket.send_json({"evento":"match_nao_encontrado"})
+                        await websocket.send_json({
+                            "evento": "match_nao_encontrado",
+                            "mensagem": "Tipo de mesa inválido."
+                        })
+                        await websocket.close(code=1003)
+                        return
                     except Exception as e:
                         print(f"[WS][EXC_SEND_JSON][NO_MATCH] {type(e)} {e}")
                         traceback.print_exc()
+                        await websocket.close(code=1011)
+                        return
                 continue
+
 
             # Ações mesa real
             if mesa_id != 0:

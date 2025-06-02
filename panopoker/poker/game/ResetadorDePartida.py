@@ -24,6 +24,12 @@ class ResetadorDePartida:
             .all()
         )
 
+        # ⚠️ Impede da mesa voltar para aberta qnd tiver em manutencao e impede o inicio de uma nova rodada
+        status_atual = MesaStatus(self.mesa.status) if isinstance(self.mesa.status, str) else self.mesa.status
+        if status_atual == MesaStatus.manutencao:
+            debug_print(f"[NOVA_RODADA] Mesa {self.mesa.id} está em manutenção. Abortando nova rodada.")
+            return
+
         # 2) Se sobrar menos de 2, reabre mesa e encerra ciclo
         if len(jogadores_ativos) < 2:
             debug_print("[NOVA_RODADA] Menos de 2 jogadores ativos. Encerrando ciclo.")
