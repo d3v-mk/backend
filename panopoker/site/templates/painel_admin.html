@@ -226,6 +226,56 @@
   </div>
 
 
+
+
+  <h2>⚡ Criar/Atualizar Promotor Manualmente</h2>
+  <div class="form-promover">
+    <div class="card-form">
+      <h3>🛠️ Criar ou Atualizar Promotor</h3>
+      <form id="form-criar-promotor" onsubmit="return criarPromotor(event)">
+        <label for="user_id">🆔 user_id (int):</label>
+        <input type="number" id="user_id" name="user_id" required placeholder="Ex: 42" />
+
+        <label for="user_id_mp">📦 user_id_mp (string):</label>
+        <input type="text" id="user_id_mp" name="user_id_mp" required placeholder="Ex: mp_abc123" />
+
+        <label for="access_token">🔑 access_token:</label>
+        <input type="text" id="access_token" name="access_token" required />
+
+        <label for="refresh_token">♻️ refresh_token:</label>
+        <input type="text" id="refresh_token" name="refresh_token" required />
+
+        <label for="nome">📝 Nome (opcional):</label>
+        <input type="text" id="nome" name="nome" placeholder="Ex: Loja do MK" />
+
+        <div style="text-align:center; margin-top: 15px;">
+          <button type="submit" class="botao">🚀 Criar/Atualizar</button>
+        </div>
+      </form>
+      <div id="resultado-criar-promotor" style="margin-top:10px; color: #FFD700; font-weight: bold;"></div>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   <h2>Manutenção do Sistema</h2>
   <div class="form-promover">
     <div class="card-form">
@@ -305,7 +355,7 @@
         <th>ID</th>
         <th>Slug</th>
         <th>Access Token</th>
-        <th>Saldo</th>
+        <th>Repasse</th>
         <th>Status</th>
         <th>Última Atividade</th>
         <th>Ações</th>
@@ -345,9 +395,7 @@
               <form method="post" action="/admin/promotor/{{ promotor.id }}/desbloquear">
                 <button type="submit" {% if not promotor.bloqueado %}disabled{% endif %}>Desbloquear ✅</button>
               </form>
-              <form method="post" action="/admin/promotor/{{ promotor.id }}/zerar_saldo" onsubmit="return confirmarZerar();">
-                <button class="botao-danger" type="submit">Zerar Saldo 0️⃣</button>
-              </form>
+
               {% if promotor.slug %}
               <form method="post" action="/admin/promotor/{{ promotor.id }}/apagar_loja" onsubmit="return confirm('Tem certeza que deseja apagar a loja deste promotor? Esta ação não poderá ser desfeita.');">
                 <button class="botao-danger" type="submit">Apagar Loja 🗑️</button>
@@ -469,6 +517,57 @@
     window.addEventListener("click", () => {
       document.querySelectorAll(".dropdown").forEach(el => el.classList.remove("show"));
     });
+
+
+
+
+
+    async function criarPromotor(event) {
+      event.preventDefault();
+      const form = event.target;
+      const data = {
+        user_id: parseInt(form.user_id.value),
+        user_id_mp: form.user_id_mp.value,
+        access_token: form.access_token.value,
+        refresh_token: form.refresh_token.value,
+        nome: form.nome.value || null,
+      };
+
+      try {
+        const res = await fetch('/admin/promotor/criar_loja', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) throw new Error(result.detail || 'Erro desconhecido');
+
+        document.getElementById('resultado-criar-promotor').textContent = result.msg;
+        form.reset();
+      } catch (e) {
+        let msg = e.message || JSON.stringify(e);
+        document.getElementById('resultado-criar-promotor').textContent = '❌ ' + msg;
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   </script>
 </body>
 </html>

@@ -9,6 +9,8 @@ from panopoker.core.security import get_current_user_optional
 from pydantic import BaseModel
 from datetime import datetime
 from decimal import Decimal
+from panopoker.usuarios.models.promotor import Promotor
+from urllib.parse import urlencode
 
 router = APIRouter(prefix="", tags=["Painel Promotores"])
 templates = Jinja2Templates(directory="panopoker/site/templates")
@@ -32,12 +34,18 @@ def painel_promotor(
         Saque.promotor_id == usuario.id
     ).all()
 
+    promotor = db.query(Promotor).filter(Promotor.id == usuario.id).first()
+
+    saldo_repassar = promotor.saldo_repassar if promotor else Decimal("0")
+    comissao_total = promotor.comissao_total if promotor else Decimal("0")
+
+
     return templates.TemplateResponse("painel_promotor.html", {
         "request": request,
         "saques": saques,
         "usuario": usuario,
-        "saldo_repassar": Decimal("125.50"),
-        "comissao_total": Decimal("33.75")
+        "saldo_repassar": saldo_repassar,
+        "comissao_total": comissao_total
     })
 
 # ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
@@ -70,6 +78,12 @@ def criar_saque(request: SaqueCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"msg": "Saque criado"}
 
+
+
+
+
+
+
 @router.post("/painel/promotor/solicitar_saque")
 def solicitar_saque(
     request: Request,
@@ -83,7 +97,8 @@ def solicitar_saque(
 
     jogador = db.query(Usuario).filter(Usuario.id_publico == id_publico).first()
     if not jogador:
-        return HTMLResponse("Jogador não encontrado", status_code=404)
+        mensagem = urlencode({"erro": "ID do Jogador não encontrado"})
+        return RedirectResponse(url=f"/painel/promotor?{mensagem}", status_code=302)
 
     saque = Saque(
         jogador_id=jogador.id,

@@ -76,10 +76,24 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
 
                 usuario = db.query(Usuario).filter(Usuario.id == pagamento.user_id).first()
                 if usuario:
-                    valor_liquido = calcular_liquido(Decimal(str(pagamento.valor)))  # <--- converte para Decimal
+                    valor_bruto = Decimal(str(pagamento.valor))
+                    valor_liquido = calcular_liquido(valor_bruto)
+                    rake = valor_bruto - valor_liquido  # Ex: 3.00 - 2.80 = 0.20
+
                     usuario.saldo += valor_liquido
                     db.add(usuario)
                     logging.info(f"✅ Fichas adicionadas: R${valor_liquido} para usuário ID {usuario.id}")
+
+                    if promotor:
+                        metade_rake = rake / 2  # 50% da rake
+                        promotor.comissao_total = (promotor.comissao_total or Decimal("0")) + metade_rake
+                        promotor.saldo_repassar = (promotor.saldo_repassar or Decimal("0")) + metade_rake
+
+                        db.add(promotor)
+                        logging.info(f"💰 Promotor ID {promotor.id}: comissão_total={promotor.comissao_total}, saldo_repassar (dívida contigo)={promotor.saldo_repassar}")
+
+                    if promotor.saldo_repassar >= Decimal("5.00"):
+                        promotor.bloqueado = True
 
                 db.add(pagamento)
                 db.commit()

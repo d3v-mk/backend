@@ -14,47 +14,11 @@ from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
 from panopoker.lobby.models.noticias import Noticia
 from panopoker.schemas.usuario import NoticiaAdminCreate
 from fastapi.responses import JSONResponse
+from decimal import Decimal
 
 router = APIRouter(tags=["Admin"])
 
 templates = Jinja2Templates(directory="panopoker/site/templates")
-
-# @router.delete("/admin/reset_estatisticas")
-# def resetar_estatisticas(
-#     db: Session = Depends(get_db),
-#     usuario: Usuario = Depends(get_current_user_optional)
-# ):
-#     if usuario is None:
-#         raise HTTPException(status_code=401, detail="Você precisa estar logado.")
-
-#     if not getattr(usuario, "is_admin", False):
-#         raise HTTPException(status_code=403, detail="Sem permissão, jovem gafanhoto.")
-
-#     estatisticas = db.query(EstatisticasJogador).all()
-#     if not estatisticas:
-#         raise HTTPException(status_code=404, detail="Nenhuma estatística encontrada")
-
-#     for stat in estatisticas:
-#         stat.rodadas_jogadas = 0
-#         stat.rodadas_ganhas = 0
-#         stat.vitorias = 0
-#         stat.fichas_ganhas = 0.0
-#         stat.fichas_perdidas = 0.0
-#         stat.maior_pote = 0.0
-#         stat.data_primeira_vitoria = None
-#         stat.data_ultima_vitoria = None
-#         stat.mao_favorita = None
-#         stat.sequencias = 0
-#         stat.flushes = 0
-#         stat.fullhouses = 0
-#         stat.quadras = 0
-#         stat.straight_flushes = 0
-#         stat.royal_flushes = 0
-#         stat.ultimo_update = None
-#         db.add(stat)
-
-#     db.commit()
-#     return {"mensagem": "Estatísticas resetadas com sucesso"}
 
 
 
@@ -162,6 +126,236 @@ def criar_noticia_admin(
     return noticia
 
 
+# ============================= PROMOVER USUARIO A PROMOTER =============================
+
+@router.post("/admin/usuario/promover/{user_id}")
+def promover_usuario(
+    user_id: int,
+    tipo: str,  # "admin" ou "promotor"
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user_optional)
+):
+    if usuario is None:
+        raise HTTPException(status_code=401, detail="Você precisa estar logado.")
+
+    if not getattr(usuario, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Sem permissão, jovem padawan.")
+
+    usuario_alvo = db.query(Usuario).get(user_id)
+    if not usuario_alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    if tipo == "admin":
+        usuario_alvo.is_admin = True
+    elif tipo == "promotor":
+        usuario_alvo.is_promoter = True
+    else:
+        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
+
+    db.commit()
+    return {"msg": f"Usuário promovido a {tipo} (sem perder cargos anteriores)"}
+
+
+
+
+
+
+@router.post("/admin/usuario/despromover/{user_id}")
+def despromover_usuario(
+    user_id: int,
+    tipo: str,  # "admin" ou "promotor"
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user_optional)
+):
+    if usuario is None:
+        raise HTTPException(status_code=401, detail="Você precisa estar logado.")
+
+    if not getattr(usuario, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Sem permissão, jovem padawan.")
+
+    usuario_alvo = db.query(Usuario).get(user_id)
+    if not usuario_alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    if tipo == "admin":
+        usuario_alvo.is_admin = False
+    elif tipo == "promotor":
+        usuario_alvo.is_promoter = False
+    else:
+        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
+
+    db.commit()
+    return {"msg": f"Usuário removido do cargo de {tipo}"}
+
+
+
+@router.post("/admin/promotor/{promotor_id}/apagar_loja")
+def apagar_loja_promotor(
+    promotor_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_user_optional)
+):
+    if not admin.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+
+    promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
+
+    if not promotor:
+        raise HTTPException(status_code=404, detail="Loja do promotor não encontrada.")
+
+    db.delete(promotor)
+    db.commit()
+
+    return {"status": "ok", "mensagem": "Loja do promotor removida com sucesso."}
+
+
+
+
+
+@router.post("/admin/promotor/{promotor_id}/desbloquear")
+async def desbloquear_promotor(
+    promotor_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_user_optional)
+):
+    if not admin.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+
+    promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
+    if not promotor:
+        raise HTTPException(status_code=404, detail="Promotor não encontrado")
+
+    promotor.bloqueado = False
+    promotor.saldo_repassar = Decimal("0.00")  # opcional
+    promotor.comissao_total = Decimal("0.00")
+
+    db.add(promotor)
+    db.commit()
+
+    return {"status": "ok", "mensagem": f"Promotor {promotor_id} desbloqueado com sucesso"}
+
+
+
+
+
+
+
+
+
+
+
+# ============================================================
+# from pydantic import BaseModel
+
+# class PromotorCreate(BaseModel):
+#     user_id: int
+#     user_id_mp: str
+#     access_token: str
+#     refresh_token: str
+#     nome: str | None = None
+
+
+# @router.post("/admin/promotor/criar_loja")
+# def criar_loja_promotor(promotor_data: PromotorCreate, db: Session = Depends(get_db)):
+#     data = promotor_data
+#     user_id = data.user_id
+#     user_id_mp = data.user_id_mp
+#     access_token = data.access_token
+#     refresh_token = data.refresh_token
+#     nome = data.nome
+
+#     promotor = db.query(Promotor).filter(Promotor.user_id == user_id).first()
+
+#     if not promotor:
+#         promotor = Promotor(
+#             user_id=user_id,
+#             user_id_mp=user_id_mp,
+#             access_token=access_token,
+#             refresh_token=refresh_token,
+#             slug=f"promotor_{user_id}",
+#             nome=nome or "Loja do Promotor"
+#         )
+#         db.add(promotor)
+#     else:
+#         promotor.user_id_mp = user_id_mp
+#         promotor.access_token = access_token
+#         promotor.refresh_token = refresh_token
+#         if nome:
+#             promotor.nome = nome
+#         if not promotor.slug:
+#             promotor.slug = f"promotor_{user_id}"
+
+#     db.commit()
+
+#     return {"msg": "Promotor criado ou atualizado com sucesso!", "promotor_id": promotor.id}
+# ============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+# ==== so pra ver oq o showdown ta retornando ====
+# @router.post("/admin/{mesa_id}/debug/executar_showdown")
+# async def executar_showdown_debug(mesa_id: int, db: Session = Depends(get_db)):
+#     mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
+#     if not mesa:
+#         raise HTTPException(status_code=404, detail="Mesa não encontrada")
+
+#     controlador = DistribuidorDePote(mesa=mesa, db=db)
+#     resultado = await controlador.realizar_showdown()
+#     return resultado
+
+
+
+
+
+
+
+# @router.post("/admin/promotor/criar_loja")
+# def criar_loja_promotor(
+#     user_id: int,
+#     nome: str,
+#     slug: str,
+#     access_token: str = "",
+#     refresh_token: str = "",
+#     db: Session = Depends(get_db),
+#     admin: Usuario = Depends(get_current_user_optional)
+# ):
+#     if not admin.is_admin:
+#         raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+
+#     usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+#     if not usuario:
+#         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+#     promotor_existente = db.query(Promotor).filter(Promotor.user_id == user_id).first()
+#     if promotor_existente:
+#         raise HTTPException(status_code=400, detail="Este usuário já possui uma loja.")
+
+#     nova_loja = Promotor(
+#         user_id=user_id,
+#         user_id_mp="manual",
+#         nome=nome,
+#         slug=slug,
+#         access_token=access_token,
+#         refresh_token=refresh_token
+#     )
+
+#     db.add(nova_loja)
+#     db.commit()
+
+#     return {"status": "ok", "mensagem": "Loja criada com sucesso."}
+
+
+
+
 
 
 # ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
@@ -231,134 +425,46 @@ def criar_noticia_admin(
 #     return {"detail": "Estado forçado para showdown"}
 
 
-# ============================= PROMOVER USUARIO A PROMOTER =============================
-
-@router.post("/admin/usuario/promover/{user_id}")
-def promover_usuario(
-    user_id: int,
-    tipo: str,  # "admin" ou "promotor"
-    db: Session = Depends(get_db),
-    usuario: Usuario = Depends(get_current_user_optional)
-):
-    if usuario is None:
-        raise HTTPException(status_code=401, detail="Você precisa estar logado.")
-
-    if not getattr(usuario, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Sem permissão, jovem padawan.")
-
-    usuario_alvo = db.query(Usuario).get(user_id)
-    if not usuario_alvo:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    if tipo == "admin":
-        usuario_alvo.is_admin = True
-    elif tipo == "promotor":
-        usuario_alvo.is_promoter = True
-    else:
-        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
-
-    db.commit()
-    return {"msg": f"Usuário promovido a {tipo} (sem perder cargos anteriores)"}
 
 
 
 
 
 
-@router.post("/admin/usuario/despromover/{user_id}")
-def despromover_usuario(
-    user_id: int,
-    tipo: str,  # "admin" ou "promotor"
-    db: Session = Depends(get_db),
-    usuario: Usuario = Depends(get_current_user_optional)
-):
-    if usuario is None:
-        raise HTTPException(status_code=401, detail="Você precisa estar logado.")
 
-    if not getattr(usuario, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Sem permissão, jovem padawan.")
-
-    usuario_alvo = db.query(Usuario).get(user_id)
-    if not usuario_alvo:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    if tipo == "admin":
-        usuario_alvo.is_admin = False
-    elif tipo == "promotor":
-        usuario_alvo.is_promoter = False
-    else:
-        raise HTTPException(status_code=400, detail="Tipo inválido. Use 'admin' ou 'promotor'.")
-
-    db.commit()
-    return {"msg": f"Usuário removido do cargo de {tipo}"}
-
-
-
-
-# @router.post("/admin/promotor/criar_loja")
-# def criar_loja_promotor(
-#     user_id: int,
-#     nome: str,
-#     slug: str,
-#     access_token: str = "",
-#     refresh_token: str = "",
+# @router.delete("/admin/reset_estatisticas")
+# def resetar_estatisticas(
 #     db: Session = Depends(get_db),
-#     admin: Usuario = Depends(get_current_user_optional)
+#     usuario: Usuario = Depends(get_current_user_optional)
 # ):
-#     if not admin.is_admin:
-#         raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+#     if usuario is None:
+#         raise HTTPException(status_code=401, detail="Você precisa estar logado.")
 
-#     usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
-#     if not usuario:
-#         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+#     if not getattr(usuario, "is_admin", False):
+#         raise HTTPException(status_code=403, detail="Sem permissão, jovem gafanhoto.")
 
-#     promotor_existente = db.query(Promotor).filter(Promotor.user_id == user_id).first()
-#     if promotor_existente:
-#         raise HTTPException(status_code=400, detail="Este usuário já possui uma loja.")
+#     estatisticas = db.query(EstatisticasJogador).all()
+#     if not estatisticas:
+#         raise HTTPException(status_code=404, detail="Nenhuma estatística encontrada")
 
-#     nova_loja = Promotor(
-#         user_id=user_id,
-#         user_id_mp="manual",
-#         nome=nome,
-#         slug=slug,
-#         access_token=access_token,
-#         refresh_token=refresh_token
-#     )
+#     for stat in estatisticas:
+#         stat.rodadas_jogadas = 0
+#         stat.rodadas_ganhas = 0
+#         stat.vitorias = 0
+#         stat.fichas_ganhas = 0.0
+#         stat.fichas_perdidas = 0.0
+#         stat.maior_pote = 0.0
+#         stat.data_primeira_vitoria = None
+#         stat.data_ultima_vitoria = None
+#         stat.mao_favorita = None
+#         stat.sequencias = 0
+#         stat.flushes = 0
+#         stat.fullhouses = 0
+#         stat.quadras = 0
+#         stat.straight_flushes = 0
+#         stat.royal_flushes = 0
+#         stat.ultimo_update = None
+#         db.add(stat)
 
-#     db.add(nova_loja)
 #     db.commit()
-
-#     return {"status": "ok", "mensagem": "Loja criada com sucesso."}
-
-
-
-@router.post("/admin/promotor/{promotor_id}/apagar_loja")
-def apagar_loja_promotor(
-    promotor_id: int,
-    db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_user_optional)
-):
-    if not admin.is_admin:
-        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
-
-    promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
-
-    if not promotor:
-        raise HTTPException(status_code=404, detail="Loja do promotor não encontrada.")
-
-    db.delete(promotor)
-    db.commit()
-
-    return {"status": "ok", "mensagem": "Loja do promotor removida com sucesso."}
-
-
-# ==== so pra ver oq o showdown ta retornando ====
-# @router.post("/admin/{mesa_id}/debug/executar_showdown")
-# async def executar_showdown_debug(mesa_id: int, db: Session = Depends(get_db)):
-#     mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
-#     if not mesa:
-#         raise HTTPException(status_code=404, detail="Mesa não encontrada")
-
-#     controlador = DistribuidorDePote(mesa=mesa, db=db)
-#     resultado = await controlador.realizar_showdown()
-#     return resultado
+#     return {"mensagem": "Estatísticas resetadas com sucesso"}

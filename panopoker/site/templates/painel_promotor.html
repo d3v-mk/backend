@@ -181,6 +181,13 @@
                 </div>
             </div>
 
+
+            {% if usuario.promotor.bloqueado %}
+                <div style="background-color: rgb(171, 0, 0); color: white; padding: 10px; margin-bottom: 20px; border-radius: 8px;">
+                    ⚠️ Sua conta está <strong>bloqueada</strong> por saldo de repasse pendente. Fale com o administrador e aguarde liberação.
+                </div>
+            {% endif %}
+
             <div class="menu-container">
                 <button type="button" class="logout-btn menu-toggle">☰</button>
                 <div id="dropdown-menu">
@@ -208,12 +215,22 @@
         </div>
 
         <h2>📤 Solicitar novo saque</h2>
+
+        {% if request.query_params.get("erro") %}
+        <p style="color: red; background-color: #330000; padding: 10px; border-radius: 8px; font-weight: bold;">
+            ⚠️ {{ request.query_params.get("erro") }}
+        </p>
+        {% endif %}
+
+
         <form method="post" action="/painel/promotor/solicitar_saque">
             <label>ID do Jogador:</label>
             <input type="number" name="id_publico" required>
             <label>Valor (R$):</label>
             <input type="number" step="0.01" name="valor" placeholder="" required>
-            <button class="botao" type="submit">📤 Solicitar Saque</button>
+            <button class="botao" type="submit" {% if usuario.promotor.bloqueado %}disabled{% endif %}>
+                📤 Solicitar Saque
+            </button>
         </form>
 
         <hr>
