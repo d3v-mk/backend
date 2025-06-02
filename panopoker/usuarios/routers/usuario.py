@@ -23,7 +23,8 @@ def get_user_balance(
     db: Session = Depends(get_db),
     user: Usuario = Depends(get_current_user)
 ):
-    return {"saldo": user.saldo}
+    usuario_atualizado = db.query(Usuario).filter(Usuario.id == user.id).first()
+    return {"saldo": usuario_atualizado.saldo}
 
 # ==================== ROTA /me PARA EXIBIR DADOS NO FRONT ====================
 @router.get("/me")
