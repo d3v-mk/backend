@@ -32,72 +32,82 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
         return {"status": "ignorado"}
 
     pagamento_id = str(payload["data"]["id"])
-    logging.info(f"🔍 Buscando pagamento ID {pagamento_id}")
+    logging.info(f"🔍 Buscando pagamento ID {pagamento_id} na API Mercado Pago")
 
-    # Retry: espera até 5 segundos pro pagamento aparecer
-    pagamento = None
-    for tentativa in range(5):
-        pagamento = db.query(Pagamento).filter(Pagamento.payment_id == pagamento_id).first()
-        if pagamento:
-            break
-        logging.warning(f"⏳ Tentativa {tentativa+1}/5: pagamento ainda não encontrado...")
-        await asyncio.sleep(1)
-
-    if not pagamento:
-        logging.error(f"❌ Pagamento ID {pagamento_id} não encontrado após retries.")
-        return {"status": "ignorado"}
-
-    promotor = db.query(Promotor).filter(Promotor.id == pagamento.promotor_id).first()
-    if not promotor or not promotor.access_token:
-        logging.warning(f"❗ Promotor inválido ou sem token. ID: {pagamento.promotor_id}")
+    # 1. Tenta buscar o pagamento na API com retries
+    dados = None
+    promotor = db.query(Promotor).filter(Promotor.access_token.isnot(None)).first()  # Busca qualquer promotor com token
+    if not promotor:
+        logging.warning("❗ Nenhum promotor com token disponível.")
         return {"status": "ignorado"}
 
     headers = {"Authorization": f"Bearer {promotor.access_token}"}
     url = f"https://api.mercadopago.com/v1/payments/{pagamento_id}"
 
-    try:
+    for tentativa in range(5):
         response = requests.get(url, headers=headers)
         if response.status_code == 401:
             logging.warning("🔁 Token expirado, tentando renovar...")
             if renovar_token_do_promotor(promotor):
                 db.commit()
                 headers["Authorization"] = f"Bearer {promotor.access_token}"
-                response = requests.get(url, headers=headers)
+                continue
             else:
                 logging.error("❌ Falha ao renovar token do promotor.")
                 return {"status": "erro_token"}
 
-        response.raise_for_status()
-        dados = response.json()
-        status = dados.get("status")
-        logging.info(f"💳 Status do pagamento: {status}")
+        if response.status_code == 200:
+            dados = response.json()
+            break
 
-        if status == "approved" and pagamento.status != "approved":
-            pagamento.status = "approved"
+        logging.warning(f"⏳ Tentativa {tentativa+1}/5: pagamento ainda não disponível na API...")
+        await asyncio.sleep(1)
 
-            usuario = db.query(Usuario).filter(Usuario.id == pagamento.user_id).first()
-            if usuario:
-                valor_bruto = Decimal(str(pagamento.valor))
-                valor_liquido = calcular_liquido(valor_bruto)
-                rake = valor_bruto - valor_liquido
+    if not dados:
+        logging.error(f"❌ Pagamento ID {pagamento_id} não encontrado na API após retries.")
+        return {"status": "ignorado"}
 
-                usuario.saldo += valor_liquido
-                db.add(usuario)
-                logging.info(f"✅ Fichas adicionadas: R${valor_liquido} para usuário ID {usuario.id}")
+    status = dados.get("status")
+    logging.info(f"💳 Status do pagamento: {status}")
 
-                metade_rake = rake / 2
-                promotor.comissao_total = (promotor.comissao_total or Decimal("0")) + metade_rake
-                promotor.saldo_repassar = (promotor.saldo_repassar or Decimal("0")) + metade_rake
+    if status != "approved":
+        return {"status": "ignorado"}
 
-                if promotor.saldo_repassar >= Decimal("5.00"):
-                    promotor.bloqueado = True
+    # 2. Cria ou atualiza localmente
+    pagamento = db.query(Pagamento).filter(Pagamento.payment_id == pagamento_id).first()
+    if not pagamento:
+        pagamento = Pagamento(
+            payment_id=pagamento_id,
+            status="approved",
+            valor=Decimal(str(dados.get("transaction_amount"))),
+            user_id=None,  # ← talvez você precise buscar pelo e-mail depois
+            promotor_id=promotor.id,
+        )
+        db.add(pagamento)
+    else:
+        pagamento.status = "approved"
 
-                db.add(promotor)
+    # 3. Acha o usuário pelo e-mail usado no pagamento
+    email_pagador = dados["payer"]["email"]
+    usuario = db.query(Usuario).filter(Usuario.email == email_pagador).first()
 
-            db.add(pagamento)
-            db.commit()
+    if usuario:
+        pagamento.user_id = usuario.id
+        valor_bruto = pagamento.valor
+        valor_liquido = calcular_liquido(valor_bruto)
+        rake = valor_bruto - valor_liquido
 
-    except Exception as e:
-        logging.exception("❌ Erro ao processar pagamento via Mercado Pago.")
+        usuario.saldo += valor_liquido
+        promotor.comissao_total = (promotor.comissao_total or Decimal("0")) + rake / 2
+        promotor.saldo_repassar = (promotor.saldo_repassar or Decimal("0")) + rake / 2
 
+        if promotor.saldo_repassar >= Decimal("5.00"):
+            promotor.bloqueado = True
+
+        db.add(usuario)
+        db.add(promotor)
+
+        logging.info(f"✅ Fichas adicionadas: R${valor_liquido} para usuário {usuario.email}")
+
+    db.commit()
     return {"status": "ok"}
