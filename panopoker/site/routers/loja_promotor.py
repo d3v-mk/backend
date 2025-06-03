@@ -23,7 +23,11 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 # ============================= LINK DA LOJA DO PROMOTOR =============================
 
 @router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
-def loja_promotor(slug: str, request: Request, db: Session = Depends(get_current_user_optional)):
+def loja_promotor(    slug: str,
+    request: Request,
+    db: Session = Depends(get_db),  # ← TEM que vir antes
+    usuario: Usuario = Depends(get_current_user_optional),
+):
     promotor = db.query(Promotor)\
         .options(joinedload(Promotor.usuario))\
         .filter(Promotor.slug == slug).first()
