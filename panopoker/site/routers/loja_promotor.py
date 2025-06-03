@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 # ============================= LINK DA LOJA DO PROMOTOR =============================
 
 @router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
-def loja_promotor(slug: str, request: Request, db: Session = Depends(get_db)):
+def loja_promotor(slug: str, request: Request, db: Session = Depends(get_current_user_optional)):
     promotor = db.query(Promotor)\
         .options(joinedload(Promotor.usuario))\
         .filter(Promotor.slug == slug).first()
@@ -46,7 +46,7 @@ def loja_promotor(slug: str, request: Request, db: Session = Depends(get_db)):
 # ==================== GERA O PIX DINAMICO NA LOJA DO PROMOTOR ====================
 
 @router.get("/api/gerar_pix/{slug}/{valor}")
-def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
+def gerar_pix(slug: str, valor: Decimal,
               db: Session = Depends(get_db),
               usuario: Usuario | None = Depends(get_current_user_optional)):
 
@@ -54,10 +54,16 @@ def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
     if not promotor or not promotor.access_token:
         raise HTTPException(status_code=404, detail="Promotor não encontrado ou sem token")
 
+    # Define email do pagador
     email = usuario.email if usuario else f"cliente.{slug}@servicosdigital.com"
 
+    # Gera referência única com ID do usuário (se logado)
+    if usuario:
+        referencia = f"user_{usuario.id}"
+    else:
+        referencia = f"cliente_{slug}_{uuid.uuid4()}"
 
-    # 📃 Descrição com leve variação só pra não parecer clone
+    # Descrições variadas
     descricoes_possiveis = [
         "Serviço digital contratado",
         "Cobrança por acesso online",
@@ -65,14 +71,13 @@ def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
         "Produto digital adquirido",
         "Pagamento via plataforma"
     ]
-
     descricao = random.choice(descricoes_possiveis)
 
     payload = {
-        "transaction_amount": float(valor),  # MercadoPago só aceita float na API deles, então só aqui converte pra float!
+        "transaction_amount": float(valor),
         "description": descricao,
         "payment_method_id": "pix",
-        "external_reference": f"pedido_{uuid.uuid4()}",
+        "external_reference": referencia,
         "payer": {
             "email": email
         }
@@ -90,7 +95,6 @@ def gerar_pix(slug: str, valor: Decimal,  # <--- Valor já Decimal
 
     response = requests.post(url, json=payload, headers=headers)
 
-    # 🔁 Se o token expirou, tenta renovar e refazer
     if response.status_code == 401:
         print("⚠️ TOKEN EXPIRADO - Tentando renovar...")
         if renovar_token_do_promotor(promotor):
