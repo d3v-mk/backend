@@ -134,6 +134,7 @@
         <form method="post" action="/login-web">
             <input type="text" name="username" placeholder="Usuário" required>
             <input type="password" name="password" placeholder="Senha" required>
+            <input type="hidden" name="next" value="{{ next or '/' }}">
             <button type="submit">Entrar</button>
         </form>
 

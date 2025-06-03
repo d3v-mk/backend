@@ -54,25 +54,23 @@ def loja_promotor(
 
 # ==================== GERA O PIX DINAMICO NA LOJA DO PROMOTOR ====================
 
+from fastapi import HTTPException
+
 @router.get("/api/gerar_pix/{slug}/{valor}")
 def gerar_pix(slug: str, valor: Decimal,
               db: Session = Depends(get_db),
-              usuario: Usuario | None = Depends(get_current_user_optional)):
+              usuario: Usuario = Depends(get_current_user_required)):  # troca aqui, obrigatório login
 
     promotor = db.query(Promotor).filter(Promotor.slug == slug).first()
     if not promotor or not promotor.access_token:
         raise HTTPException(status_code=404, detail="Promotor não encontrado ou sem token")
 
-    # Define email do pagador
-    email = usuario.email if usuario else f"cliente.{slug}@servicosdigital.com"
+    # email garantido porque usuario é obrigatório aqui
+    email = usuario.email
 
-    # Gera referência única com ID do usuário (se logado)
-    if usuario:
-        referencia = f"user_{usuario.id}"
-    else:
-        referencia = f"cliente_{slug}_{uuid.uuid4()}"
+    # referencia única com id do usuário
+    referencia = f"user_{usuario.id}_{uuid.uuid4()}"
 
-    # Descrições variadas
     descricoes_possiveis = [
         "Serviço digital contratado",
         "Cobrança por acesso online",

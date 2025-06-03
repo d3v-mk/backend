@@ -29,8 +29,9 @@ def dashboard_redirect(request: Request, usuario: Usuario = Depends(get_current_
 
 
 @router.get("/login")
-def exibir_login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+def exibir_login(request: Request, next: str | None = None):
+    return templates.TemplateResponse("login.html", {"request": request, "next": next})
+
 
 @router.get("/finaliza_login")
 def finaliza_login(request: Request):
@@ -42,6 +43,7 @@ def finaliza_login(request: Request):
 def processar_login(request: Request, response: Response,
                     username: str = Form(...),
                     password: str = Form(...),
+                    next: str = Form("/"),
                     db: Session = Depends(get_db)):
 
     usuario = db.query(Usuario).filter(Usuario.nome == username).first()
@@ -49,18 +51,19 @@ def processar_login(request: Request, response: Response,
     if not usuario or not verify_password(password, usuario.senha_hash):
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "erro": "Usuário ou senha inválidos"
+            "erro": "Usuário ou senha inválidos",
+            "next": next
         })
 
     token = create_access_token({"sub": str(usuario.id)})
-    resp = RedirectResponse(url="/dashboard", status_code=302)
+    resp = RedirectResponse(url=next, status_code=302)  # <- aqui o pulo do gato
     resp.set_cookie(
-    key="access_token",
-    value=token,
-    httponly=True,
-    secure=True,          # 🔒 obrigatório em HTTPS (ngrok é HTTPS)
-    samesite="None",       # 🔁 permite redirecionamento entre domínios
-    domain=".panopoker.com"
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="None",
+        domain=".panopoker.com"
     )
     return resp
 
