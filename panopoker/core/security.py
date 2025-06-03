@@ -78,11 +78,11 @@ def verificar_token(token: str, db: Session) -> Usuario | None:
 def get_current_user_required(request: Request, db: Session = Depends(get_db)) -> Usuario:
     token = request.cookies.get("access_token")
     if not token:
-        raise RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
+        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
 
     usuario = verificar_token(token, db)
     if not usuario:
-        raise RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
+        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
 
     return usuario
 

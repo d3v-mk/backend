@@ -14,6 +14,7 @@ import random
 from decimal import Decimal
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
 from panopoker.core.security import get_current_user_optional, get_current_user, get_current_user_required
+from fastapi.responses import RedirectResponse
 
 
 router = APIRouter(tags=["Loja Promotores"])
@@ -23,18 +24,22 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 # ============================= LINK DA LOJA DO PROMOTOR =============================
 
 @router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
-def loja_promotor(    slug: str,
+def loja_promotor(
+    slug: str,
     request: Request,
-    db: Session = Depends(get_db),  # ← TEM que vir antes
-    usuario: Usuario = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
 ):
+    usuario = get_current_user_optional(request, db)
+    if not usuario:
+        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
+
     promotor = db.query(Promotor)\
         .options(joinedload(Promotor.usuario))\
         .filter(Promotor.slug == slug).first()
     
     if not promotor:
         return HTMLResponse(
-            content="<h1>Olá jogador!</h1><h1>Loja não encontrada</h1><h1>Verifique se o link está correto.</h1>",
+            content="<h1>Loja não encontrada</h1><p>Verifique o link.</p>",
             status_code=404
         )
 
@@ -44,8 +49,8 @@ def loja_promotor(    slug: str,
         "slug": promotor.slug,
         "avatar_url": promotor.usuario.avatar_url if promotor.usuario else "",
         "timestamp": int(time()),
-        # Nada de pix_copias aqui
     })
+
 
 # ==================== GERA O PIX DINAMICO NA LOJA DO PROMOTOR ====================
 
