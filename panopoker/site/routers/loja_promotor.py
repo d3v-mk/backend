@@ -13,7 +13,7 @@ import uuid
 import random
 from decimal import Decimal
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
-from panopoker.core.security import get_current_user_optional
+from panopoker.core.security import get_current_user_optional, get_current_user
 
 
 router = APIRouter(tags=["Loja Promotores"])
@@ -26,7 +26,7 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 def loja_promotor(    slug: str,
     request: Request,
     db: Session = Depends(get_db),  # ← TEM que vir antes
-    usuario: Usuario = Depends(get_current_user_optional),
+    usuario: Usuario = Depends(get_current_user),
 ):
     promotor = db.query(Promotor)\
         .options(joinedload(Promotor.usuario))\
