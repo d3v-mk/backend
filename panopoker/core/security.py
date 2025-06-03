@@ -7,6 +7,8 @@ from panopoker.core.config import settings
 from panopoker.usuarios.models.usuario import Usuario
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
+from fastapi.responses import RedirectResponse
+from starlette.status import HTTP_302_FOUND
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -72,6 +74,17 @@ def verificar_token(token: str, db: Session) -> Usuario | None:
 
     return db.query(Usuario).filter(Usuario.id == user_id).first()
 
+
+def get_current_user_required(request: Request, db: Session = Depends(get_db)) -> Usuario:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
+
+    usuario = verificar_token(token, db)
+    if not usuario:
+        raise RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
+
+    return usuario
 
 
 
