@@ -75,14 +75,18 @@ def verificar_token(token: str, db: Session) -> Usuario | None:
     return db.query(Usuario).filter(Usuario.id == user_id).first()
 
 
+class RedirectToLoginException(HTTPException):
+    def __init__(self, redirect_url: str):
+        super().__init__(status_code=302, headers={"Location": redirect_url})
+
 def get_current_user_required(request: Request, db: Session = Depends(get_db)) -> Usuario:
     token = request.cookies.get("access_token")
     if not token:
-        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
+        raise RedirectToLoginException(redirect_url=f"/login?next={request.url.path}")
 
     usuario = verificar_token(token, db)
     if not usuario:
-        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
+        raise RedirectToLoginException(redirect_url=f"/login?next={request.url.path}")
 
     return usuario
 
