@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Tuple, Dict
-from decimal import Decimal  # Adicionado!
+from decimal import Decimal
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from panopoker.poker.models.mesa import JogadorNaMesa
 
@@ -26,7 +26,7 @@ class AtualizadorDeEstatisticas:
                 stats.vitorias = (stats.vitorias or 0) + 1
 
                 ganho = valores_ganhos.get(jogador.jogador_id, Decimal("0.00"))
-                # Se stats.fichas_ganhas não for Decimal, converte agora:
+                
                 fichas_atuais = stats.fichas_ganhas or Decimal("0.00")
                 if not isinstance(fichas_atuais, Decimal):
                     fichas_atuais = Decimal(str(fichas_atuais))
@@ -47,7 +47,7 @@ class AtualizadorDeEstatisticas:
                 if not stats.mao_favorita:
                     stats.mao_favorita = mao_formatada
                 elif stats.mao_favorita != mao_formatada:
-                    pass  # pode implementar contagem no futuro
+                    pass
             else:
                 perdidas = stats.fichas_perdidas or Decimal("0.00")
                 if not isinstance(perdidas, Decimal):

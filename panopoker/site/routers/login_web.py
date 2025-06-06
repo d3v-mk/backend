@@ -10,6 +10,7 @@ import os
 
 router = APIRouter(tags=[""])
 
+IS_PRODUCTION = os.getenv("IS_PRODUCTION", "false").lower() == "true"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "../templates"))
 
@@ -56,14 +57,14 @@ def processar_login(request: Request, response: Response,
         })
 
     token = create_access_token({"sub": str(usuario.id)})
-    resp = RedirectResponse(url=next, status_code=302)  # <- aqui o pulo do gato
+    resp = RedirectResponse(url=next, status_code=302)
     resp.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        secure=True,
-        samesite="None",
-        domain=".panopoker.com"
+        secure=IS_PRODUCTION,
+        samesite="None" if IS_PRODUCTION else "Lax",
+        domain=".panopoker.com" if IS_PRODUCTION else None
     )
     return resp
 

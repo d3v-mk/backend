@@ -5,12 +5,9 @@ from panopoker.core.database import get_db
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.financeiro.models.saque import Saque
 from panopoker.core.security import get_current_user
-from pydantic import BaseModel
+from panopoker.schemas.poker_financeiro_schema import ConfirmarSaqueRequest
 
 router = APIRouter(tags=["Saques"])
-
-class ConfirmarSaqueRequest(BaseModel):
-    valor_digitado: Decimal
 
 def decimal2(val):
     # Função util pra padronizar duas casas

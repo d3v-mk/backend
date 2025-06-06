@@ -52,7 +52,7 @@ class ResetadorDePartida:
         # Incrementa +1 no rodada_id
         self.mesa.rodada_id += 1
 
-        # 4) Já chamamos resetar_jogadores() no topo, não precisa aqui de novo
+
 
         self.mesa.dealer_pos = dealer_ant
         self.db.add(self.mesa)
@@ -114,11 +114,12 @@ class ResetadorDePartida:
             if j.saldo_atual <= 0 and not j.participando_da_rodada:
                 debug_print(f"[RESETAR_JOGADORES] Removendo jogador {j.jogador_id} — ausente e zerado")
 
-                # 🔥 Envia aviso individual antes de remover
+                # Envia aviso individual antes de remover
                 await connection_manager.enviar_para_jogador(
                     mesa_id=self.mesa.id,
                     user_id=j.jogador_id,
                     message={
+                        # Só avisa mesmo mas ainda nao funciona no front
                         "type": "removido_sem_saldo",
                         "mensagem": "Você ficou sem fichas e foi removido da mesa. Fale com um promotor para recarregar!"
                     }

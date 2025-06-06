@@ -6,6 +6,7 @@ import asyncio
 
 from panopoker.core.database import engine, Base, SessionLocal
 from panopoker.core import timers_async
+from panopoker.core.config import settings
 
 # Importa os modelos para garantir criação das tabelas
 from panopoker.poker.financeiro.routers import saques
@@ -65,9 +66,9 @@ create_tables()
 
 # Desativa tudo em producao para seguranca!!!
 app = FastAPI(
-   docs_url=None,         # Desativa a Swagger UI (/docs)
-   redoc_url=None,        # Desativa a ReDoc UI (/redoc)
-   openapi_url=None       # Desativa o esquema OpenAPI (/openapi.json)
+    docs_url="/docs" if not settings.IS_PRODUCTION else None,
+    redoc_url="/redoc" if not settings.IS_PRODUCTION else None,
+    openapi_url="/openapi.json" if not settings.IS_PRODUCTION else None,
 )
 
 app.mount(
@@ -76,26 +77,31 @@ app.mount(
     name="media"
 )
 
-# Middleware CORS producao!
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://www.panopoker.com",
-        "https://api.panopoker.com"
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "PUT"],
-    allow_headers=["Authorization", "Content-Type"],
-)
+# Middleware CORS!
+# Define se está em produção ou não
+IS_PRODUCTION = os.getenv("IS_PRODUCTION", "false").lower() == "true"
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
+if IS_PRODUCTION:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "https://www.panopoker.com",
+            "https://api.panopoker.com"
+        ],
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "DELETE", "PUT"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+else:
+    print("⚠️ Modo desenvolvimento: CORS liberado!")
+    print("⚠️ Modo desenvolvimento: DOCS liberado!")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Middleware de sessão
 secret_key = os.getenv("SESSION_SECRET_KEY")
@@ -121,7 +127,7 @@ app.include_router(loja_web_promoters.router)
 app.include_router(lobby.router)
 app.include_router(ws_routes.router)
 
-# Swagger JWT personalizado
+# Swagger personalizado
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema

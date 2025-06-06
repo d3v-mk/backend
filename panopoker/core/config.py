@@ -24,6 +24,9 @@ class Settings(BaseSettings):
 
     # MiddleWare CORS
     SESSION_SECRET_KEY: str
+
+    # Ativa e desativa modo producao
+    IS_PRODUCTION: bool = False
     
     # E-mail
     EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"

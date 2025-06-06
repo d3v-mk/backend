@@ -12,7 +12,7 @@ class ExecutorDeAcoes:
         self.db = db
 
     def _cancelar_timer(self):
-        from panopoker.poker.game.GerenciadorDeRodada import GerenciadorDeRodada  # lazy import evita loop
+        from panopoker.poker.game.GerenciadorDeRodada import GerenciadorDeRodada
         gerente = GerenciadorDeRodada(self.mesa, self.db)
         gerente.cancelar_timer()
 
@@ -47,7 +47,7 @@ class ExecutorDeAcoes:
         debug_print(f"[ACAO_CHECK] 👤 Jogador encontrado: {jogador.jogador_id} (posição {jogador.posicao_cadeira})")
 
         aposta_jogador = Decimal(str(jogador.aposta_atual))
-        aposta_mesa = self.mesa.aposta_atual  # já deve ser Decimal
+        aposta_mesa = self.mesa.aposta_atual
 
         if self.mesa.estado_da_rodada not in ("pre-flop", "flop", "turn", "river"):
             raise HTTPException(status_code=400, detail="Rodada encerrada, espere a próxima.")
@@ -213,7 +213,7 @@ class ExecutorDeAcoes:
         jogador.participando_da_rodada = False
         jogador.rodada_ja_agiu = True
         self.mesa.jogador_da_vez = None
-        #jogador.folds_seguidos_por_inatividade = 0
+        #jogador.folds_seguidos_por_inatividade = 0 <- Nao marca aqui, derrr
         self._cancelar_timer()
         self.db.commit()
 

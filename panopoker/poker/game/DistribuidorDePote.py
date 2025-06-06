@@ -78,7 +78,7 @@ class DistribuidorDePote:
 
         # Calcula side pots e distribui
         side_pots = self._calcular_side_pots(participantes)
-        side_pots = [(amt, grp) for amt, grp in side_pots if amt > 0] #### nova linha, se der merda, tira isso
+        side_pots = [(amt, grp) for amt, grp in side_pots if amt > 0] # nova linha, se der merda, tira isso
         vencedores_ids = []
         for amount, grupo in side_pots:
             resultados = []
@@ -110,7 +110,7 @@ class DistribuidorDePote:
             JogadorNaMesa.mesa_id == self.mesa.id
         ).all()
 
-        # 🚨 Helper novo: retorna showdown detalhado pra cada jogador!
+        # Helper novo: retorna showdown detalhado pra cada jogador!
         showdown_payload = wincards_helper(
             jogadores=jogadores_na_mesa,
             cartas_mesa=cartas_mesa,
@@ -122,10 +122,10 @@ class DistribuidorDePote:
             "mesa_id": self.mesa.id,
             "showdown": showdown_payload,
             "vencedores": list(set(vencedores_ids)),
-            "side_pots": side_pots_info  # 👈 adiciona aqui!
+            "side_pots": side_pots_info
         }
 
-        # (Opcional) Delay de 5s pra nova rodada
+        # Delay de 5s pra nova rodada
         async def reset_com_delay():
             await asyncio.sleep(5)
             debug_print(f"[SHOWDOWN] Executando nova_rodada após delay de 5s")
@@ -133,7 +133,7 @@ class DistribuidorDePote:
 
         asyncio.create_task(reset_com_delay())
 
-        # Registrar estatísticas (se precisar)
+        # Registrar estatísticas
         try:
             registrar_estatisticas_showdown(
                 participantes=participantes,
@@ -164,18 +164,18 @@ class DistribuidorDePote:
             "dados": json_safe(payload)
         })
 
-        # 👇 Lógica da manutenção aqui:
+        # Lógica da manutenção aqui:
         if self.mesa.manutencao_pendente:
             rodada_anterior = self.mesa.rodada_id
             self.mesa.rodada_id += 1  # rodada avança normalmente
 
             if self.mesa.rodada_id > rodada_anterior:
-                await self.kickar_todos()  # <- se for async, não esquece
+                await self.kickar_todos()
                 self.mesa.status = MesaStatus.manutencao
                 self.mesa.manutencao_pendente = False
                 self.db.add(self.mesa)
                 self.db.commit()
-                return payload  # <- encerra aqui, nem precisa nova_rodada()
+                return payload
 
         return payload
     
@@ -223,7 +223,7 @@ class DistribuidorDePote:
 
     
     def _calcular_side_pots(self, jogadores: List[JogadorNaMesa]) -> List[Tuple[Decimal, List[JogadorNaMesa]]]:
-        # Ordena apostas acumuladas, tudo decimal!
+        # Ordena apostas acumuladas
         bets = sorted(
             [(j, Decimal(j.aposta_acumulada)) for j in jogadores],
             key=lambda x: x[1]

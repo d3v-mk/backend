@@ -2,8 +2,8 @@ from typing import List, Tuple
 from panopoker.poker.models.mesa import JogadorNaMesa
 
 def registrar_evento(mensagem, db, mesa_id=None, usuario_id=None, tipo="evento", admin=False):
-    from panopoker.lobby.models.noticias import Noticia  # Importa aqui pra evitar circular import
-
+    from panopoker.lobby.models.noticias import Noticia
+    
     noticia = Noticia(
         mensagem=mensagem,
         tipo="admin" if admin else tipo,
@@ -12,7 +12,7 @@ def registrar_evento(mensagem, db, mesa_id=None, usuario_id=None, tipo="evento",
     )
     db.add(noticia)
     db.commit()
-    db.refresh(noticia)  # Se quiser o objeto atualizado
+    db.refresh(noticia)
     return noticia
 
 

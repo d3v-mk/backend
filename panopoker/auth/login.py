@@ -10,8 +10,8 @@ from panopoker.core.debug import debug_print
 import httpx
 from fastapi.responses import RedirectResponse
 from panopoker.core.config import settings
-
 from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
+import os
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 

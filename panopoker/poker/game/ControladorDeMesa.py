@@ -106,7 +106,7 @@ class ControladorDeMesa:
             cartas=json.dumps([])
         )
 
-        # 🔥 AJUSTE IMPORTANTE: Se a mesa já estiver em jogo, ele NÃO participa da rodada atual
+        # AJUSTE IMPORTANTE: Se a mesa já estiver em jogo, jogador NÃO participa da rodada atual
         if self.mesa.status == MesaStatus.em_jogo:
             print("[PRINT] Mesa já está em jogo, não participa da rodada atual")
             jogador_na_mesa.participando_da_rodada = False
@@ -226,7 +226,7 @@ class ControladorDeMesa:
             self.db.commit()
             await self._gerenciador().avancar_vez()
 
-        # 🔥 BROADCAST SEMPRE, mesmo que ainda tenha mais de um jogador
+        # BROADCAST, mesmo que ainda tenha mais de um jogador
         debug_print(f"[SAIR_DA_MESA] Broadcast geral: mesa_atualizada após saída do jogador {user_id}")
         await connection_manager.broadcast_mesa(self.mesa.id, {
             "evento": "mesa_atualizada"
