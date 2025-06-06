@@ -1,7 +1,5 @@
-from typing import List, Tuple, Set, Dict
+from typing import List, Set
 import json
-from collections import defaultdict
-
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.poker.game.avaliar_maos import avaliar_mao, identificar_cartas_usadas_completo, descrever_mao
 from panopoker.core.debug import debug_print

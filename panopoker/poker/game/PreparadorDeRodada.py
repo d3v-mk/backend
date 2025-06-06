@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa, EstadoDaMesa
 from fastapi import HTTPException
-from typing import List, Optional
+from typing import List
 from sqlalchemy import or_
 import json
 

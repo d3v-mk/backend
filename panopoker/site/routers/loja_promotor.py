@@ -8,14 +8,13 @@ from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
 from sqlalchemy.orm import joinedload
 from time import time
+from decimal import Decimal
+from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
+from panopoker.core.security import get_current_user_optional, get_current_user_required
+from fastapi.responses import RedirectResponse
 import requests
 import uuid
 import random
-from decimal import Decimal
-from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
-from panopoker.core.security import get_current_user_optional, get_current_user, get_current_user_required
-from fastapi.responses import RedirectResponse
-
 
 router = APIRouter(tags=["Loja Promotores"])
 templates = Jinja2Templates(directory="panopoker/site/templates")

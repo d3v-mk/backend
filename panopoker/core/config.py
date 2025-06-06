@@ -1,7 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Set
 from dotenv import load_dotenv
-import os
 
 load_dotenv(".env")
 

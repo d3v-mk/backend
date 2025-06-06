@@ -4,13 +4,11 @@ from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import Mesa
 from panopoker.core.security import get_current_user
 from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
-from panopoker.poker.game.avaliar_maos import RANKING
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import JogadorNaMesa
-import json
 from panopoker.poker.game.avaliar_maos import avaliar_mao
 from panopoker.usuarios.models.usuario import Usuario
-
+import json
 
 
 router = APIRouter(prefix="/mesa", tags=["Showdown"])

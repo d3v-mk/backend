@@ -2,12 +2,11 @@ from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa, EstadoDaMesa
 from typing import Optional
-import asyncio
 from panopoker.core.timers_async import timers_async, loop_principal
-import panopoker.core.timers_async as timers
 from time import time
 from fastapi import HTTPException
 import json
+import asyncio
 
 from panopoker.websocket.manager import connection_manager
 

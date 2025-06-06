@@ -2,8 +2,6 @@ from sqlalchemy.orm import Session
 from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa
 import json
-import time
-from threading import Thread
 from typing import List, Tuple
 from panopoker.poker.game.avaliar_maos import avaliar_mao
 from panopoker.websocket.manager import connection_manager

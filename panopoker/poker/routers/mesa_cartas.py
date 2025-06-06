@@ -4,12 +4,10 @@ from panopoker.core.database import get_db
 from panopoker.core.security import get_current_user
 from panopoker.poker.models.mesa import Mesa, JogadorNaMesa, EstadoDaMesa
 from panopoker.usuarios.models.usuario import Usuario
-import json
 from panopoker.core.debug import debug_print
-from panopoker.poker.game.mesa_utils import get_mesa
-from panopoker.poker.game.ControladorDePartida import ControladorDePartida
 from panopoker.poker.game.avaliar_maos import avaliar_mao
 from typing import List
+import json
 
 
 

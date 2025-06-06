@@ -2,11 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.estatisticas import EstatisticasJogador
-from panopoker.schemas.usuario import UserCreate, User, UserLogin
 from panopoker.core.database import get_db
-from panopoker.core.security import hash_password, verify_password, create_access_token, get_current_user
-from datetime import timedelta
-from panopoker.core.debug import debug_print
+from panopoker.core.security import get_current_user
 from panopoker.schemas.usuario import PerfilResponse
 from PIL import Image
 from io import BytesIO

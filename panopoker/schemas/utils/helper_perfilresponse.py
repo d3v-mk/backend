@@ -1,6 +1,5 @@
 from fastapi import Request
 from typing import Optional
-from datetime import datetime
 from panopoker.schemas.usuario import PerfilResponse
 
 def build_perfil_response(

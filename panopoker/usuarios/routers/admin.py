@@ -1,19 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
-from panopoker.poker.models.mesa import JogadorNaMesa
-from panopoker.core.debug import debug_print
 from panopoker.poker.models.mesa import Mesa
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
-from panopoker.core.security import get_current_user
 from panopoker.core.security import get_current_user_optional
-from panopoker.usuarios.models.estatisticas import EstatisticasJogador
 from fastapi.templating import Jinja2Templates
-from panopoker.poker.game.DistribuidorDePote import DistribuidorDePote
 from panopoker.lobby.models.noticias import Noticia
 from panopoker.schemas.usuario import NoticiaAdminCreate
-from fastapi.responses import JSONResponse
 from decimal import Decimal
 
 router = APIRouter(tags=["Admin"])

@@ -6,7 +6,7 @@ from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
 from panopoker.core.security import get_current_user_optional
 from panopoker.core.config import settings
-import requests, os
+import requests
 
 router = APIRouter()
 

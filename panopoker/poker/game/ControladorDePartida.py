@@ -1,14 +1,8 @@
 from sqlalchemy.orm import Session
 from panopoker.poker.models.mesa import Mesa
 from panopoker.poker.models.mesa import MesaStatus, JogadorNaMesa, EstadoDaMesa
-from panopoker.poker.game.baralho import embaralhar, criar_baralho, distribuir_comunidade, distribuir_cartas
-from fastapi import HTTPException
-from itertools import combinations
-import json
-from panopoker.poker.game.avaliar_maos import avaliar_mao
+from panopoker.poker.game.baralho import embaralhar, criar_baralho
 from panopoker.core.debug import debug_print
-from panopoker.usuarios.models.usuario import Usuario
-from typing import Optional, List
 
 
 

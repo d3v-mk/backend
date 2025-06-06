@@ -7,8 +7,6 @@ from panopoker.core.config import settings
 from panopoker.usuarios.models.usuario import Usuario
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
-from fastapi.responses import RedirectResponse
-from starlette.status import HTTP_302_FOUND
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

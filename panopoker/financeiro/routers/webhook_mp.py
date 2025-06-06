@@ -8,7 +8,6 @@ from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_tok
 from decimal import Decimal
 import logging
 import requests
-import uuid
 import asyncio
 
 router = APIRouter(tags=["Webhook"])

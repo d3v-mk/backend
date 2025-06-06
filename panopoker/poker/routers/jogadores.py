@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.game.mesa_utils import get_mesa
-from panopoker.poker.game.ControladorDePartida import ControladorDePartida
 from panopoker.poker.models.mesa import JogadorNaMesa
 from panopoker.core.debug import debug_print
 from panopoker.core.security import get_current_user
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.websocket.manager import connection_manager
-import asyncio
 import json
 
 router = APIRouter(prefix="/mesa", tags=["Jogadores na mesa"])
