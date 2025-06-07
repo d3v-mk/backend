@@ -17,7 +17,7 @@ from panopoker.usuarios.models.promotor import Promotor
 # Importa rotas backend
 from panopoker.auth import login, register
 from panopoker.financeiro.routers import webhook_mp, auth_mp
-from panopoker.poker.routers import jogadores, mesa_cartas, vez, mesa, loja_web_promoters
+from panopoker.poker.routers import jogadores, mesa_cartas, mesa, loja_web_promoters
 from panopoker.usuarios.routers import admin, usuario
 from panopoker.lobby.routers import lobby
 from panopoker.websocket import routes as ws_routes
@@ -117,7 +117,6 @@ app.include_router(webhook_mp.router)
 app.include_router(saques.router)
 app.include_router(mesa_cartas.router)
 app.include_router(jogadores.router)
-app.include_router(vez.router)
 app.include_router(mesa.router)
 app.include_router(admin.router)
 app.include_router(login.router)
