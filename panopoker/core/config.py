@@ -1,10 +1,15 @@
 from pydantic_settings import BaseSettings
+from pydantic import computed_field
 from dotenv import load_dotenv
 
 load_dotenv(".env")
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
+    DATABASE_HOST: str = "localhost"
+    DATABASE_PORT: int = 5432
+    DATABASE_NAME: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300
@@ -27,7 +32,7 @@ class Settings(BaseSettings):
 
     # Ativa e desativa modo producao
     IS_PRODUCTION: bool = False
-    
+
     # E-mail
     EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"
 
@@ -39,9 +44,17 @@ class Settings(BaseSettings):
         except Exception as e:
             raise ValueError(f"EMAIL_DOMINIOS_VALIDOS inválido: {e}")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    @computed_field
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}"
+            f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        )
+
+    model_config = {
+        "case_sensitive": True,
+        "env_file": ".env"
+    }
 
 
 settings = Settings()
