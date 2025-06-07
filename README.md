@@ -1,17 +1,18 @@
 # PanoPoker
 
-> Desenvolvi o PanoPoker como um projeto fullstack completo para aplicar e consolidar habilidades-chave em backend, comunicação em tempo real e integração com sistemas externos.
+Desenvolvi o PanoPoker como um projeto fullstack completo para aplicar e consolidar habilidades-chave em back e frontend, comunicação em tempo real e integração com sistemas externos.
 
-O sistema foi executado em produção real (VPS), com funcionalidades como controle de partidas multiplayer, timers sincronizados pelo servidor, lógica de turnos, gerenciamento de promotores e um app Android conectado via WebSocket. Apesar de estar atualmente offline, o projeto foi testado em uso real com sucesso.
+O sistema foi executado em produção real (VPS), com funcionalidades como controle de partidas multiplayer, timers sincronizados pelo servidor, lógica de turnos, gerenciamento de promotores e um app Android conectado via WebSocket. Apesar de estar atualmente offline, o projeto foi testado em uso real com sucesso no Linux com Nginx + CertBot.
 
 ---
 
 ## 🛠️ Tecnologias usadas
 
 - **Backend:** FastAPI, SQLAlchemy, WebSocket
-- **Frontend Android:** Kotlin, Jetpack Compose
+- **Frontend Android (Jogo):** Kotlin, Jetpack Compose
+- **Frontend Web (Site e Paineis):** Jinja2, HTML, CSS, JS
 - **Pagamentos:** Mercado Pago webhook  
-- **Auth:** JWT, Google OAuth
+- **Autenticação:** JWT, Google OAuth
 - **Banco de dados:** PostgreSQL
 - **Testes:** Pytest + Hypothesis
 
@@ -39,11 +40,27 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 ---
 
+## 📸 Prints do projeto
+
+### 🃏 App Android (Jetpack Compose)
+
+<img src="docs/prints/print_app_1.png" width="300"/> <img src="docs/prints/print_app_2.png" width="300"/>
+
+### 💻 Paineis + Site do aplicativo
+
+<img src="docs/prints/print_painel_admin.png" width="600"/>
+
+> *Imagens capturadas durante a fase de testes em produção real.*
+
+---
+
 ## 🎯 Roadmap / Próximos passos
 
 - Modo "PanoCoins" (jogar sem ser com real money)
-- Chat entre jogadores na mesa
-- Estatísticas, ranking e equipes
+- Motor do jogo BlackJack
+- Chat em tempo real na mesa
+- Adicionar equipes (clans)
+- Adicionar sistema de VIPs
 
 ---
 
@@ -51,4 +68,4 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 LinkedIn: [seu-linkedin]
 Portfólio: [portfolio]
-GitHub: [seu-github]
+GitHub: [https://www.github.com/d3v-mk]
