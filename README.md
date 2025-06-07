@@ -44,7 +44,9 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 ### 🃏 App Android (Jetpack Compose)
 
-<img src="docs/prints/print_app_1.png" width="300"/> <img src="docs/prints/print_app_2.png" width="300"/>
+<img src="docs/prints/print_app_1.jpeg" height="300"/> <img src="docs/prints/print_app_2.jpeg" height="300"/>
+<img src="docs/prints/print_app_3.jpeg" height="300"/> <img src="docs/prints/print_app_4.jpeg" height="300"/>
+<img src="docs/prints/print_app_5.jpeg" height="300"/> 
 
 ### 💻 Paineis + Site do aplicativo
 
