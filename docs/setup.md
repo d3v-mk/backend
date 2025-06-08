@@ -90,7 +90,7 @@ uvicorn panopoker.main_site:app_site --host 0.0.0.0 --port 8000 --reload
 
 - roda a API do jogo
 ```bash
-> uvicorn panopoker.main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn panopoker.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 ---

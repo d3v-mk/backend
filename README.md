@@ -1,18 +1,18 @@
 # PanoPoker
 
-Desenvolvi o PanoPoker como um projeto fullstack completo para aplicar e consolidar habilidades-chave em back e frontend, comunicação em tempo real e integração com sistemas externos.
+Desenvolvi o PanoPoker como um projeto fullstack completo para consolidar habilidades essenciais em backend, frontend, comunicação em tempo real e integração com sistemas externos.
 
-O sistema foi executado em produção real (VPS), com funcionalidades como controle de partidas multiplayer, timers sincronizados pelo servidor, lógica de turnos, gerenciamento de promotores e um app Android conectado via WebSocket. Apesar de estar atualmente offline, o projeto foi testado em uso real com sucesso no Linux com Nginx + CertBot.
+O sistema rodou em produção real com domínio próprio (www.panopoker.com), incluindo controle de partidas multiplayer, timers sincronizados via servidor, lógica de turnos, gestão de promotores e um app Android conectado por WebSocket. Embora esteja offline no momento, foi testado com sucesso em ambiente Linux usando Nginx + CertBot.
 
 ---
 
 ## 🛠️ Tecnologias usadas
 
-- **Backend:** FastAPI, SQLAlchemy, WebSocket
+- **Backend:** Python, FastAPI, SQLAlchemy, WebSocket
 - **Frontend Android (Jogo):** Kotlin, Jetpack Compose
 - **Frontend Web (Site e Paineis):** Jinja2, HTML, CSS, JS
-- **Pagamentos:** Mercado Pago webhook  
-- **Autenticação:** JWT, Google OAuth
+- **Pagamentos:** MercadoPago Webhook
+- **Autenticação e Segurança:** JWT, Google OAuth
 - **Banco de dados:** PostgreSQL
 - **Testes:** Pytest + Hypothesis
 
@@ -20,23 +20,30 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 ## 🔥 Features principais
 
-- ✅ Controle de turnos com timers sincronizados por timestamp do servidor
-- ✅ Comunicação real-time via WebSocket (sem delay)
-- ✅ Backend em FastAPI com banco gerenciado via SQLAlchemy  
-- ✅ Frontend Android moderno em Jetpack Compose
-- ✅ Sistema de manutenção e controle de partidas 
-- ✅ Integração com Mercado Pago (via webhook) 
-- ✅ Showdown com exibição dos vencedores
+- Controle de turnos com timers sincronizados por timestamp do servidor
+- Comunicação em tempo real via WebSocket (sem delay)
+- Backend em FastAPI com banco gerenciado via SQLAlchemy
+- Frontend Android moderno em Jetpack Compose
+- Sistema de manutenção e controle de partidas
+- Integração com APIs externas (Mercado Pago, Google)
+- Showdown com exibição dos vencedores
+- Perfil personalizado com estatísticas, upload de avatar e conquistas
+- Avatares clicáveis nas mesas exibindo um dialog que mostra estatísticas do jogador
+
+> 🔒 Todas as rotas sensíveis protegidas com JWT + checagem de escopo/autorização + CORS com origem restrita + bcrypt para senhas + variáveis de ambiente pra tudo sensível.
 
 ---
 
 ## 🌐 Frontend Web
 
-> O próprio backend também serve a pasta `/site`, que funciona como frontend web leve. Essa parte inclui:
+> O próprio backend também serve a pasta `/site`, que funciona como frontend web leve.
 
-- Página para download do app (.APK)
-- Painel dos promotores com gestão de repasses e saldo
+Essa parte inclui:
+- Site principal que serve o download do .APK
+- Loja dos promotores
+- Painel dos promotores com gestão de comissão e repasse
 - Painel administrativo para controle das mesas, usuários e promotores
+- Painel do desenvolvedor (permite conectar nas mesas via WebSocket, fazer ações, e etc..)
 
 ---
 
@@ -44,21 +51,43 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 ### 🃏 App Android (Jetpack Compose)
 
-<img src="docs/prints/print_app_1.jpeg" height="300"/> <img src="docs/prints/print_app_2.jpeg" height="300"/>
-<img src="docs/prints/print_app_3.jpeg" height="300"/> <img src="docs/prints/print_app_4.jpeg" height="300"/>
-<img src="docs/prints/print_app_5.jpeg" height="300"/> 
+<div>
+  <img src="docs/prints/print_app_1.jpeg" height="200"/>
+  <img src="docs/prints/print_app_2.jpeg" height="200"/>
+  <img src="docs/prints/print_app_3.jpeg" height="200"/>
+  <img src="docs/prints/print_app_4.jpeg" height="200"/>
+  <img src="docs/prints/print_app_5.jpeg" height="200"/>
+</div>
+
+> *Imagens capturadas durante a fase de testes em produção real.*
 
 ### 💻 Paineis + Site do aplicativo
 
 <img src="docs/prints/print_painel_admin.png" width="600"/>
 
-> *Imagens capturadas durante a fase de testes em produção real.*
+### 🎥 Vídeo rápido de apresentação do app
 
+- https://www.youtube.com/video-do-pano
+
+---
+
+## ⚙️ Rodando o projeto
+
+A documentação de setup está em [`docs/setup.md`](https://github.com/d3v-mk/backend/blob/main/docs/setup.md)
+
+Este guia inclui:
+- 📦 Instalação dos requisitos
+- 🧠 Criação do banco de dados e tabelas
+- 🔑 Configuração de autenticação OAuth (Google e Mercado Pago)
+- 🚀 Execução do backend (FastAPI + WebSocket)
+- 🌐 Execução do site e painéis administrativos
+
+> Tudo documentado e organizado para rodar localmente ou em produção.
 ---
 
 ## 🎯 Roadmap / Próximos passos
 
-- Modo "PanoCoins" (jogar sem ser com real money)
+- Modo "PanoCoins" (Modo casual, focado na diversão)
 - Motor do jogo BlackJack
 - Chat em tempo real na mesa
 - Adicionar equipes (clans)
@@ -68,6 +97,8 @@ O sistema foi executado em produção real (VPS), com funcionalidades como contr
 
 ## 📫 Contato
 
-LinkedIn: [seu-linkedin]
-Portfólio: [portfolio]
-GitHub: [https://www.github.com/d3v-mk]
+- [LinkedIn](https://www.linkedin.com/in/SEU-LINK-AQUI)  
+- [Portfólio](https://SEU-PORTFOLIO.com)  
+- [GitHub](https://github.com/d3v-mk)
+
+> GRATIDAO UNIVERSO!
