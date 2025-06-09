@@ -1,0 +1,91 @@
+.hero {
+    text-align: center;
+    padding: 2rem 1rem;
+    background-color: #111;
+    color: #fff;
+}
+
+.hero h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.download-button {
+    background-color: #f5c518;
+    color: #111;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.download-button:hover {
+    background-color: #ffe164;
+}
+
+.features {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.features h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+.features li {
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+    .hero h1 {
+        font-size: 1.5rem;
+    }
+
+    .hero p,
+    .features li {
+        font-size: 1rem;
+    }
+
+    .download-button {
+        width: 80%;
+        font-size: 1rem;
+    }
+}
+
+.carousel-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 1rem 0;
+}
+
+.carousel {
+    display: flex;
+    gap: 1rem;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 1rem;
+}
+
+.carousel img {
+    flex: 0 0 auto;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 10px;
+    scroll-snap-align: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}

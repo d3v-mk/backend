@@ -1,0 +1,87 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #111;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+}
+
+body, html {
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+h1 {
+    color: gold;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.descricao {
+    font-size: 15px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.valores {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.botao-valor {
+    background-color: gold;
+    color: black;
+    border: none;
+    padding: 12px 18px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    flex: 1 1 45%;
+    max-width: 140px;
+}
+
+.resultado-pix {
+    display: none;
+    background-color: #222;
+    padding: 16px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.pix-codigo {
+    background-color: #000;
+    padding: 10px;
+    border-radius: 6px;
+    word-break: break-word;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    .descricao {
+        font-size: 14px;
+    }
+
+    .botao-valor {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+}
