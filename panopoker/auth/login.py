@@ -11,6 +11,7 @@ import httpx
 from fastapi.responses import RedirectResponse
 from panopoker.core.config import settings
 from panopoker.auth.utils.conq_beta_tester_helper import conq_beta_tester
+from urllib.parse import urljoin
 import os
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
@@ -91,7 +92,7 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/callback-web")
 def google_callback_web(request: Request, db: Session = Depends(get_db)):
     code = request.query_params.get("code")
-    next_url = request.query_params.get("next") or "/"  # 👈 pega o next da URL
+    state_url = request.query_params.get("state") or "/"
 
     if not code:
         raise HTTPException(status_code=400, detail="Código ausente")
@@ -119,8 +120,11 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
     resultado = login_unificado(login_payload, db)
     access_token = resultado["access_token"]
 
-    # ✅ Seta o cookie corretamente e redireciona pro next
-    resp = RedirectResponse(url=next_url, status_code=302)
+    # Monta URL completa pra loja, não só rota relativa
+    LOJA_BASE_URL = "https://www.panopoker.com"
+    redirect_url = urljoin(LOJA_BASE_URL, state_url)
+
+    resp = RedirectResponse(url=redirect_url, status_code=302)
     resp.set_cookie(
         key="access_token",
         value=access_token,
