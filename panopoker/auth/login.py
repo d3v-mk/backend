@@ -91,6 +91,8 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/callback-web")
 def google_callback_web(request: Request, db: Session = Depends(get_db)):
     code = request.query_params.get("code")
+    next_url = request.query_params.get("next") or "/"  # 👈 pega o next da URL
+
     if not code:
         raise HTTPException(status_code=400, detail="Código ausente")
 
@@ -117,8 +119,14 @@ def google_callback_web(request: Request, db: Session = Depends(get_db)):
     resultado = login_unificado(login_payload, db)
     access_token = resultado["access_token"]
 
-    # ✅ Redireciona e salva o token em cookie
-    resp = RedirectResponse(url="https://www.panopoker.com/finaliza_login?token=" + access_token, status_code=302)
-    resp.set_cookie(key="access_token", value=access_token, httponly=True)
+    # ✅ Seta o cookie corretamente e redireciona pro next
+    resp = RedirectResponse(url=next_url, status_code=302)
+    resp.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.IS_PRODUCTION,
+        samesite="None" if settings.IS_PRODUCTION else "Lax",
+        domain=".panopoker.com" if settings.IS_PRODUCTION else None
+    )
     return resp
-
