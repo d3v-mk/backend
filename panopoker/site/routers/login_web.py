@@ -78,5 +78,11 @@ def processar_login(request: Request, response: Response,
 @router.get("/logout")
 def logout(response: Response):
     resp = RedirectResponse(url="/login", status_code=302)
-    resp.delete_cookie("access_token")
+    resp.delete_cookie(
+        key="access_token",
+        domain=".panopoker.com" if settings.IS_PRODUCTION else None,
+        path="/",
+        secure=settings.IS_PRODUCTION,
+        samesite="None" if settings.IS_PRODUCTION else "Lax",
+    )
     return resp
