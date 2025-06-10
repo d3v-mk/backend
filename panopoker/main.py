@@ -79,7 +79,7 @@ app.mount(
 
 # Middleware CORS!
 # Define se está em produção ou não
-IS_PRODUCTION = os.getenv("IS_PRODUCTION", "false").lower() == "true"
+IS_PRODUCTION = settings.IS_PRODUCTION
 
 if IS_PRODUCTION:
     app.add_middleware(
