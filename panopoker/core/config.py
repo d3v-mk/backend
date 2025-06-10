@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     GOOGLE_ANDROID_CLIENT_ID: str
     GOOGLE_TOKEN_URL: str
     GOOGLE_REDIRECT_URI_WEB: str
+    GOOGLE_REDIRECT_URI_WEB_DEV: str = "http://localhost:8000/auth/callback-web"
 
     # Mercado Pago
     MERCADO_PAGO_ACCESS_TOKEN: str
@@ -33,6 +34,10 @@ class Settings(BaseSettings):
 
     # E-mail
     EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"
+
+    @computed_field(return_type=str)
+    def GOOGLE_REDIRECT_URI_WEB_FINAL(self) -> str:
+        return self.GOOGLE_REDIRECT_URI_WEB if self.IS_PRODUCTION else self.GOOGLE_REDIRECT_URI_WEB_DEV
 
     @computed_field(return_type=str)
     def MERCADO_PAGO_REDIRECT_URI_FINAL(self) -> str:

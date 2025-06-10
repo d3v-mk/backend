@@ -6,11 +6,12 @@ from panopoker.core.security import verify_password, create_access_token, get_cu
 from panopoker.usuarios.models.usuario import Usuario
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+from panopoker.core.config import settings
 import os
 
 router = APIRouter(tags=[""])
 
-IS_PRODUCTION = os.getenv("IS_PRODUCTION", "false").lower() == "true"
+IS_PRODUCTION = settings.IS_PRODUCTION
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "../templates"))
 
@@ -31,7 +32,12 @@ def dashboard_redirect(request: Request, usuario: Usuario = Depends(get_current_
 
 @router.get("/login")
 def exibir_login(request: Request, next: str | None = None):
-    return templates.TemplateResponse("login.html", {"request": request, "next": next})
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "next": next,
+        "google_redirect_uri_web_final": settings.GOOGLE_REDIRECT_URI_WEB_FINAL,
+        "google_client_id": settings.GOOGLE_WEB_CLIENT_ID
+    })
 
 
 @router.get("/finaliza_login")
