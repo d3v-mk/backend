@@ -33,9 +33,8 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
     pagamento_id = str(payload["data"]["id"])
     logging.info(f"🔍 Buscando pagamento ID {pagamento_id} na API Mercado Pago")
 
-    # 1. Tenta buscar o pagamento na API com retries
-    dados = None
-    promotor = db.query(Promotor).filter(Promotor.access_token.isnot(None)).first()  # Busca qualquer promotor com token
+    # 1. Busca promotor com token
+    promotor = db.query(Promotor).filter(Promotor.access_token.isnot(None)).first()
     if not promotor:
         logging.warning("❗ Nenhum promotor com token disponível.")
         return {"status": "ignorado"}
@@ -43,6 +42,7 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
     headers = {"Authorization": f"Bearer {promotor.access_token}"}
     url = f"https://api.mercadopago.com/v1/payments/{pagamento_id}"
 
+    dados = None
     for tentativa in range(5):
         response = requests.get(url, headers=headers)
         if response.status_code == 401:
@@ -72,24 +72,40 @@ async def webhook_mercado_pago(request: Request, db: Session = Depends(get_db)):
     if status != "approved":
         return {"status": "ignorado"}
 
-    # 2. Cria ou atualiza localmente
+    # 2. Cria ou atualiza localmente pagamento
     pagamento = db.query(Pagamento).filter(Pagamento.payment_id == pagamento_id).first()
     if not pagamento:
         pagamento = Pagamento(
             payment_id=pagamento_id,
             status="approved",
             valor=Decimal(str(dados.get("transaction_amount"))),
-            user_id=None,  # ← talvez você precise buscar pelo e-mail depois
+            user_id=None,
             promotor_id=promotor.id,
         )
         db.add(pagamento)
     else:
         pagamento.status = "approved"
 
-    # 3. Acha o usuário pelo e-mail usado no pagamento
-    email_pagador = dados["payer"]["email"]
-    usuario = db.query(Usuario).filter(Usuario.email == email_pagador).first()
+    # 3. Pega usuário pelo external_reference ou email (fallback)
+    external_reference = dados.get("external_reference")
+    usuario = None
 
+    if external_reference and external_reference.startswith("user_"):
+        try:
+            user_id_str = external_reference.split("_")[1]
+            user_id = int(user_id_str)
+            usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+            logging.info(f"🔗 Usuário encontrado pelo external_reference: ID {user_id}")
+        except Exception as e:
+            logging.warning(f"⚠️ Erro ao interpretar external_reference: {external_reference} - {e}")
+
+    if not usuario:
+        email_pagador = dados.get("payer", {}).get("email")
+        if email_pagador:
+            usuario = db.query(Usuario).filter(Usuario.email == email_pagador).first()
+            logging.info(f"🔗 Usuário encontrado pelo email: {email_pagador}")
+
+    # 4. Atualiza saldo e comissões
     if usuario:
         pagamento.user_id = usuario.id
         valor_bruto = pagamento.valor
