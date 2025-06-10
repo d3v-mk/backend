@@ -38,7 +38,7 @@
                         <input type="hidden" name="client_id" value="{{ mercado_pago_client_id }}">
                         <input type="hidden" name="response_type" value="code">
                         <input type="hidden" name="platform_id" value="mp">
-                        <input type="hidden" name="redirect_uri" value="https://api.panopoker.com/auth/callback-mp">
+                        <input type="hidden" name="redirect_uri" value="{{ mercado_pago_redirect_uri_final }}">
                         <button type="submit" class="logout-btn">Criar Loja</button>
                     </form>
                 {% else %}

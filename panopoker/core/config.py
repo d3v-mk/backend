@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     MERCADO_PAGO_CLIENT_SECRET: str
     MERCADO_PAGO_CLIENT_ID: str
     MERCADO_PAGO_REDIRECT_URI: str
+    MERCADO_PAGO_REDIRECT_URI_DEV: str = "http://localhost:8000/auth/callback-mp"
 
     # MiddleWare CORS
     SESSION_SECRET_KEY: str
@@ -32,6 +33,11 @@ class Settings(BaseSettings):
 
     # E-mail
     EMAIL_DOMINIOS_VALIDOS_RAW: str = "[]"
+
+    @computed_field(return_type=str)
+    def MERCADO_PAGO_REDIRECT_URI_FINAL(self) -> str:
+        return self.MERCADO_PAGO_REDIRECT_URI if self.IS_PRODUCTION else self.MERCADO_PAGO_REDIRECT_URI_DEV
+
 
     @property
     def EMAIL_DOMINIOS_VALIDOS(self) -> set[str]:

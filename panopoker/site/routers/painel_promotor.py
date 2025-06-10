@@ -48,6 +48,7 @@ def painel_promotor(
         "saldo_repassar": saldo_repassar,
         "comissao_total": comissao_total,
         "mercado_pago_client_id": settings.MERCADO_PAGO_CLIENT_ID,
+        "mercado_pago_redirect_uri_final": settings.MERCADO_PAGO_REDIRECT_URI_FINAL
     })
 
 # ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
