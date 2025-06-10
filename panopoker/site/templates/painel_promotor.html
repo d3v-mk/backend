@@ -35,7 +35,7 @@
                 <div id="dropdown-menu">
                 {% if not usuario.promotor or not usuario.promotor.slug %}
                     <form method="get" action="https://auth.mercadopago.com.br/authorization">
-                        <input type="hidden" name="client_id" value="1378468002854798">
+                        <input type="hidden" name="client_id" value="{{ mercado_pago_client_id }}">
                         <input type="hidden" name="response_type" value="code">
                         <input type="hidden" name="platform_id" value="mp">
                         <input type="hidden" name="redirect_uri" value="https://api.panopoker.com/auth/callback-mp">

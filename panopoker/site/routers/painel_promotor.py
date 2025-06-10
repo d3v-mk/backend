@@ -11,6 +11,7 @@ from datetime import datetime
 from decimal import Decimal
 from panopoker.usuarios.models.promotor import Promotor
 from urllib.parse import urlencode
+from panopoker.core.config import settings
 
 router = APIRouter(prefix="", tags=["Painel Promotores"])
 templates = Jinja2Templates(directory="panopoker/site/templates")
@@ -45,7 +46,8 @@ def painel_promotor(
         "saques": saques,
         "usuario": usuario,
         "saldo_repassar": saldo_repassar,
-        "comissao_total": comissao_total
+        "comissao_total": comissao_total,
+        "mercado_pago_client_id": settings.MERCADO_PAGO_CLIENT_ID,
     })
 
 # ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
