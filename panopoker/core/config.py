@@ -1,8 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import computed_field
-from dotenv import load_dotenv
-
-load_dotenv(".env")
+from pydantic import ConfigDict, computed_field, field_validator
 
 class Settings(BaseSettings):
     DATABASE_USER: str
@@ -44,17 +41,23 @@ class Settings(BaseSettings):
         except Exception as e:
             raise ValueError(f"EMAIL_DOMINIOS_VALIDOS inválido: {e}")
 
-    @computed_field
+    @computed_field(return_type=str)
     def DATABASE_URL(self) -> str:
         return (
             f"postgresql://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}"
             f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
         )
 
-    model_config = {
-        "case_sensitive": True,
-        "env_file": ".env"
-    }
+    @field_validator("IS_PRODUCTION", mode="before")
+    def cast_bool(cls, v):
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes")
+        return bool(v)
 
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow",
+    )
 
 settings = Settings()
