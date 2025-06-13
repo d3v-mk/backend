@@ -13,6 +13,7 @@ export function FormListarPromotores() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [ativoFiltro, setAtivoFiltro] = useState<'todos' | 'ativos' | 'bloqueados'>('todos');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     listarPromotores();
@@ -22,7 +23,7 @@ export function FormListarPromotores() {
     setLoading(true);
     setErro('');
     try {
-        const res = await fetch("http://localhost:8000/api/admin/promotor/listar?ativo=todos", {
+        const res = await fetch(`${API_URL}/api/admin/promotor/listar?ativo=todos`, {
         method: "GET",
         credentials: "include", // cookie é enviado só assim
         })

@@ -3,13 +3,16 @@ import { useEffect } from "react";
 import { HeroSection } from "../components/HeroSection";
 
 export default function HomePage() {
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     // const ultimaVisita = localStorage.getItem("ultima-visita");
     // const agora = Date.now();
 
     // Só conta 1 vez por hora
     // if (!ultimaVisita || agora - parseInt(ultimaVisita) > 3600 * 1000) {
-    fetch("http://localhost:8000/visitas", {
+    fetch(`${API_URL}/visitas`, {
       method: "GET",
       credentials: "include",
     }).catch((err) => console.error("Erro ao contar visita:", err));

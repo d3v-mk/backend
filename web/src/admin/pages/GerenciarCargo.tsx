@@ -1,18 +1,42 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+
 export default function GerenciarCargo() {
   const [acaoSelecionada, setAcaoSelecionada] = useState<"promover" | "despromover">("promover");
   const [formPromoverUserId, setFormPromoverUserId] = useState<number | "">("");
 
-  function handlePromoverSubmit(e: FormEvent) {
+  async function handlePromoverSubmit(e: FormEvent) {
     e.preventDefault();
     if (!formPromoverUserId) {
       alert("Informe o ID do usuário");
       return;
     }
-    const url = `/admin/usuario/${acaoSelecionada}/${formPromoverUserId}?tipo=promotor`;
-    window.location.href = url;
+    
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/usuario/${acaoSelecionada}/${formPromoverUserId}?tipo=promotor`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        const errorMsg = errData?.detail || errData?.msg || "Erro desconhecido";
+        alert("❌ " + errorMsg);
+        return;
+      }
+
+      const data = await res.json();
+      alert("✅ " + (data.msg || "Operação concluída com sucesso!"));
+      setFormPromoverUserId(""); // limpa input após sucesso
+    } catch (error: any) {
+      alert("❌ Erro na requisição: " + (error.message || "desconhecido"));
+    }
   }
 
   return (

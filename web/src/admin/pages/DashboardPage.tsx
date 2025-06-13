@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const [visitas, setVisitas] = useState<number | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch("http://localhost:8000/visitas", {
+    if (!API_URL) {
+      console.error("API_URL não definido no .env");
+      return;
+    }
+    
+    fetch(`${API_URL}/visitas`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -13,8 +19,8 @@ export default function DashboardPage() {
         console.error("Erro ao buscar visitas:", err);
         setVisitas(null);
       });
-  }, []);
-
+  }, [API_URL]);
+  
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold">🏠 Dashboard</h1>

@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState("");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
@@ -25,7 +27,7 @@ export default function LoginPage() {
         next,
       });
 
-      const res = await fetch("http://localhost:8000/login-web", {
+      const res = await fetch(`${API_URL}/login-web`, {
         method: "POST",
         body: formData,
         credentials: "include",

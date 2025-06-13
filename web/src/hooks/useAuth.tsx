@@ -14,6 +14,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAutenticado, setAutenticado] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Verifica autenticação logo que o app carrega
   useEffect(() => {
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verificarAuth = async () => {
     try {
-      const res = await fetch("http://localhost:8000/me", {
+      const res = await fetch(`${API_URL}/me`, {
         credentials: "include",
       });
 
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch("http://localhost:8000/logout", {
+      await fetch(`${API_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });
