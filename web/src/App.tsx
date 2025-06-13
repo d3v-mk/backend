@@ -11,8 +11,8 @@ import { AuthProvider } from "./hooks/useAuth";
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <Routes>
           {/* Home */}
           <Route path="/" element={<HomeLayout />}>
@@ -34,9 +34,10 @@ function App() {
             <Route path="lista" element={<ListarPromotores />} />
           </Route>
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
+
 
 export default App;

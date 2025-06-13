@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../hooks/useAuth";
 
 const links = [
   { path: "/admin", label: "🏠 Dashboard" },
@@ -12,6 +13,21 @@ export function AdminLayout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8000/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      logout(); // atualiza o contexto
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+    }
+  };
+
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -77,6 +93,14 @@ export function AdminLayout() {
             {label}
           </Link>
         ))}
+
+        <button
+          onClick={handleLogout}
+          className="block w-full text-left px-4 py-2 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 mt-4 bg-red-700 font-semibold"
+        >
+          🚪 Sair
+        </button>
+
       </aside>
 
       {/* Conteúdo principal */}
