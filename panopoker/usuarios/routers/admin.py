@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from panopoker.core.database import get_db
 from panopoker.poker.models.mesa import Mesa
@@ -15,6 +15,23 @@ router = APIRouter(tags=["Admin"])
 templates = Jinja2Templates(directory="panopoker/site/templates")
 
 
+
+
+@router.get("/visitas")
+def contar_visita(request: Request, db: Session = Depends(get_db)):
+    # Tenta pegar o registro único (id=1)
+    usuario = db.query(Usuario).filter_by(id=1).first()
+    if not usuario:
+        usuario = Usuario(id=1, visitas=0)
+        db.add(usuario)
+        db.commit()
+        db.refresh(usuario)
+
+    usuario.visitas_ao_site += 1
+    db.commit()
+    db.refresh(usuario)
+
+    return {"total": usuario.visitas_ao_site}
 
 @router.post("/admin/ativar-manutencao")
 def ativar_manutencao(
@@ -239,49 +256,95 @@ async def desbloquear_promotor(
 
 
 # ============================================================
-# from pydantic import BaseModel
+from pydantic import BaseModel
 
-# class PromotorCreate(BaseModel):
-#     user_id: int
-#     user_id_mp: str
-#     access_token: str
-#     refresh_token: str
-#     nome: str | None = None
+class PromotorCreate(BaseModel):
+    user_id: int
+    user_id_mp: str
+    access_token: str
+    refresh_token: str
+    nome: str | None = None
 
 
-# @router.post("/admin/promotor/criar_loja")
-# def criar_loja_promotor(promotor_data: PromotorCreate, db: Session = Depends(get_db)):
-#     data = promotor_data
-#     user_id = data.user_id
-#     user_id_mp = data.user_id_mp
-#     access_token = data.access_token
-#     refresh_token = data.refresh_token
-#     nome = data.nome
+@router.post("/admin/promotor/criar_loja")
+def criar_loja_promotor(promotor_data: PromotorCreate, db: Session = Depends(get_db)):
+    data = promotor_data
+    user_id = data.user_id
+    user_id_mp = data.user_id_mp
+    access_token = data.access_token
+    refresh_token = data.refresh_token
+    nome = data.nome
 
-#     promotor = db.query(Promotor).filter(Promotor.user_id == user_id).first()
+    promotor = db.query(Promotor).filter(Promotor.user_id == user_id).first()
 
-#     if not promotor:
-#         promotor = Promotor(
-#             user_id=user_id,
-#             user_id_mp=user_id_mp,
-#             access_token=access_token,
-#             refresh_token=refresh_token,
-#             slug=f"promotor_{user_id}",
-#             nome=nome or "Loja do Promotor"
-#         )
-#         db.add(promotor)
-#     else:
-#         promotor.user_id_mp = user_id_mp
-#         promotor.access_token = access_token
-#         promotor.refresh_token = refresh_token
-#         if nome:
-#             promotor.nome = nome
-#         if not promotor.slug:
-#             promotor.slug = f"promotor_{user_id}"
+    if not promotor:
+        promotor = Promotor(
+            user_id=user_id,
+            user_id_mp=user_id_mp,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            slug=f"promotor_{user_id}",
+            nome=nome or "Loja do Promotor"
+        )
+        db.add(promotor)
+    else:
+        promotor.user_id_mp = user_id_mp
+        promotor.access_token = access_token
+        promotor.refresh_token = refresh_token
+        if nome:
+            promotor.nome = nome
+        if not promotor.slug:
+            promotor.slug = f"promotor_{user_id}"
 
-#     db.commit()
+    db.commit()
 
-#     return {"msg": "Promotor criado ou atualizado com sucesso!", "promotor_id": promotor.id}
+    return {"msg": "Promotor criado ou atualizado com sucesso!", "promotor_id": promotor.id}
+
+
+
+
+# ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
+
+from panopoker.poker.models.mesa import JogadorNaMesa
+from panopoker.core.debug import debug_print
+
+@router.delete("/admin/limparhard/{mesa_id}")
+def forcar_limpeza_mesa(
+    mesa_id: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user_optional)
+):
+    if usuario is None:
+        raise HTTPException(status_code=401, detail="Você precisa estar logado.")
+
+    if not getattr(usuario, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Sem permissão para usar o sabre de luz da destruição total.")
+
+    jogadores = db.query(JogadorNaMesa).filter(
+        JogadorNaMesa.mesa_id == mesa_id,
+    ).all()
+    
+    for j in jogadores:
+        debug_print(f"[FORCAR_LIMPEZA] Removendo jogador {j.jogador_id} da mesa {mesa_id}")
+        db.delete(j)
+
+    mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
+    if mesa:
+        mesa.status = "aberta"
+        mesa.estado_da_rodada = "pre-flop"
+        mesa.jogador_da_vez = None
+        mesa.dealer_pos = None
+        mesa.posicao_sb = None
+        mesa.posicao_bb = None
+        mesa.pote_total = 0
+        mesa.flop = []
+        mesa.turn = []
+        mesa.river = []
+        debug_print(f"[FORCAR_LIMPEZA] Mesa {mesa_id} resetada para status 'aberta'")
+
+    db.commit()
+    return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
+
 # ============================================================
 
 
@@ -346,50 +409,6 @@ async def desbloquear_promotor(
 #     db.commit()
 
 #     return {"status": "ok", "mensagem": "Loja criada com sucesso."}
-
-
-
-
-
-
-# ============================= FORCA LIMPAR A MESA TOTALMENTE (remove players tbm) =============================
-
-# @router.delete("/admin/limparhard/{mesa_id}")
-# def forcar_limpeza_mesa(
-#     mesa_id: int,
-#     db: Session = Depends(get_db),
-#     usuario: Usuario = Depends(get_current_user_optional)
-# ):
-#     if usuario is None:
-#         raise HTTPException(status_code=401, detail="Você precisa estar logado.")
-
-#     if not getattr(usuario, "is_admin", False):
-#         raise HTTPException(status_code=403, detail="Sem permissão para usar o sabre de luz da destruição total.")
-
-#     jogadores = db.query(JogadorNaMesa).filter(
-#         JogadorNaMesa.mesa_id == mesa_id,
-#     ).all()
-    
-#     for j in jogadores:
-#         debug_print(f"[FORCAR_LIMPEZA] Removendo jogador {j.jogador_id} da mesa {mesa_id}")
-#         db.delete(j)
-
-#     mesa = db.query(Mesa).filter(Mesa.id == mesa_id).first()
-#     if mesa:
-#         mesa.status = "aberta"
-#         mesa.estado_da_rodada = "pre-flop"
-#         mesa.jogador_da_vez = None
-#         mesa.dealer_pos = None
-#         mesa.posicao_sb = None
-#         mesa.posicao_bb = None
-#         mesa.pote_total = 0
-#         mesa.flop = []
-#         mesa.turn = []
-#         mesa.river = []
-#         debug_print(f"[FORCAR_LIMPEZA] Mesa {mesa_id} resetada para status 'aberta'")
-
-#     db.commit()
-#     return {"status": "ok", "removidos": [j.jogador_id for j in jogadores]}
 
 
 

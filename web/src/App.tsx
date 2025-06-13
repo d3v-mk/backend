@@ -8,6 +8,7 @@ import { HomeLayout } from "./home/layout/HomeLayout";
 import { RotaPrivada } from "./components/RotaPrivada";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./hooks/useAuth";
+import { DashboardPage } from "./admin";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
               </RotaPrivada>
             }
           >
+            <Route index element={<DashboardPage />} />
             <Route path="criar" element={<CriarPromotorPage />} />
             <Route path="cargos" element={<GerenciarCargo />} />
             <Route path="lista" element={<ListarPromotores />} />

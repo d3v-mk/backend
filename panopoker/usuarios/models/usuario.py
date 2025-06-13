@@ -20,6 +20,8 @@ class Usuario(Base):
     is_promoter = Column(Boolean, default=False)
     avatar_url = Column(String, nullable=True)
 
+    visitas_ao_site = Column(Integer, default=0)
+
     auth_provider = Column(String, default="local")
 
     # Relationships

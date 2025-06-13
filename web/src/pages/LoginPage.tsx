@@ -8,7 +8,7 @@ export default function LoginPage() {
   const { login } = useAuth();
 
   const nextParam = new URLSearchParams(location.search).get("next");
-  const next = nextParam || "/dashboard";
+  const next = nextParam || "/";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

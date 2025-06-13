@@ -4,6 +4,7 @@
 export { AdminLayout } from "./layout/AdminLayout";
 export { default as CriarPromotorPage } from "./pages/CriarPromotorPage";
 export { default as GerenciarCargo } from "./pages/GerenciarCargo";
+export { default as DashboardPage } from "./pages/DashboardPage";
 
 // Exporta hooks custom, se tiver
 // export * from "./hooks";
