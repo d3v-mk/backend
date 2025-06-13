@@ -1,9 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth"; // ajusta o path se precisar
 
 export default function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const nextParam = new URLSearchParams(location.search).get("next");
   const next = nextParam || "/dashboard";
 
@@ -25,12 +28,19 @@ export default function LoginPage() {
       const res = await fetch("http://localhost:8000/login-web", {
         method: "POST",
         body: formData,
-        credentials: "include", // pra cookie ser recebido
+        credentials: "include",
       });
 
       if (res.ok) {
+        // Aguarda login e sincronização com backend
+        await login();
+
         const { next: nextUrl } = await res.json();
-        navigate(nextUrl);
+
+        // Espera pequena pra garantir que o navegador fixou o cookie
+        setTimeout(() => {
+          navigate(nextUrl);
+        }, 100);
       } else {
         const err = await res.json();
         setErro(err.detail || "Usuário ou senha inválidos.");

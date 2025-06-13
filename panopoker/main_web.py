@@ -7,7 +7,7 @@ app_web = FastAPI()
 
 app_web.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # React no front
+    allow_origins=["http://localhost:5173"],  # React no front
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

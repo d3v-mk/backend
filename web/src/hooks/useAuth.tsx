@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 type AuthContextType = {
   isAutenticado: boolean;
-  login: () => void;
+  login: () => Promise<void>;
   logout: () => void;
   carregando: boolean;
 };
@@ -15,21 +15,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [carregando, setCarregando] = useState(true);
   const navigate = useNavigate();
 
+  // Verifica autenticação logo que o app carrega
   useEffect(() => {
-    fetch("http://localhost:8000/me", {
-      credentials: "include",
-    })
-      .then((res) => {
-        setAutenticado(res.ok);
-        setCarregando(false);
-      })
-      .catch(() => {
-        setAutenticado(false);
-        setCarregando(false);
-      });
+    verificarAuth();
   }, []);
 
-  const login = () => setAutenticado(true);
+  const verificarAuth = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/me", {
+        credentials: "include",
+      });
+
+      setAutenticado(res.ok);
+    } catch {
+      setAutenticado(false);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const login = async () => {
+    // Refaz o check com o cookie recém setado
+    await verificarAuth();
+  };
 
   const logout = async () => {
     try {
