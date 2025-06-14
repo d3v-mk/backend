@@ -19,14 +19,12 @@ function JogadoresDoMes() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFade(false); // inicia fade out
-
+      setFade(false);
       setTimeout(() => {
         setIndexAtual((old) => (old + 1) % jogadores.length);
-        setFade(true); // fade in do próximo
-      }, 500); // duração do fade out
-
-    }, 4000); // troca a cada 4 segundos
+        setFade(true);
+      }, 500);
+    }, 5000); //segundos
 
     return () => clearInterval(interval);
   }, [jogadores.length]);
@@ -67,15 +65,11 @@ function JogadoresDoMes() {
   );
 }
 
-
-
-
-
 function GaleriaDoJogo() {
   const fotos = [
-    { src: "/img/pic2.png", alt: "Lobby 1" },
-    { src: "/img/pic3.png", alt: "Lobby 2" },
-    { src: "/img/pic1.png", alt: "Mesa de Jogo" },
+    { src: "/img/pic2.png", alt: "Lobby 1", orientacao: "paisagem" },
+    { src: "/img/pic3.png", alt: "Lobby 2", orientacao: "paisagem" },
+    { src: "/img/pic1.png", alt: "Mesa de Jogo", orientacao: "retrato" },
   ];
 
   const [indexAtual, setIndexAtual] = useState(0);
@@ -83,36 +77,48 @@ function GaleriaDoJogo() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFade(false); // começa o fade out
-
+      setFade(false);
       setTimeout(() => {
         setIndexAtual((oldIndex) => (oldIndex + 1) % fotos.length);
-        setFade(true); // fade in da próxima imagem
-      }, 500); // 500ms para o fade out
-
-    }, 3000); // troca total a cada 3 segundos
+        setFade(true);
+      }, 500);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [fotos.length]);
 
+  const imagemAtual = fotos[indexAtual];
+
   return (
     <section className="max-w-6xl mx-auto px-4 py-20">
       <h2 className="text-4xl font-extrabold text-yellow-400 text-center mb-10 drop-shadow-lg">
-        🎲 Galeria do Jogo
+        🎲 PanoPoker
       </h2>
       <div className="flex justify-center items-center">
-        <img
-          src={fotos[indexAtual].src}
-          alt={fotos[indexAtual].alt}
-          loading="lazy"
-          className={`rounded-xl shadow-lg border border-yellow-500 max-h-[300px] max-w-[400px] object-cover transition-opacity duration-500 ease-in-out ${
-            fade ? "opacity-100" : "opacity-0"
-          }`}
-        />
+        <div
+          className={`relative w-full 
+            max-w-[320px] sm:max-w-[400px] md:max-w-[800px]
+            h-[500px] md:h-auto md:aspect-[4/3]
+            rounded-xl shadow-lg overflow-hidden 
+            transition-opacity duration-500 ease-in-out ${
+              fade ? "opacity-100" : "opacity-0"
+            }`}
+        >
+          <img
+            src={imagemAtual.src}
+            alt={imagemAtual.alt}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+        </div>
       </div>
     </section>
   );
 }
+
+
+
+
 
 export default function HomePage() {
   return (
@@ -125,7 +131,6 @@ export default function HomePage() {
 
       <GaleriaDoJogo />
 
-      {/* Seção de Recursos */}
       <section className="max-w-5xl mx-auto px-4 py-16">
         <h2 className="text-4xl font-extrabold mb-10 text-center text-yellow-400 drop-shadow-lg">
           🔥 Recursos do Jogo
@@ -150,7 +155,6 @@ export default function HomePage() {
         </ul>
       </section>
 
-      {/* CTA: Baixar APK */}
       <section className="relative text-center py-20 px-4">
         <div className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 rounded-3xl max-w-xl mx-auto shadow-2xl p-10">
           <h3 className="text-3xl font-extrabold text-black mb-6">

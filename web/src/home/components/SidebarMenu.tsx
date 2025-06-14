@@ -26,7 +26,8 @@ export function SidebarMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
       style={{
-        backgroundColor: "transparent",
+        background:
+          "linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,50,0.7) 100%)",
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
       }}
