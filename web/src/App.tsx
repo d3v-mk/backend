@@ -22,7 +22,7 @@ import {
 
 // Outros imports
 import HomePage from "./home/pages/HomePage";
-import { HomeLayout } from "./home/layout/HomeLayout";
+import HomeLayout from "./home/layout/HomeLayout";
 import { RotaPrivada } from "./components/RotaPrivada";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./hooks/useAuth";
