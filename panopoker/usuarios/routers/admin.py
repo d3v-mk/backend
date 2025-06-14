@@ -221,7 +221,8 @@ def apagar_loja_promotor(
 
 
 
-
+from fastapi.responses import JSONResponse
+from decimal import Decimal
 
 @router.post("/admin/promotor/{promotor_id}/desbloquear")
 async def desbloquear_promotor(
@@ -229,21 +230,29 @@ async def desbloquear_promotor(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_user_optional)
 ):
-    if not admin.is_admin:
-        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar.")
+    try:
+        if not admin or not admin.is_admin:
+            return JSONResponse(status_code=403, content={"erro": "Apenas administradores podem acessar."})
 
-    promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
-    if not promotor:
-        raise HTTPException(status_code=404, detail="Promotor não encontrado")
+        promotor = db.query(Promotor).filter(Promotor.id == promotor_id).first()
+        if not promotor:
+            return JSONResponse(status_code=404, content={"erro": "Promotor não encontrado"})
 
-    promotor.bloqueado = False
-    promotor.saldo_repassar = Decimal("0.00")  # opcional
-    promotor.comissao_total = Decimal("0.00")
+        promotor.bloqueado = False
+        promotor.saldo_repassar = Decimal("0.00")
+        promotor.comissao_total = Decimal("0.00")
 
-    db.add(promotor)
-    db.commit()
+        db.add(promotor)
+        db.commit()
 
-    return {"status": "ok", "mensagem": f"Promotor {promotor_id} desbloqueado com sucesso"}
+        return JSONResponse(status_code=200, content={
+            "status": "ok",
+            "mensagem": f"Promotor {promotor_id} desbloqueado com sucesso"
+        })
+    
+    except Exception as e:
+        print("Erro ao desbloquear:", e)
+        return JSONResponse(status_code=500, content={"erro": str(e)})
 
 
 

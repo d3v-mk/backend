@@ -1,5 +1,6 @@
 // src/components/FormListarPromotores.tsx
 import type { Promotor } from '@/types';
+import { useState } from 'react';
 
 type Props = {
   promotores: Promotor[];
@@ -7,6 +8,42 @@ type Props = {
 };
 
 export function FormListarPromotores({ promotores, onCopiarId }: Props) {
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const desbloquearPromotor = async (id: number) => {
+    if (!confirm(`Desbloquear promotor ${id}?`)) return;
+    setLoadingId(id);
+    try {
+      const res = await fetch(`${API_URL}/admin/promotor/${id}/desbloquear`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Resposta inválida do servidor (sem JSON)');
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Erro ao desbloquear');
+      }
+
+
+      alert(`✅ ${data.mensagem}`);
+      window.location.reload(); // recarrega pra atualizar a tabela
+    } catch (err: any) {
+      alert(`❌ Falha ao desbloquear: ${err.message}`);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 10 }}>
       <thead>
@@ -29,7 +66,7 @@ export function FormListarPromotores({ promotores, onCopiarId }: Props) {
             </td>
           </tr>
         )}
-        {promotores.map(p => (
+        {promotores.map((p) => (
           <tr key={p.id} style={{ backgroundColor: p.bloqueado ? '#5a1a1a' : 'transparent' }}>
             <td>{p.nome || '-'}</td>
             <td>
@@ -47,10 +84,17 @@ export function FormListarPromotores({ promotores, onCopiarId }: Props) {
               <details>
                 <summary style={{ cursor: 'pointer' }}>Ações ▼</summary>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button disabled={!p.bloqueado}>Desbloquear ✅</button>
+                  <button
+                    disabled={!p.bloqueado || loadingId === p.id}
+                    onClick={() => desbloquearPromotor(p.id)}
+                  >
+                    {loadingId === p.id ? 'Desbloqueando...' : 'Desbloquear ✅'}
+                  </button>
                   {p.slug && (
                     <button
-                      onClick={() => confirm('Apagar loja?') && console.log('Apagar loja de', p.id)}
+                      onClick={() =>
+                        confirm('Apagar loja?') && console.log('Apagar loja de', p.id)
+                      }
                       style={{ color: 'red' }}
                     >
                       Apagar Loja 🗑️
