@@ -6,7 +6,7 @@ from panopoker.core.security import verify_password, create_access_token, get_cu
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.core.config import settings
 
-router = APIRouter(tags=["auth"])
+router = APIRouter(prefix="/api")
 IS_PRODUCTION = settings.IS_PRODUCTION
 
 @router.post("/login-web")

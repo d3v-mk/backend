@@ -9,7 +9,7 @@ from decimal import Decimal
 from pydantic import BaseModel
 from datetime import datetime
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 
 
