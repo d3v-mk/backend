@@ -18,7 +18,7 @@ export default function PageListarPromotores() {
     setLoading(true);
     setErro("");
     try {
-      const res = await fetch(`${API_URL}/api/admin/promotor/listar?ativo=${ativoFiltro}`, {
+      const res = await fetch(`${API_URL}/admin/promotor/listar?ativo=${ativoFiltro}`, {
         method: "GET",
         credentials: "include",
       });

@@ -10,7 +10,7 @@ from panopoker.lobby.models.noticias import Noticia
 from panopoker.schemas.usuario import NoticiaAdminCreate
 from decimal import Decimal
 
-router = APIRouter(tags=["Admin"])
+router = APIRouter(prefix="/api", tags=["Admin"])
 
 templates = Jinja2Templates(directory="panopoker/site/templates")
 
