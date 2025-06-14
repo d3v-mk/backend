@@ -1,7 +1,5 @@
-// src/App.tsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Importa tudo do admin pelo index.ts que você tem, centralizando
 import {
   AdminLayout,
   CriarPromotorPage,
@@ -12,19 +10,17 @@ import {
   NoticiasPage,
 } from "./PainelAdmin";
 
-
-// Promotor
-import { 
+import {
   PromotorLayout,
   SacarPage,
   VerSaquesPage,
   DashBoardPage,
-} from"./PainelPromotor";
+} from "./PainelPromotor";
 
-// Outros imports
 import HomePage from "./home/pages/HomePage";
 import HomeLayout from "./home/layout/HomeLayout";
-import { RotaPrivada } from "./components/RotaPrivada";
+
+import { RotaAdmin, RotaPromotor } from "./components/RotaPrivada";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./hooks/useAuth";
 
@@ -43,9 +39,9 @@ function App() {
           <Route
             path="/admin"
             element={
-              <RotaPrivada>
+              <RotaAdmin>
                 <AdminLayout />
-              </RotaPrivada>
+              </RotaAdmin>
             }
           >
             <Route index element={<DashboardPage />} />
@@ -60,9 +56,9 @@ function App() {
           <Route
             path="/promotor"
             element={
-              <RotaPrivada>
+              <RotaPromotor>
                 <PromotorLayout />
-              </RotaPrivada>
+              </RotaPromotor>
             }
           >
             <Route index element={<DashBoardPage />} />

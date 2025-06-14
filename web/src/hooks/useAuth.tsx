@@ -1,8 +1,17 @@
+// src/hooks/useAuth.ts
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+type Usuario = {
+  id: string;
+  nome: string;
+  is_admin: boolean;
+  is_promoter: boolean;
+  avatar_url: string;
+};
+
 type AuthContextType = {
-  isAutenticado: boolean;
+  user: Usuario | null;
   login: () => Promise<void>;
   logout: () => void;
   carregando: boolean;
@@ -11,32 +20,33 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAutenticado, setAutenticado] = useState(false);
+  const [user, setUser] = useState<Usuario | null>(null);
   const [carregando, setCarregando] = useState(true);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Verifica autenticação logo que o app carrega
   useEffect(() => {
     verificarAuth();
   }, []);
 
   const verificarAuth = async () => {
     try {
-      const res = await fetch(`${API_URL}/me`, {
-        credentials: "include",
-      });
+      const res = await fetch(`${API_URL}/me`, { credentials: "include" });
 
-      setAutenticado(res.ok);
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      } else {
+        setUser(null);
+      }
     } catch {
-      setAutenticado(false);
+      setUser(null);
     } finally {
       setCarregando(false);
     }
   };
 
   const login = async () => {
-    // Refaz o check com o cookie recém setado
     await verificarAuth();
   };
 
@@ -49,13 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Erro ao fazer logout:", err);
     } finally {
-      setAutenticado(false);
+      setUser(null);
       navigate("/login");
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAutenticado, login, logout, carregando }}>
+    <AuthContext.Provider value={{ user, login, logout, carregando }}>
       {children}
     </AuthContext.Provider>
   );

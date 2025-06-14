@@ -51,4 +51,12 @@ def logout():
 def me(usuario: Usuario = Depends(get_current_user_optional)):
     if not usuario:
         raise HTTPException(status_code=401, detail="Não autenticado")
-    return {"id": usuario.id, "nome": usuario.nome, "is_admin": usuario.is_admin}
+
+    return {
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "is_admin": bool(usuario.is_admin),
+        "is_promoter": bool(usuario.is_promoter),
+        "avatar_url": usuario.avatar_url or f"https://i.pravatar.cc/150?u={usuario.nome}"
+    }
+
