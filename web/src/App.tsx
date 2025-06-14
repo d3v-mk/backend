@@ -15,7 +15,9 @@ import {
 
 // Promotor
 import { 
-  PromotorLayout 
+  PromotorLayout,
+  SacarPage,
+  VerSaquesPage,
 } from"./PainelPromotor";
 
 // Outros imports
@@ -62,7 +64,8 @@ function App() {
               </RotaPrivada>
             }
           >
-
+            <Route path="saque" element={<SacarPage />} />
+            <Route path="saques" element={<VerSaquesPage />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -6,7 +6,8 @@ import { useAuth } from "../../hooks/useAuth";
 const links = [
   { path: "/promotor", label: "🏠 Dashboard" },
   { path: "/promotor/loja", label: "🏬 Minha Loja" },
-  { path: "/promotor/noticias", label: "📰 Notícias" },
+  { path: "/promotor/saque", label: "💸 Sacar para jogador" },
+  { path: "/promotor/saques", label: "👀 Ver saques" },
 ];
 
 export function PromotorLayout() {

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from panopoker.site.router.listar_promotor import router as listar_promotor_router
-from panopoker.site.router import login_web
+from panopoker.site.router import login_web, painel_promotor
 from panopoker.usuarios.routers import admin
 
 app_web = FastAPI()
@@ -17,6 +17,7 @@ app_web.add_middleware(
 app_web.include_router(listar_promotor_router)
 app_web.include_router(login_web.router)
 app_web.include_router(admin.router)
+app_web.include_router(painel_promotor.router)
 
 if __name__ == "__main__":
     import uvicorn
