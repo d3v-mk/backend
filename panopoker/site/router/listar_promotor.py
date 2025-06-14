@@ -32,30 +32,33 @@ def get_current_user_cookie(request: Request, db: Session = Depends(get_db)) -> 
 
 @router.get("/admin/promotor/listar")
 def listar_promotores(
-    ativo: str = Query("todos", regex="^(todos|ativos|bloqueados)$"),
+    ativo: str = Query("todos", pattern="^(todos|ativos|bloqueados)$"),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_user_cookie)
 ):
-    print("🔍 Requisição chegou!")
     if not admin.is_admin:
         raise HTTPException(status_code=403, detail="Acesso não autorizado")
 
     query = db.query(Promotor)
 
     if ativo == "ativos":
-        query = query.filter(Promotor.ativo == True)
+        query = query.filter(Promotor.bloqueado == False)
     elif ativo == "bloqueados":
-        query = query.filter(Promotor.ativo == False)
+        query = query.filter(Promotor.bloqueado == True)
 
     promotores = query.all()
 
     return [
         {
+            "id": p.id,
             "user_id": p.user_id,
             "user_id_mp": p.user_id_mp,
             "nome": p.nome,
-            "saldo": float(p.saldo),
-            "ativo": p.ativo
+            "slug": p.slug,
+            "access_token": p.access_token,
+            "saldo": float(p.saldo_repassar),
+            "bloqueado": p.bloqueado,
+            #"ultima_atividade": str(p.usuario.ultima_atividade) if p.usuario and p.usuario.ultima_atividade else None,
         }
         for p in promotores
     ]

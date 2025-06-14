@@ -14,7 +14,6 @@ export default function HomePage() {
     // if (!ultimaVisita || agora - parseInt(ultimaVisita) > 3600 * 1000) {
     fetch(`${API_URL}/visitas`, {
       method: "GET",
-      credentials: "include",
     }).catch((err) => console.error("Erro ao contar visita:", err));
 
     // localStorage.setItem("ultima-visita", agora.toString());
@@ -22,7 +21,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-8">
+    <main className="min-h-screen flex flex-col items-center justify-center">
       <HeroSection />
     </main>
   );

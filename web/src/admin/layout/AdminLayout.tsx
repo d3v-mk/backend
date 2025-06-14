@@ -8,6 +8,8 @@ const links = [
   { path: "/admin/criar", label: "➕ Criar Loja Promotor" },
   { path: "/admin/cargos", label: "👥 Cargos" },
   { path: "/admin/lista", label: "📋 Lista de Promotores" },
+  { path: "/admin/manutencao", label: "⚙️ Manutenção" },
+  { path: "/admin/noticias", label: "📰 Notícias" },
 ];
 
 export function AdminLayout() {
