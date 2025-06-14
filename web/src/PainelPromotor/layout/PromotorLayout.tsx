@@ -52,7 +52,7 @@ export function PromotorLayout() {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen bg-white text-gray-800 relative">
+    <div className="flex min-h-screen bg-gray-950 text-white relative">
       {/* Botão hamburguer mobile */}
       <button
         onClick={() => setMenuOpen((o) => !o)}
@@ -107,7 +107,7 @@ export function PromotorLayout() {
       </aside>
 
       {/* Conteúdo principal */}
-      <main className="flex-1 p-8 overflow-y-auto bg-white text-gray-800 md:ml-64">
+      <main className="flex-1 p-8 overflow-y-auto bg-black text-white md:ml-64">
         <Outlet />
       </main>
     </div>

@@ -4,6 +4,7 @@
 export { PromotorLayout } from "./layout/PromotorLayout";
 export { default as SacarPage } from "./pages/SacarPage";
 export { default as VerSaquesPage } from "./pages/VerSaquesPage";
+export { default as DashBoardPage } from "./pages/DashBoardPage";
 
 // Exporta hooks custom, se tiver
 // export * from "./hooks";

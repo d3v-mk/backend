@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FormCriarPromotor } from "../components/FormCriarPromotor";
 import type { FormData } from "../components/FormCriarPromotor";
-
+import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect"; // ajusta o path se precisar
 
 export default function CriarPromotorPage() {
   const [resultadoCriar, setResultadoCriar] = useState("");
@@ -36,9 +36,17 @@ export default function CriarPromotorPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6">➕ Criar Loja do Promotor</h1>
-      <FormCriarPromotor onCriar={criarLoja} resultadoCriar={resultadoCriar} />
-    </div>
+    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+      {/* Fundo animado */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <BackgroundPokerEffect />
+      </div>
+
+      {/* Conteúdo */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">➕ Criar Loja do Promotor</h1>
+        <FormCriarPromotor onCriar={criarLoja} resultadoCriar={resultadoCriar} />
+      </div>
+    </main>
   );
 }

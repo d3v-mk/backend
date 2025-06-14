@@ -11,6 +11,35 @@ from datetime import datetime
 
 router = APIRouter()
 
+
+
+
+
+from fastapi.responses import JSONResponse
+
+@router.get("/promotor/info")
+def saldo_promotor_api(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user_optional)
+):
+    if usuario is None or not usuario.is_promoter:
+        raise HTTPException(status_code=401, detail="Usuário não autorizado")
+
+    promotor = db.query(Promotor).filter(Promotor.id == usuario.id).first()
+
+    saldo_repassar = promotor.saldo_repassar if promotor else Decimal("0")
+    comissao_total = promotor.comissao_total if promotor else Decimal("0")
+    bloqueado = promotor.bloqueado if promotor else False
+
+    return JSONResponse(content={
+        "saldo_repassar": float(saldo_repassar),
+        "comissao_total": float(comissao_total),
+        "bloqueado": bloqueado,
+    })
+
+
+
+
 @router.get("/promotor/saques")
 def listar_saques_promotor(
     db: Session = Depends(get_db),

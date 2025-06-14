@@ -1,8 +1,7 @@
 import { useState } from "react";
-//import { useAuth } from "../../hooks/useAuth";
+import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect"; // ajusta o path se precisar
 
 export default function ManutencaoPage() {
-  //const { user } = useAuth(); // se precisar info do usuário/admin
   const [loading, setLoading] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -16,7 +15,7 @@ export default function ManutencaoPage() {
     try {
       const res = await fetch(`${API_URL}/admin/ativar-manutencao`, {
         method: "POST",
-        credentials: "include", // manda cookie pra manter auth
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Falha ao ativar manutenção");
       const data = await res.json();
@@ -39,7 +38,12 @@ export default function ManutencaoPage() {
       });
       if (!res.ok) throw new Error("Falha ao encerrar manutenção");
       const data = await res.json();
-      setMensagem(data.msg + (data.mesas_reabertas ? ` (Mesas reabertas: ${data.mesas_reabertas.join(", ")})` : ""));
+      setMensagem(
+        data.msg +
+          (data.mesas_reabertas
+            ? ` (Mesas reabertas: ${data.mesas_reabertas.join(", ")})`
+            : "")
+      );
     } catch (err: any) {
       setErro(err.message || "Erro desconhecido");
     } finally {
@@ -48,43 +52,46 @@ export default function ManutencaoPage() {
   }
 
   return (
-    <div style={{ padding: 20, color: "#eee", fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif" }}>
-      <h2>⚙️ Painel de Manutenção</h2>
-      <p>Ative a manutenção para mesas em jogo e abertas, ou encerre a manutenção para reabrir mesas.</p>
+    <main className="relative min-h-screen bg-black text-white overflow-hidden font-sans">
+      {/* Fundo animado */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <BackgroundPokerEffect />
+      </div>
 
-      <button
-        onClick={ativarManutencao}
-        disabled={loading}
-        style={{
-          marginRight: 10,
-          padding: "10px 20px",
-          backgroundColor: "#c0392b",
-          border: "none",
-          borderRadius: 6,
-          color: "white",
-          cursor: "pointer",
-        }}
-      >
-        {loading ? "Processando..." : "Ativar Manutenção"}
-      </button>
+      {/* Conteúdo */}
+      <section className="relative z-10 max-w-xl mx-auto p-8 space-y-4">
+        <h2 className="text-2xl font-bold">⚙️ Painel de Manutenção</h2>
+        <p className="text-gray-300">
+          Ative a manutenção para mesas em jogo e abertas, ou encerre a manutenção para reabrir mesas.
+        </p>
 
-      <button
-        onClick={encerrarManutencao}
-        disabled={loading}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#27ae60",
-          border: "none",
-          borderRadius: 6,
-          color: "white",
-          cursor: "pointer",
-        }}
-      >
-        {loading ? "Processando..." : "Encerrar Manutenção"}
-      </button>
+        <div className="flex gap-4">
+          <button
+            onClick={ativarManutencao}
+            disabled={loading}
+            className={`px-6 py-2 rounded ${
+              loading ? "bg-red-700 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+            } text-white font-semibold transition`}
+          >
+            {loading ? "Processando..." : "Ativar Manutenção"}
+          </button>
 
-      {mensagem && <p style={{ marginTop: 20, color: "#2ecc71", fontWeight: "600" }}>{mensagem}</p>}
-      {erro && <p style={{ marginTop: 20, color: "#e74c3c", fontWeight: "600" }}>{erro}</p>}
-    </div>
+          <button
+            onClick={encerrarManutencao}
+            disabled={loading}
+            className={`px-6 py-2 rounded ${
+              loading ? "bg-green-700 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+            } text-white font-semibold transition`}
+          >
+            {loading ? "Processando..." : "Encerrar Manutenção"}
+          </button>
+        </div>
+
+        {mensagem && (
+          <p className="mt-4 text-green-400 font-semibold">{mensagem}</p>
+        )}
+        {erro && <p className="mt-4 text-red-500 font-semibold">{erro}</p>}
+      </section>
+    </main>
   );
 }

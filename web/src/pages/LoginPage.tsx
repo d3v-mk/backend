@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth"; // ajusta o path se precisar
+import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect"; // ajusta o path se necessário
 
 export default function LoginPage() {
   const location = useLocation();
@@ -34,12 +35,8 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        // Aguarda login e sincronização com backend
         await login();
-
         const { next: nextUrl } = await res.json();
-
-        // Espera pequena pra garantir que o navegador fixou o cookie
         setTimeout(() => {
           navigate(nextUrl);
         }, 100);
@@ -53,8 +50,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black text-yellow-400 px-4">
-      <div className="bg-zinc-900 p-10 rounded-xl shadow-2xl w-full max-w-md space-y-6">
+    <main className="relative min-h-screen flex items-center justify-center bg-black text-yellow-400 overflow-hidden">
+      {/* Efeito fundo com zIndex 1 */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+        <BackgroundPokerEffect />
+      </div>
+
+      {/* Conteúdo acima do efeito */}
+      <div className="relative z-10 bg-zinc-900 p-10 rounded-xl shadow-2xl w-full max-w-md space-y-6">
         <h1 className="text-4xl font-extrabold text-center">
           PanoPoker
           <br />
@@ -104,6 +107,6 @@ export default function LoginPage() {
           Entrar com Google
         </a>
       </div>
-    </div>
+    </main>
   );
 }

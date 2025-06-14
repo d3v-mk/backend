@@ -1,6 +1,6 @@
-// src/pages/promotor/VerSaquesPage.tsx
 import { useEffect, useState } from "react";
 import { FaCheckCircle, FaTimesCircle, FaClock } from "react-icons/fa";
+import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect"; // ajusta o path se necessário
 
 type Jogador = {
   id: number;
@@ -65,70 +65,79 @@ export default function VerSaquesPage() {
   }, []);
 
   if (carregando) {
-    return <div className="p-4">Carregando saques...</div>;
+    return <div className="p-4 text-white">Carregando saques...</div>;
   }
 
   if (saques.length === 0) {
-    return <div className="p-4 text-gray-600">Nenhum saque encontrado.</div>;
+    return <div className="p-4 text-gray-400">Nenhum saque encontrado.</div>;
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">📄 Lista de Saques</h1>
-      <div className="overflow-x-auto max-h-[450px] overflow-y-auto border rounded shadow-md">
-        <table className="min-w-full border-collapse border border-gray-300">
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr>
-              <th className="py-2 px-4 border-b cursor-pointer select-none hover:bg-gray-200">
-                Jogador ⬆️⬇️
-              </th>
-              <th className="py-2 px-4 border-b">ID Público</th>
-              <th className="py-2 px-4 border-b">Valor</th>
-              <th className="py-2 px-4 border-b">Status</th>
-              <th className="py-2 px-4 border-b">Data</th>
-            </tr>
-          </thead>
-          <tbody>
-            {saques.map((saque) => (
-              <tr
-                key={saque.id}
-                className="hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
-                tabIndex={0}
-                onClick={() =>
-                  alert(`Saque #${saque.id} do jogador ${saque.jogador.nome}`)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") alert(`Saque #${saque.id}`);
-                }}
-              >
-                <td className="py-2 px-4 border-b">{saque.jogador.nome}</td>
-                <td className="py-2 px-4 border-b">{saque.jogador.id_publico}</td>
-                <td className="py-2 px-4 border-b">
-                  {Number(saque.valor).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </td>
-                <td className="py-2 px-4 border-b flex items-center">
-                  {statusIcon(saque.status)}
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${statusBadge(
-                      saque.status
-                    )}`}
-                  >
-                    {saque.status.charAt(0).toUpperCase() + saque.status.slice(1)}
-                  </span>
-                </td>
-                <td className="py-2 px-4 border-b">
-                  {saque.criado_em
-                    ? new Date(saque.criado_em).toLocaleString("pt-BR")
-                    : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+      {/* Fundo animado com zIndex 1 */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+        <BackgroundPokerEffect />
       </div>
-    </div>
+
+      {/* Conteúdo com zIndex maior */}
+      <div className="relative z-10 p-6 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">📄 Lista de Saques</h1>
+        <div className="overflow-x-auto max-h-[450px] overflow-y-auto border rounded shadow-md bg-zinc-900 bg-opacity-90">
+          <table className="min-w-full border-collapse border border-gray-300">
+            <thead className="bg-gray-100 sticky top-0 z-20 text-black">
+              <tr>
+                <th className="py-2 px-4 border-b cursor-pointer select-none hover:bg-gray-200">
+                  Jogador ⬆️⬇️
+                </th>
+                <th className="py-2 px-4 border-b">ID Público</th>
+                <th className="py-2 px-4 border-b">Valor</th>
+                <th className="py-2 px-4 border-b">Status</th>
+                <th className="py-2 px-4 border-b">Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              {saques.map((saque) => (
+                <tr
+                  key={saque.id}
+                  className="hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+                  tabIndex={0}
+                  onClick={() =>
+                    alert(`Saque #${saque.id} do jogador ${saque.jogador.nome}`)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") alert(`Saque #${saque.id}`);
+                  }}
+                >
+                  <td className="py-2 px-4 border-b">{saque.jogador.nome}</td>
+                  <td className="py-2 px-4 border-b">{saque.jogador.id_publico}</td>
+                  <td className="py-2 px-4 border-b">
+                    {Number(saque.valor).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </td>
+                  <td className="py-2 px-4 border-b flex items-center">
+                    {statusIcon(saque.status)}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${statusBadge(
+                        saque.status
+                      )}`}
+                    >
+                      {saque.status.charAt(0).toUpperCase() +
+                        saque.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    {saque.criado_em
+                      ? new Date(saque.criado_em).toLocaleString("pt-BR")
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
   );
 }

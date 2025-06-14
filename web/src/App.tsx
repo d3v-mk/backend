@@ -18,6 +18,7 @@ import {
   PromotorLayout,
   SacarPage,
   VerSaquesPage,
+  DashBoardPage,
 } from"./PainelPromotor";
 
 // Outros imports
@@ -64,6 +65,7 @@ function App() {
               </RotaPrivada>
             }
           >
+            <Route index element={<DashBoardPage />} />
             <Route path="saque" element={<SacarPage />} />
             <Route path="saques" element={<VerSaquesPage />} />
           </Route>

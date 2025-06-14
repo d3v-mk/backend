@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect";
 
 export default function NoticiasPage() {
   const [mensagem, setMensagem] = useState("");
@@ -17,7 +18,7 @@ export default function NoticiasPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // ⚠️ envia cookie automaticamente
+        credentials: "include",
         body: JSON.stringify({ mensagem }),
       });
       if (!res.ok) {
@@ -38,7 +39,7 @@ export default function NoticiasPage() {
     try {
       const res = await fetch(`${API_URL}/noticias/limpar`, {
         method: "DELETE",
-        credentials: "include", // ⚠️ envia cookie automaticamente
+        credentials: "include",
       });
       if (!res.ok) {
         const data = await res.json();
@@ -51,32 +52,49 @@ export default function NoticiasPage() {
   }
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Painel de Notícias Newsmarquee</h1>
+    <main className="relative min-h-screen bg-black text-white overflow-hidden font-sans">
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <BackgroundPokerEffect />
+      </div>
 
-      <textarea
-        rows={4}
-        className="w-full text-black p-2 border rounded mb-2"
-        placeholder="Escreva a notícia aqui..."
-        value={mensagem}
-        onChange={(e) => setMensagem(e.target.value)}
-      />
+      <section className="relative z-10 max-w-xl mx-auto p-8 space-y-6">
+        <h1 className="text-3xl font-bold">📰 Painel de Notícias Newsmarquee</h1>
 
-      <button
-        onClick={criarNoticia}
-        className="bg-blue-600 text-white px-4 py-2 rounded mr-4 hover:bg-blue-700"
-      >
-        Criar Notícia
-      </button>
+        <textarea
+          rows={5}
+          className="w-full text-black p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Escreva a notícia aqui..."
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+        />
 
-      <button
-        onClick={limparNoticias}
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-      >
-        Limpar Todas Notícias
-      </button>
+        <div className="flex gap-4">
+          <button
+            onClick={criarNoticia}
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={status === "Enviando..."}
+          >
+            Criar Notícia
+          </button>
 
-      {status && <p className="mt-4 text-black dark:text-gray-200">{status}</p>}
-    </div>
+          <button
+            onClick={limparNoticias}
+            className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-semibold transition"
+          >
+            Limpar Todas Notícias
+          </button>
+        </div>
+
+        {status && (
+          <p
+            className={`mt-4 font-semibold ${
+              status.startsWith("Erro") ? "text-red-500" : "text-green-400"
+            }`}
+          >
+            {status}
+          </p>
+        )}
+      </section>
+    </main>
   );
 }
