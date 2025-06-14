@@ -10,7 +10,13 @@ import {
   ListarPromotores,
   ManutencaoPage,
   NoticiasPage,
-} from "./admin";
+} from "./PainelAdmin";
+
+
+// Promotor
+import { 
+  PromotorLayout 
+} from"./PainelPromotor";
 
 // Outros imports
 import HomePage from "./home/pages/HomePage";
@@ -30,7 +36,7 @@ function App() {
             <Route path="login" element={<LoginPage />} />
           </Route>
 
-          {/* Admin protegido */}
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -45,6 +51,18 @@ function App() {
             <Route path="lista" element={<ListarPromotores />} />
             <Route path="manutencao" element={<ManutencaoPage />} />
             <Route path="noticias" element={<NoticiasPage />} />
+          </Route>
+
+          {/* Promotor */}
+          <Route
+            path="/promotor"
+            element={
+              <RotaPrivada>
+                <PromotorLayout />
+              </RotaPrivada>
+            }
+          >
+
           </Route>
         </Routes>
       </AuthProvider>

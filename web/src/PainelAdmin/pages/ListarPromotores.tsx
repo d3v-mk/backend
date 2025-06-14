@@ -1,6 +1,6 @@
 // src/pages/PageListarPromotores.tsx
 import { useEffect, useState } from 'react';
-import { FormListarPromotores } from '@/admin/components/FormListarPromotores';
+import { FormListarPromotores } from '@/PainelAdmin/components/FormListarPromotores';
 import type { Promotor } from '@/types';
 
 export default function PageListarPromotores() {
