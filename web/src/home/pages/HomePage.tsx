@@ -24,7 +24,7 @@ function JogadoresDoMes() {
         setIndexAtual((old) => (old + 1) % jogadores.length);
         setFade(true);
       }, 500);
-    }, 5000); //segundos
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [jogadores.length]);
@@ -116,11 +116,22 @@ function GaleriaDoJogo() {
   );
 }
 
-
-
-
-
 export default function HomePage() {
+  useEffect(() => {
+    const registrarVisita = async () => {
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL}/registrar/visita`, {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (err) {
+        console.error("Erro ao registrar visita:", err);
+      }
+    };
+
+    registrarVisita();
+  }, []);
+
   return (
     <main className="relative min-h-screen bg-black text-white overflow-x-hidden z-0">
       <BackgroundPokerEffect />

@@ -17,21 +17,30 @@ templates = Jinja2Templates(directory="panopoker/site/templates")
 
 
 
+# 🔍 Apenas CONSULTAR
 @router.get("/visitas")
-def contar_visita(request: Request, db: Session = Depends(get_db)):
-    # Tenta pegar o registro único (id=1)
+def consultar_visitas(db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter_by(id=1).first()
     if not usuario:
-        usuario = Usuario(id=1, visitas=0)
+        return {"total": 0}
+    return {"total": usuario.visitas_ao_site}
+
+# ➕ Registrar uma nova visita
+@router.post("/registrar/visita")
+def contar_visita(request: Request, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter_by(id=1).first()
+    if not usuario:
+        usuario = Usuario(id=1, visitas_ao_site=1)
         db.add(usuario)
         db.commit()
-        db.refresh(usuario)
+        return {"mensagem": "Primeira visita registrada!"}
 
     usuario.visitas_ao_site += 1
     db.commit()
-    db.refresh(usuario)
+    return {"mensagem": "Visita registrada com sucesso!", "total": usuario.visitas_ao_site}
 
-    return {"total": usuario.visitas_ao_site}
+
+
 
 @router.post("/admin/ativar-manutencao")
 def ativar_manutencao(
