@@ -5,7 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 const links = [
   { path: "/promotor", label: "🏠 Dashboard" },
-  { path: "/promotor/loja", label: "🏬 Minha Loja" },
+  { path: "/promotor/loja", label: "🏬 Configurar loja" },
   { path: "/promotor/saque", label: "💸 Sacar para jogador" },
   { path: "/promotor/saques", label: "👀 Ver saques" },
 ];

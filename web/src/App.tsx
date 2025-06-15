@@ -15,12 +15,18 @@ import {
   SacarPage,
   VerSaquesPage,
   DashBoardPage,
+  LojaConfigPage,
 } from "./PainelPromotor";
+
+import {
+  LojaPromotorLayout
+
+} from "./LojaPromotor";
 
 import HomePage from "./home/pages/HomePage";
 import HomeLayout from "./home/layout/HomeLayout";
 
-import { RotaAdmin, RotaPromotor } from "./components/RotaPrivada";
+import { RotaAdmin, RotaPromotor, RotaPrivada } from "./components/RotaPrivada";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./hooks/useAuth";
 
@@ -64,7 +70,21 @@ function App() {
             <Route index element={<DashBoardPage />} />
             <Route path="saque" element={<SacarPage />} />
             <Route path="saques" element={<VerSaquesPage />} />
+            <Route path="loja" element={<LojaConfigPage/>} />
           </Route>
+
+          {/* LojaPromotor */}
+          <Route
+            path="/loja/:slug"
+            element={
+              <RotaPrivada>
+                <LojaPromotorLayout />
+              </RotaPrivada>
+            }
+          >
+
+          </Route>
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
