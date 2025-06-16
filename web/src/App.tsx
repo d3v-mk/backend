@@ -19,6 +19,10 @@ import {
 } from "./PainelPromotor";
 
 import {
+  RankPage
+} from "./Rank";
+
+import {
   LojaPromotorLayout
 
 } from "./LojaPromotor";
@@ -79,6 +83,18 @@ function App() {
             element={
               <RotaPrivada>
                 <LojaPromotorLayout />
+              </RotaPrivada>
+            }
+          >
+
+          </Route>
+
+          {/* RankPage */}
+          <Route
+            path="rank"
+            element={
+              <RotaPrivada>
+                <RankPage />
               </RotaPrivada>
             }
           >

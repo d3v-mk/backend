@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { BackgroundPokerEffect } from "@/home/components/BackgroundPokerEffect";
+import { Header } from "@/home/components/Header";
+import { Footer } from "@/home/components/Footer";
+import { SidebarMenu } from "@/home/components/SidebarMenu"; // ajuste o path se necessário
 
 export function LojaPromotorLayout() {
   const { slug } = useParams<{ slug: string }>();
@@ -12,6 +15,7 @@ export function LojaPromotorLayout() {
   const [copiado, setCopiado] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
   const valores = [3, 5, 10, 20, 50, 100];
@@ -40,10 +44,7 @@ export function LojaPromotorLayout() {
   }, [slug]);
 
   async function gerarPix(valor: number) {
-    if (!slug) {
-      alert("Slug inválido");
-      return;
-    }
+    if (!slug) return alert("Slug inválido");
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/gerar_pix/${slug}/${valor}`, {
@@ -95,8 +96,24 @@ export function LojaPromotorLayout() {
         <BackgroundPokerEffect />
       </div>
 
-      {/* Conteúdo */}
-      <div className="relative z-10 flex flex-col items-center justify-start px-4 py-10 sm:px-6 md:px-10 max-w-2xl mx-auto">
+      {/* Header com botão de menu */}
+      <div className="relative z-20">
+        <Header onMenuClick={() => setMenuAberto(true)} />
+      </div>
+
+      {/* Overlay que fecha menu ao clicar fora */}
+      {menuAberto && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 z-40"
+          onClick={() => setMenuAberto(false)}
+        />
+      )}
+
+      {/* SidebarMenu com controle */}
+      <SidebarMenu isOpen={menuAberto} onClose={() => setMenuAberto(false)} />
+
+      {/* Conteúdo principal */}
+      <div className="relative z-10 flex flex-col items-center justify-start pt-24 px-4 py-10 sm:px-6 md:px-10 max-w-2xl mx-auto">
         <img
           src={avatar_url ?? "https://i.imgur.com/1MfqtXH.png"}
           alt={`Avatar do promotor ${nome}`}
@@ -149,6 +166,11 @@ export function LojaPromotorLayout() {
             </button>
           </section>
         )}
+      </div>
+
+      {/* Footer bonitão */}
+      <div className="relative z-10 mt-12">
+        <Footer />
       </div>
     </main>
   );
