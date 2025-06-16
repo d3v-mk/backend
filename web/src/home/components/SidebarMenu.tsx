@@ -1,14 +1,29 @@
+import { useEffect, useRef } from "react";
 import { useAuth } from "../../hooks/useAuth";
 
 export function SidebarMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { logout, carregando, user } = useAuth();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.is_admin;
   const isPromotor = user?.is_promoter;
 
+  // 🎯 Lógica de clique fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
   if (carregando) {
     return (
       <aside
+        ref={menuRef}
         className={`fixed top-0 left-0 h-full w-72 z-50 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } transition-transform duration-300`}
@@ -21,6 +36,7 @@ export function SidebarMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   return (
     <aside
+      ref={menuRef}
       aria-label="Sidebar de navegação"
       className={`fixed top-0 left-0 h-full w-72 flex flex-col z-50 transform transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
@@ -48,7 +64,6 @@ export function SidebarMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               alt={`Avatar de ${user.nome}`}
               className="w-24 h-24 rounded-full object-cover border-2 border-yellow-500 shadow-md"
             />
-
             <p className="text-white font-bold text-xl">{user.nome}</p>
             <div className="flex flex-col space-y-3 w-full">
               <a

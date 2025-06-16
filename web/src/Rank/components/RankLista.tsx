@@ -1,3 +1,5 @@
+import { useState, useMemo } from "react";
+
 type Jogador = {
   usuario_id: number;
   nome: string;
@@ -11,83 +13,112 @@ type RankListProps = {
   ranking: Jogador[];
 };
 
-export function RankLista({ ranking }: RankListProps) {
-  return (
-    <div
-      className="overflow-x-auto rounded-lg shadow-lg border border-gray-300"
-      style={{
-        position: "relative",
-        zIndex: 3,
-        backgroundColor: "rgba(240, 248, 255, 0.85)", // branco gelo translúcido
-      }}
-    >
-      <table className="min-w-full border-separate border-spacing-y-1 text-gray-900">
-        <thead>
-          <tr className="text-left text-gray-600 text-xs uppercase tracking-wide select-none">
-            <th className="px-2 py-1 sm:px-3 sm:py-2">Posição</th>
-            <th className="px-2 py-1 sm:px-3 sm:py-2">Jogador</th>
-            <th className="px-2 py-1 text-center font-mono sm:px-3 sm:py-2">Vitórias</th>
-            <th className="px-2 py-1 text-center font-mono sm:px-3 sm:py-2">Rodadas</th>
-            <th className="px-2 py-1 text-center font-mono sm:px-3 sm:py-2">Win %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ranking.map((jogador, index) => {
-            let medalha = "";
-            let medalhaClasses = "";
-            if (index === 0) {
-              medalha = "🥇";
-              medalhaClasses = "text-blue-600 drop-shadow-[0_0_5px_rgba(59,130,246,0.9)]";
-            } else if (index === 1) {
-              medalha = "🥈";
-              medalhaClasses = "text-blue-400 drop-shadow-[0_0_4px_rgba(147,197,253,0.8)]";
-            } else if (index === 2) {
-              medalha = "🥉";
-              medalhaClasses = "text-blue-300 drop-shadow-[0_0_3px_rgba(191,219,254,0.7)]";
-            } else {
-              medalha = `#${index + 1}`;
-              medalhaClasses = "text-gray-700";
-            }
+type OrderBy = "vitorias" | "rodadas" | "winrate";
 
-            return (
-              <tr
-                key={jogador.usuario_id}
-                className="hover:bg-blue-100/50 transition-colors rounded-md cursor-default"
-              >
-                <td
-                  className={`px-2 py-1 sm:px-3 sm:py-2 font-bold text-center whitespace-nowrap select-none ${medalhaClasses}`}
-                  style={{ fontSize: "1rem" }}
+export function RankLista({ ranking }: RankListProps) {
+  const [orderBy, setOrderBy] = useState<OrderBy>("vitorias");
+
+  const rankingOrdenado = useMemo(() => {
+    return [...ranking].sort((a, b) => {
+      if (orderBy === "vitorias") return b.vitorias - a.vitorias;
+      if (orderBy === "rodadas") return b.rodadas_jogadas - a.rodadas_jogadas;
+      return b.porcentagem_vitorias - a.porcentagem_vitorias;
+    });
+  }, [ranking, orderBy]);
+
+  return (
+    <div className="relative text-white z-10">
+      <div className="mb-6 flex justify-center">
+        <select
+          value={orderBy}
+          onChange={(e) => setOrderBy(e.target.value as OrderBy)}
+          className="bg-gray-800 text-white border border-gray-600 rounded-md px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 transition"
+        >
+          <option value="vitorias">+ Vitórias</option>
+          <option value="rodadas">+ Rodadas</option>
+          <option value="winrate">Maior Win %</option>
+        </select>
+      </div>
+
+      {/* Tabela desktop */}
+      <div className="hidden sm:block overflow-x-auto border border-gray-700 rounded-lg shadow-lg">
+        <table className="min-w-full border-separate border-spacing-y-1">
+          <thead className="bg-gray-800">
+            <tr className="text-gray-400 text-sm uppercase">
+              <th className="px-4 py-2 text-left">Posição</th>
+              <th className="px-4 py-2 text-left">Jogador</th>
+              <th className="px-4 py-2 text-center">Vitórias</th>
+              <th className="px-4 py-2 text-center">Rodadas</th>
+              <th className="px-4 py-2 text-center">Win %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankingOrdenado.map((jogador, index) => {
+              const medalha =
+                index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+              return (
+                <tr
+                  key={jogador.usuario_id}
+                  className="bg-gray-900 hover:bg-gray-800 transition rounded-md"
                 >
-                  {medalha}
-                </td>
-                <td className="px-2 py-1 sm:px-3 sm:py-2 flex items-center gap-2">
-                  <img
-                    src={jogador.avatar_url || "/default-avatar.png"}
-                    alt={jogador.nome}
-                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover border border-blue-300 shadow-sm"
-                    loading="lazy"
-                  />
-                  <div className="truncate">
-                    <p className="font-semibold text-blue-900 tracking-tight leading-tight text-sm sm:text-base truncate">
-                      {jogador.nome}
-                    </p>
-                    <p className="text-xs text-blue-700 select-text truncate">ID: {jogador.usuario_id}</p>
-                  </div>
-                </td>
-                <td className="px-2 py-1 sm:px-3 sm:py-2 text-center font-mono whitespace-nowrap text-blue-700 font-semibold text-sm sm:text-base">
-                  {jogador.vitorias}
-                </td>
-                <td className="px-2 py-1 sm:px-3 sm:py-2 text-center font-mono whitespace-nowrap text-blue-700 font-semibold text-sm sm:text-base">
-                  {jogador.rodadas_jogadas}
-                </td>
-                <td className="px-2 py-1 sm:px-3 sm:py-2 text-center font-mono whitespace-nowrap text-blue-700 font-semibold text-sm sm:text-base">
-                  {jogador.porcentagem_vitorias.toFixed(1)}%
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <td className="px-4 py-3 font-bold text-center">{medalha}</td>
+                  <td className="px-4 py-3 flex items-center gap-3">
+                    <img
+                      src={jogador.avatar_url || "/default-avatar.png"}
+                      alt={jogador.nome}
+                      className="w-9 h-9 rounded-full border border-gray-600 object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold text-sm truncate">{jogador.nome}</p>
+                      <p className="text-xs text-gray-400">ID: {jogador.usuario_id}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center font-mono text-blue-400">
+                    {jogador.vitorias}
+                  </td>
+                  <td className="px-4 py-3 text-center font-mono text-blue-300">
+                    {jogador.rodadas_jogadas}
+                  </td>
+                  <td className="px-4 py-3 text-center font-mono text-green-400">
+                    {jogador.porcentagem_vitorias.toFixed(1)}%
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Cards mobile */}
+      <div className="block sm:hidden space-y-2">
+        {rankingOrdenado.map((jogador, index) => {
+          const medalha =
+            index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+          return (
+            <div
+              key={jogador.usuario_id}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex gap-3 items-center shadow-md"
+            >
+              <div className="text-xl font-bold">{medalha}</div>
+              <img
+                src={jogador.avatar_url || "/default-avatar.png"}
+                alt={jogador.nome}
+                className="w-10 h-10 rounded-full object-cover border border-gray-600"
+              />
+              <div className="flex-1">
+                <div className="text-sm font-semibold truncate">{jogador.nome}</div>
+                <div className="text-xs text-gray-400">ID: {jogador.usuario_id}</div>
+                <div className="text-xs mt-1 text-blue-300 font-mono">
+                  🏆 {jogador.vitorias} vitórias • 🎮 {jogador.rodadas_jogadas} rodadas
+                </div>
+                <div className="text-xs text-green-400 font-mono">
+                  Win Rate: {jogador.porcentagem_vitorias.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
