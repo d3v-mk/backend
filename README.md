@@ -4,13 +4,16 @@ Desenvolvi o PanoPoker como um projeto fullstack completo para consolidar habili
 
 O sistema rodou em produção real com domínio próprio (www.panopoker.com), incluindo controle de partidas multiplayer, timers sincronizados via servidor, lógica de turnos, gestão de promotores e um app Android conectado por WebSocket. Embora esteja offline no momento, foi testado com sucesso em ambiente Linux usando Nginx + CertBot.
 
+
+> A documentação da VPS está em [`docs/setup_vps.md`](https://github.com/d3v-mk/backend/blob/main/docs/setup_vps.md)
+
 ---
 
 ## 🛠️ Tecnologias usadas
 
 - **Backend:** Python, FastAPI, SQLAlchemy, WebSocket
 - **Frontend Android (Jogo):** Kotlin, Jetpack Compose
-- **Frontend Web (Site e Paineis):** Jinja2, HTML, CSS, JS
+- **Frontend Web (Site e Paineis):** Vite, TypeScript, React, Tailwind CSS
 - **Pagamentos:** MercadoPago Webhook
 - **Autenticação e Segurança:** JWT, Google OAuth
 - **Banco de dados:** PostgreSQL
@@ -101,4 +104,4 @@ Este guia inclui:
 - [Portfólio](https://SEU-PORTFOLIO.com)  
 - [GitHub](https://github.com/d3v-mk)
 
-> GRATIDAO UNIVERSO!
+✨ Grateful to the universe ✨
