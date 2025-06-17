@@ -1,6 +1,6 @@
 # PanoPoker - Projeto de Casino Online
 
-> Frontend integrados com FastAPI, React + TS, autenticação com cookies, painel Admin & Promotor.
+Frontend integrados com FastAPI, React + TS, autenticação com cookies, painel Admin & Promotor.
 
 ---
 
@@ -46,37 +46,37 @@ VITE_API_URL=https://www.yourdomain.com
 
 1. Clone o repo:
 
-\`\`\`bash
+```bash
 git clone https://github.com/d3v-mk/backend.git
 cd backend
-\`\`\`
+```
 
 2. Crie e ative seu ambiente virtual Python:
 
-\`\`\`bash
+```bash
 python -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 .venv\\Scripts\\activate    # Windows
-\`\`\`
+```
 
 3. Instale as dependências backend:
 
-\`\`\`bash
+```bash
 pip install -r requirements.txt
-\`\`\`
+```
 
 5. Rode o backend:
 
-\`\`\`bash
+```bash
 uvicorn panopoker.main:app --reload
-\`\`\`
+```
 
 6. No frontend (na pasta \`web\`):
 
-\`\`\`bash
+```bash
 npm install
 npm run dev
-\`\`\`
+```
 
 ---
 
@@ -100,8 +100,10 @@ npm run dev
 
 ---
 
-## Contato
+## 📫 Contato
 
-Murilo Ferreira (devmk)
-Email: devsoulmk@gmail.com
-GitHub: [d3v-mk](https://github.com/d3v-mk)
+- [LinkedIn](https://www.linkedin.com/in/SEU-LINK-AQUI)  
+- [Portfólio](https://SEU-PORTFOLIO.com)  
+- [GitHub](https://github.com/d3v-mk)
+
+✨ Grateful to the universe ✨

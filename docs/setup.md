@@ -6,7 +6,6 @@ Passo a passo para rodar o projeto
 
 ## 📦 Requisitos
 
-##### Obrigatorio:
 - 🐍 Python 3.10+
 - 🐘 PostgreSQL rodando localmente (padrão: localhost:5432)
 
@@ -164,18 +163,6 @@ CREATE DATABASE panopoker;
 
 ---
 
-## 🔑 Autenticação
-
-O sistema suporta dois métodos de login:
-
-- **Login com Google OAuth 2.0** (recomendado em produção)  
-  Usuários autenticam via Google, recebendo um ID Token JWT validado pelo backend.
-
-- **Login tradicional com usuário e senha (JWT)** (deprecated/modo dev)  
-  Mantido para demonstração e testes locais, usando JWT customizado para sessões e bcrypt para hash de senha.
-
-> Para rodar localmente, pode usar o login tradicional, mas em produção o foco é o login Google.
-
 ## ⚙️ Configurando Login com Google
 
 Para rodar o login Google localmente ou em produção, siga esses passos:
@@ -190,9 +177,21 @@ Para rodar o login Google localmente ou em produção, siga esses passos:
   - Tipo **Android**: registre o pacote do app + SHA1 do keystore
   - Tipo **Web**: registre o domínio do backend e a URL de callback (ex: `https://yourdomain.com/auth/callback-web`)
 
-### 2. Variáveis de ambiente (.env)
+> Não esqueça de configurar as variáveis do google (configurando o .env)
 
-Não esqueça de configurar as variáveis do google (configurando o .env)
+---
+
+## 🔑 Autenticação
+
+O sistema suporta dois métodos de login:
+
+- **Login com Google OAuth 2.0** (recomendado em produção)  
+  Usuários autenticam via Google, recebendo um ID Token JWT validado pelo backend.
+
+- **Login tradicional com usuário e senha (JWT)** (deprecated/modo dev)  
+  Mantido para demonstração e testes locais, usando JWT customizado para sessões e bcrypt para hash de senha.
+
+> Para rodar localmente, pode usar o login tradicional, mas em produção o foco é o login Google.
 
 ---
 

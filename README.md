@@ -39,7 +39,7 @@ O sistema rodou em produção real com domínio próprio (www.panopoker.com), in
 
 ## 🌐 Frontend Web
 
-> O próprio backend também serve a pasta `/site`, que funciona como frontend web leve.
+> A pasta `backend` também serve a pasta `/web`, que funciona como frontend web.
 
 Essa parte inclui:
 - Site principal que serve o download do .APK
@@ -48,11 +48,29 @@ Essa parte inclui:
 - Painel administrativo para controle das mesas, usuários e promotores
 - Painel do desenvolvedor (permite conectar nas mesas via WebSocket, fazer ações, e etc..)
 
+### 📸 Screenshots:
+<div>
+  <img src="docs/prints/print_web_1.jpeg" height="200"/>
+  <img src="docs/prints/print_web_2.jpeg" height="200"/>
+  <img src="docs/prints/print_web_3.jpeg" height="200"/>
+  <img src="docs/prints/print_web_4.jpeg" height="200"/>
+  <img src="docs/prints/print_web_5.jpeg" height="200"/>
+</div>
+
+> A documentação está em [`web/README.md`](https://github.com/d3v-mk/backend/tree/main/web)
+
+### 🎥 Vídeo rápido de apresentação:
+
+- https://www.youtube.com/video-do-pano
+
 ---
 
-## 📸 Prints do projeto
+## 🤖 Frontend Android
 
-### 🃏 App Android (Jetpack Compose)
+Essa parte inclui:
+- ...
+
+### 📸 Screenshots:
 
 <div>
   <img src="docs/prints/print_app_1.jpeg" height="200"/>
@@ -64,11 +82,7 @@ Essa parte inclui:
 
 > *Imagens capturadas durante a fase de testes em produção real.*
 
-### 💻 Paineis + Site do aplicativo
-
-<img src="docs/prints/print_painel_admin.png" width="600"/>
-
-### 🎥 Vídeo rápido de apresentação do app
+### 🎥 Vídeo rápido de apresentação:
 
 - https://www.youtube.com/video-do-pano
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from panopoker.site.router.listar_promotor import router as listar_promotor_router
-from panopoker.site.router import login_web, painel_promotor, loja_promotor, configurar_loja, site_rank
+from panopoker.site.routers.listar_promotor import router as listar_promotor_router
+from panopoker.site.routers import login_web, painel_promotor, loja_promotor, configurar_loja, site_rank
 from panopoker.usuarios.routers import admin
 
 app_web = FastAPI()

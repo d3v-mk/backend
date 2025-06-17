@@ -2,39 +2,89 @@ import { useEffect, useState } from "react";
 import HeroSection from "../components/HeroSection";
 import { BackgroundPokerEffect } from "../components/BackgroundPokerEffect";
 
-function JogadoresDoMes() {
-  const jogadores = [
-    { nome: "LendárioMK", rank: "Grandmaster", avatar: "/img/avatar1.png", pontos: 2540 },
-    { nome: "ProDevsoul", rank: "Master", avatar: "/img/avatar2.png", pontos: 1985 },
-    { nome: "AsCartas", rank: "Diamond", avatar: "/img/avatar3.png", pontos: 1730 },
-    { nome: "CartasMágicas", rank: "Platinum", avatar: "/img/avatar4.png", pontos: 1500 },
-    { nome: "FullHouse", rank: "Gold", avatar: "/img/avatar5.png", pontos: 1400 },
-    { nome: "PokerFace", rank: "Silver", avatar: "/img/avatar6.png", pontos: 1300 },
-    { nome: "ReiDosBluffs", rank: "Bronze", avatar: "/img/avatar7.png", pontos: 1200 },
-    { nome: "RainhaDeCopas", rank: "Master", avatar: "/img/avatar8.png", pontos: 1800 },
-  ];
+type Jogador = {
+  usuario_id: number;
+  nome: string;
+  avatar_url?: string | null;
+  vitorias: number;
+  rodadas_jogadas: number;
+  porcentagem_vitorias: number;
+};
 
+export default function HomePage() {
+  // --- Componente JogadoresDoMes inline ---
+  function JogadoresDoMes() {
+  const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [indexAtual, setIndexAtual] = useState(0);
   const [fade, setFade] = useState(true);
 
   useEffect(() => {
+    const carregarRanking = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/ranking/geral`);
+        const data = await res.json();
+        setJogadores(data.ranking);
+      } catch (err) {
+        console.error("Erro ao buscar ranking:", err);
+      }
+    };
+
+    carregarRanking();
+  }, []);
+
+  // Define os filtros para pegar o top 1 por critério
+  const filtros = [
+    {
+      nome: "Mais Vitórias",
+      key: "vitorias",
+      ordenar: (a: Jogador, b: Jogador) => b.vitorias - a.vitorias,
+      legenda: (j: Jogador) => `Vitórias: ${j.vitorias}`,
+    },
+    {
+      nome: "Maior Win Rate",
+      key: "porcentagem_vitorias",
+      ordenar: (a: Jogador, b: Jogador) => b.porcentagem_vitorias - a.porcentagem_vitorias,
+      legenda: (j: Jogador) => `Win Rate: ${j.porcentagem_vitorias.toFixed(2)}%`,
+    },
+    {
+      nome: "Mais Rodadas Jogadas",
+      key: "rodadas_jogadas",
+      ordenar: (a: Jogador, b: Jogador) => b.rodadas_jogadas - a.rodadas_jogadas,
+      legenda: (j: Jogador) => `Rodadas: ${j.rodadas_jogadas}`,
+    },
+  ];
+
+  // Pega o jogador top 1 para o filtro do índice atual
+  const jogadorAtual = jogadores.length
+    ? [...jogadores].sort(filtros[indexAtual].ordenar)[0]
+    : null;
+
+  useEffect(() => {
+    if (jogadores.length === 0) return;
+
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {
-        setIndexAtual((old) => (old + 1) % jogadores.length);
+        setIndexAtual((old) => (old + 1) % filtros.length);
         setFade(true);
       }, 500);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [jogadores.length]);
+  }, [jogadores]);
 
-  const { nome, rank, avatar, pontos } = jogadores[indexAtual];
+  if (!jogadorAtual) {
+    return (
+      <section className="max-w-md mx-auto px-4 py-16 text-center text-yellow-400">
+        Carregando ranking...
+      </section>
+    );
+  }
 
   return (
     <section className="max-w-md mx-auto px-4 py-16">
       <h2 className="text-4xl font-extrabold text-yellow-400 text-center mb-4 drop-shadow-lg">
-        👑 Top 1 Mensal 👑
+        👑 Top 1 👑
       </h2>
 
       <div
@@ -43,14 +93,14 @@ function JogadoresDoMes() {
         }`}
       >
         <img
-          src={avatar}
-          alt={`${nome} avatar`}
+          src={jogadorAtual.avatar_url || "/img/avatar_default.png"}
+          alt={`${jogadorAtual.nome} avatar`}
           className="w-28 h-28 rounded-full border-4 border-yellow-400 mb-6 object-cover"
           loading="lazy"
         />
-        <h3 className="text-2xl font-extrabold text-yellow-400 mb-2">{nome}</h3>
-        <p className="text-sm text-gray-300 mb-4">{rank}</p>
-        <p className="text-yellow-300 font-semibold text-lg">🏆 {pontos} pts</p>
+        <p className="text-yellow-300 font-semibold text-lg">🏆 {filtros[indexAtual].nome}</p>
+        <h3 className="text-2xl font-extrabold text-yellow-400 mb-2">{jogadorAtual.nome}</h3>
+        <p className="text-sm text-gray-300 mb-4">{filtros[indexAtual].legenda(jogadorAtual)}</p>
       </div>
 
       <div className="text-center mt-3 mb-10">
@@ -65,58 +115,59 @@ function JogadoresDoMes() {
   );
 }
 
-function GaleriaDoJogo() {
-  const fotos = [
-    { src: "/img/pic2.png", alt: "Lobby 1", orientacao: "paisagem" },
-    { src: "/img/pic3.png", alt: "Lobby 2", orientacao: "paisagem" },
-    { src: "/img/pic1.png", alt: "Mesa de Jogo", orientacao: "retrato" },
-  ];
 
-  const [indexAtual, setIndexAtual] = useState(0);
-  const [fade, setFade] = useState(true);
+  // --- Componente GaleriaDoJogo inline ---
+  function GaleriaDoJogo() {
+    const fotos = [
+      { src: "/img/pic2.png", alt: "Lobby 1", orientacao: "paisagem" },
+      { src: "/img/pic3.png", alt: "Lobby 2", orientacao: "paisagem" },
+      { src: "/img/pic1.png", alt: "Mesa de Jogo", orientacao: "retrato" },
+    ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setIndexAtual((oldIndex) => (oldIndex + 1) % fotos.length);
-        setFade(true);
-      }, 500);
-    }, 5000);
+    const [indexAtual, setIndexAtual] = useState(0);
+    const [fade, setFade] = useState(true);
 
-    return () => clearInterval(interval);
-  }, [fotos.length]);
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setFade(false);
+        setTimeout(() => {
+          setIndexAtual((oldIndex) => (oldIndex + 1) % fotos.length);
+          setFade(true);
+        }, 500);
+      }, 5000);
 
-  const imagemAtual = fotos[indexAtual];
+      return () => clearInterval(interval);
+    }, [fotos.length]);
 
-  return (
-    <section className="max-w-6xl mx-auto px-4 py-20">
-      <h2 className="text-4xl font-extrabold text-yellow-400 text-center mb-10 drop-shadow-lg">
-        🎲 PanoPoker
-      </h2>
-      <div className="flex justify-center items-center">
-        <div
-          className={`relative w-full 
-            max-w-[320px] sm:max-w-[400px] md:max-w-[800px]
-            h-[500px] md:h-auto md:aspect-[4/3]
-            rounded-xl shadow-lg overflow-hidden 
-            transition-opacity duration-500 ease-in-out ${
-              fade ? "opacity-100" : "opacity-0"
-            }`}
-        >
-          <img
-            src={imagemAtual.src}
-            alt={imagemAtual.alt}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-contain"
-          />
+    const imagemAtual = fotos[indexAtual];
+
+    return (
+      <section className="max-w-6xl mx-auto px-4 py-20">
+        <h2 className="text-4xl font-extrabold text-yellow-400 text-center mb-10 drop-shadow-lg">
+          🎲 PanoPoker
+        </h2>
+        <div className="flex justify-center items-center">
+          <div
+            className={`relative w-full 
+              max-w-[320px] sm:max-w-[400px] md:max-w-[800px]
+              h-[500px] md:h-auto md:aspect-[4/3]
+              rounded-xl shadow-lg overflow-hidden 
+              transition-opacity duration-500 ease-in-out ${
+                fade ? "opacity-100" : "opacity-0"
+              }`}
+          >
+            <img
+              src={imagemAtual.src}
+              alt={imagemAtual.alt}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
+    );
+  }
 
-export default function HomePage() {
   useEffect(() => {
     const registrarVisita = async () => {
       try {

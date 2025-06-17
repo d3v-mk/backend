@@ -1,115 +1,100 @@
-from fastapi import APIRouter, Depends, Request, Form
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from panopoker.core.database import get_db
-from panopoker.usuarios.models.usuario import Usuario
-from panopoker.financeiro.models.saque import Saque
 from panopoker.core.security import get_current_user_optional
+from panopoker.usuarios.models.usuario import Usuario
+from panopoker.usuarios.models.promotor import Promotor
+from panopoker.financeiro.models.saque import Saque
+from decimal import Decimal
 from pydantic import BaseModel
 from datetime import datetime
-from decimal import Decimal
-from panopoker.usuarios.models.promotor import Promotor
-from urllib.parse import urlencode
-from panopoker.core.config import settings
 
-router = APIRouter(prefix="", tags=["Painel Promotores"])
-templates = Jinja2Templates(directory="panopoker/site/templates")
+router = APIRouter(prefix="/api")
 
-class SaqueCreate(BaseModel):
-    jogador_id: int
-    promotor_id: int
-    valor: Decimal  # <-- Decimal aqui
 
-# ============= ENDPOINT QUE CAI NO PAINEL DO PROMOTOR ================
-@router.get("/painel/promotor")
-def painel_promotor(
-    request: Request,
+
+
+
+from fastapi.responses import JSONResponse
+
+@router.get("/promotor/info")
+def saldo_promotor_api(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
 ):
     if usuario is None or not usuario.is_promoter:
-        return RedirectResponse("/", status_code=302)
-
-    saques = db.query(Saque).options(joinedload(Saque.jogador)).filter(
-        Saque.promotor_id == usuario.id
-    ).all()
+        raise HTTPException(status_code=401, detail="Usuário não autorizado")
 
     promotor = db.query(Promotor).filter(Promotor.id == usuario.id).first()
 
     saldo_repassar = promotor.saldo_repassar if promotor else Decimal("0")
     comissao_total = promotor.comissao_total if promotor else Decimal("0")
+    bloqueado = promotor.bloqueado if promotor else False
 
-
-    return templates.TemplateResponse("painel_promotor.html", {
-        "request": request,
-        "saques": saques,
-        "usuario": usuario,
-        "saldo_repassar": saldo_repassar,
-        "comissao_total": comissao_total,
-        "mercado_pago_client_id": settings.MERCADO_PAGO_CLIENT_ID,
-        "mercado_pago_redirect_uri_final": settings.MERCADO_PAGO_REDIRECT_URI_FINAL
+    return JSONResponse(content={
+        "saldo_repassar": float(saldo_repassar),
+        "comissao_total": float(comissao_total),
+        "bloqueado": bloqueado,
     })
 
-# ================ ENDPOINT QUE CONCLUI O SAQUE DO JOGADOR ================
-@router.post("/painel/promotor/concluir")
-def concluir_saque_web(
-    saque_id: int = Form(...), 
-    db: Session = Depends(get_db), 
+
+
+
+@router.get("/promotor/saques")
+def listar_saques_promotor(
+    db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
 ):
-    if not usuario.is_promoter:
-        return RedirectResponse("/", status_code=302)
+    if usuario is None or not usuario.is_promoter:
+        return {"erro": "Não autorizado"}
 
-    saque = db.query(Saque).filter(Saque.id == saque_id, Saque.promotor_id == usuario.id).first()
-    if saque and saque.status == "confirmado_pelo_jogador":
-        saque.status = "concluido"
-        db.commit()
+    saques = db.query(Saque).options(joinedload(Saque.jogador)).filter(
+        Saque.promotor_id == usuario.id
+    ).order_by(Saque.criado_em.desc()).all()
 
-    return RedirectResponse("/painel/promotor", status_code=302)
+    resultado = []
+    for saque in saques:
+        resultado.append({
+            "id": saque.id,
+            "valor": str(saque.valor),
+            "status": saque.status,
+            "criado_em": saque.criado_em.isoformat() if saque.criado_em else None,
+            "jogador": {
+                "id": saque.jogador.id,
+                "nome": saque.jogador.nome,
+                "id_publico": saque.jogador.id_publico,
+            }
+        })
 
-# ================ ENDPOINT QUE CRIA O SAQUE NO APP PRO JOGADOR ================
-@router.post("/criar_saque")
-def criar_saque(request: SaqueCreate, db: Session = Depends(get_db)):
-    novo_saque = Saque(
-        jogador_id=request.jogador_id,
-        promotor_id=request.promotor_id,
-        valor=Decimal(request.valor),
-        status="aguardando"
-    )
-    db.add(novo_saque)
-    db.commit()
-    return {"msg": "Saque criado"}
-
-
+    return {"saques": resultado}
 
 
 
 
+class SolicitarSaquePayload(BaseModel):
+    id_publico: str
+    valor: str  # mantido como string pra garantir precisão
 
 @router.post("/painel/promotor/solicitar_saque")
-def solicitar_saque(
-    request: Request,
-    id_publico: str = Form(...),
-    valor: str = Form(...),  # <-- Recebe como str pra garantir precisão ao virar Decimal
+def solicitar_saque_api(
+    payload: SolicitarSaquePayload,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user_optional)
 ):
     if not usuario or not usuario.is_promoter:
-        return RedirectResponse(url="/login", status_code=302)
+        raise HTTPException(status_code=401, detail="Não autorizado")
 
-    jogador = db.query(Usuario).filter(Usuario.id_publico == id_publico).first()
+    jogador = db.query(Usuario).filter(Usuario.id_publico == payload.id_publico).first()
     if not jogador:
-        mensagem = urlencode({"erro": "ID do Jogador não encontrado"})
-        return RedirectResponse(url=f"/painel/promotor?{mensagem}", status_code=302)
+        raise HTTPException(status_code=404, detail="Jogador não encontrado")
 
     saque = Saque(
         jogador_id=jogador.id,
         promotor_id=usuario.id,
-        valor=Decimal(valor),
+        valor=Decimal(payload.valor),
         status="aguardando",
         criado_em=datetime.utcnow()
     )
     db.add(saque)
     db.commit()
-    return RedirectResponse(url="/painel/promotor", status_code=302)
+    return {"msg": "Saque solicitado com sucesso"}

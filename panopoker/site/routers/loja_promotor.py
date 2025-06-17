@@ -1,61 +1,38 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
+from fastapi import HTTPException, APIRouter, Depends
 from panopoker.core.database import get_db
-from fastapi import Depends
-from fastapi.templating import Jinja2Templates
+from panopoker.core.security import Session
+from sqlalchemy.orm import joinedload
 from panopoker.usuarios.models.usuario import Usuario
 from panopoker.usuarios.models.promotor import Promotor
-from sqlalchemy.orm import joinedload
-from time import time
 from decimal import Decimal
+from panopoker.core.security import get_current_user_required
 from panopoker.financeiro.utils.renovar_token_promoter_helper import renovar_token_do_promotor
-from panopoker.core.security import get_current_user_optional, get_current_user_required
-from fastapi.responses import RedirectResponse
+from time import time
 import requests
 import uuid
 import random
 
-router = APIRouter(tags=["Loja Promotores"])
-templates = Jinja2Templates(directory="panopoker/site/templates")
+router = APIRouter(prefix="/api")
 
 
-# ============================= LINK DA LOJA DO PROMOTOR =============================
-
-@router.get("/loja/promotor/{slug}", response_class=HTMLResponse)
-def loja_promotor(
-    slug: str,
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    usuario = get_current_user_optional(request, db)
-    if not usuario:
-        return RedirectResponse(url=f"/login?next={request.url.path}", status_code=302)
-
-    promotor = db.query(Promotor)\
-        .options(joinedload(Promotor.usuario))\
+@router.get("/loja/promotor/{slug}")
+def get_promotor(slug: str, db: Session = Depends(get_db)):
+    promotor = db.query(Promotor).options(joinedload(Promotor.usuario))\
         .filter(Promotor.slug == slug).first()
-    
     if not promotor:
-        return HTMLResponse(
-            content="<h1>Loja não encontrada</h1><p>Verifique o link.</p>",
-            status_code=404
-        )
-
-    return templates.TemplateResponse("loja_promotor.html", {
-        "request": request,
+        raise HTTPException(status_code=404, detail="Promotor não encontrado")
+    return {
         "nome": promotor.nome,
         "slug": promotor.slug,
         "avatar_url": promotor.usuario.avatar_url if promotor.usuario else "",
-        "timestamp": int(time()),
-    })
+        "timestamp": int(time())
+    }
 
 
-# ==================== GERA O PIX DINAMICO NA LOJA DO PROMOTOR ====================
 
-from fastapi import HTTPException
 
-@router.get("/api/gerar_pix/{slug}/{valor}")
+
+@router.get("/gerar_pix/{slug}/{valor}")
 def gerar_pix(slug: str, valor: Decimal,
               db: Session = Depends(get_db),
               usuario: Usuario = Depends(get_current_user_required)):  # troca aqui, obrigatório login
@@ -122,3 +99,4 @@ def gerar_pix(slug: str, valor: Decimal,
     pix_code = dados["point_of_interaction"]["transaction_data"]["qr_code"]
 
     return {"pix_copia_cola": pix_code}
+
