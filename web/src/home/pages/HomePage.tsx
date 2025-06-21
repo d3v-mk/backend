@@ -93,7 +93,7 @@ export default function HomePage() {
         }`}
       >
         <img
-          src={jogadorAtual.avatar_url || "/img/avatar_default.png"}
+          src={jogadorAtual.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${jogadorAtual.nome}`}
           alt={`${jogadorAtual.nome} avatar`}
           className="w-28 h-28 rounded-full border-4 border-yellow-400 mb-6 object-cover"
           loading="lazy"

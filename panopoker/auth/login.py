@@ -32,6 +32,7 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
 
             email = idinfo.get("email")
             nome = idinfo.get("name")
+            avatar_url = idinfo.get("picture")
 
         except Exception as e:
             raise HTTPException(status_code=401, detail="Token inválido ou expirado")
@@ -43,7 +44,8 @@ def login_unificado(payload: LoginRequest, db: Session = Depends(get_db)):
                 nome=nome,
                 email=email,
                 senha_hash="google",
-                auth_provider="google"
+                auth_provider="google",
+                avatar_url=avatar_url
             )
             db.add(usuario)
             db.commit()

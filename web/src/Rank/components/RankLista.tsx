@@ -64,10 +64,11 @@ export function RankLista({ ranking }: RankListProps) {
                   <td className="px-4 py-3 font-bold text-center">{medalha}</td>
                   <td className="px-4 py-3 flex items-center gap-3">
                     <img
-                      src={jogador.avatar_url || "/default-avatar.png"}
+                      src={jogador.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${jogador.nome}`}
                       alt={jogador.nome}
-                      className="w-9 h-9 rounded-full border border-gray-600 object-cover"
+                      className="w-10 h-10 rounded-full object-cover border border-gray-600"
                     />
+
                     <div>
                       <p className="font-semibold text-sm truncate">{jogador.nome}</p>
                       <p className="text-xs text-gray-400">ID: {jogador.usuario_id}</p>
